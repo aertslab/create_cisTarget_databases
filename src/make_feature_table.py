@@ -1,176 +1,312 @@
-from commands import getoutput
-import numpy as np
-from collections import defaultdict
-import pandas as pd
-from collections import OrderedDict
-import optparse
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Purpose :      Make feature table.
+
+Copyright (C): 2019 - Gert Hulselmans
+"""
+
+
+import argparse
+
+import io
+import os
 import sys
-
-fmt = optparse.IndentedHelpFormatter(indent_increment=2, max_help_position=9, width=79, short_first=1)
-usage = "Usage: %prog [options]"
-parser = optparse.OptionParser(usage = usage, version = "%prog v1.0", formatter = fmt)
-
-parser.add_option("-o", "--feature_order", action = "store", type = "string", dest = "feature_order_path", help = 'Name of the TF to process')
-parser.add_option("-f", "--fasta_file", action = "store", type = "string", dest = "fasta_file", help = 'Path to fasta file with DNA sequences of the samples')
-parser.add_option("-s", "--save_path", action = "store", type = "string", dest = "path_to_save_results", help = 'Path to save results')
-parser.add_option("-m", "--motifs_path", action = "store", type = "string", dest = "motifs_path", help = 'Path to folder with singletons')
-parser.add_option("-c", "--cbust_path", action = "store", type = "string", dest = "cbust_path", help = 'Path to cluster-buster tool')
-(options, args) = parser.parse_args()
+import subprocess
+import numpy as np
+import pandas as pd
+import multiprocessing as mp
 
 
-# Check if we have an expression matrix filea FASTA or twobit file is given as input.
-if ( (options.feature_order_path is None) or (options.fasta_file is None) or (options.path_to_save_results is None)  \
-             or (options.motifs_path is None) or (options.cbust_path is None)):
-    parser.print_help()
-    print >> sys.stderr, '\nERROR: minimum required options not satisfied:\n'
-    sys.exit(1)
+def get_motif_name_to_filename_dict(motifs_dir, motifs_list_filename):
+    motif_name_to_filename_dict = dict()
 
-PATH_TO_FEATURE_ORDER = options.feature_order_path
-PATH_TO_FASTA = options.fasta_file
-PATH_TO_SAVE = options.path_to_save_results
-PATH_TO_FOLDER_WITH_SINGLETONS = options.motifs_path
-PATH_TO_CBUST = options.cbust_path
-
-
-def readFetureOrder(path_to_file):
-    FeatureOrder_list=[]
-    with open(path_to_file) as my_file:
-        for line in my_file:
-            motif_name = line.split()[0]
-            FeatureOrder_list.append(motif_name)
-    return FeatureOrder_list
-
-
-def read_fasta_IDs(path_to_file):
-    fasta_ID_dict=OrderedDict()
-    with open(path_to_file, 'r') as fh:
+    with open(motifs_list_filename, 'r') as fh:
         for line in fh:
-            if line[0] == '>':
-                regionID=line[1:].rstrip('\n')
-                fasta_ID_dict[regionID] = 1
+            motif_name=line.rstrip()
 
-    ids = fasta_ID_dict.keys()
-    return ids
+            if motif_name and not motif_name.startswith('#'):
+                if motif_name.endswith('.cb'):
+                    # Remove ".cb" extension from motif name.
+                    motif_name = motif_name[:-3]
 
+                motif_filename = os.path.join(motifs_dir, motif_name + '.cb')
 
-def merge2oneFileSingletonScanWG(Text, oldText):
+                if not os.path.exists(motif_filename):
+                    print(
+                        'Error: Motif filename "{0:s}" does not exist.'.format(motif_filename),
+                        file=sys.stderr
+                    )
+                    sys.exit(1)
 
-    """
-    Input:
-    # Score	Start	End	Sequence	transfac_pro-M01238
-    23.2	436	1285	chrX-reg7487	47.1
-    """
+                motif_name_to_filename_dict[motif_name] = motif_filename
 
-
-    """
-    Output is in format:
-    chr1    247279147    247282336    transfac_pro-M00801    136.0
-    """
-    Merged_file_RAM = ''
-    ####Parsing of stdout####
-    Text = Text.split("\n")
-    motif_name = ''
-    for line in Text:
-        chr = ''
-        start = ''
-        end = ''
-        crm_score = ''
-        if line.startswith("#"):
-            tmp_line = line.split()
-            motif_name = tmp_line[5]
-        line = line.split()
-        # if len(line) == 5 and str(line[3]).startswith('chr'):
-        if len(line) == 5:
-            try:
-                crm_score = str(float(line[0]))
-            except:
-                continue
-            chr = str(line[3])   ###chr:start-end
-            start = str(line[1])
-            end = str(line[2])
-            regionID = line[3]
-        if chr != '' and str(start) != '' and str(end) != '' and motif_name != '' and str(crm_score) != '':
-            Merged_file_RAM += regionID + "\t" + start  + "\t" + end + "\t" + motif_name + "\t" + str(crm_score) + "\n"
-    ###---Merge perocessed results with existing---###
-    oldText = oldText + Merged_file_RAM
-    return oldText
+    return motif_name_to_filename_dict
 
 
-def run_cbust_scan(singletone_list, path_to_fasta):
-    ###---Variable to save results of scanning---###
-    initScanningData=''
-    for motif in singletone_list:
-        Cbustscann_singl = getoutput(PATH_TO_CBUST + " " + '-c 0 -m 0 -f 3' + " " + PATH_TO_FOLDER_WITH_SINGLETONS + motif + "  " + path_to_fasta)
-        initScanningData = merge2oneFileSingletonScanWG(Cbustscann_singl,initScanningData)
-    return initScanningData
+def get_sequence_names_from_fasta(fasta_filename):
+    sequence_names_list = list()
+    sequence_names_set = set()
+    duplicated_sequences = False
+
+    with open(fasta_filename, 'r') as fh:
+        for line in fh:
+            if line.startswith('>'):
+                # Get sequence name by getting everything after '>' up till the first whitespace.
+                sequence_name = line[1:].split(maxsplit=1)[0]
+
+                # Check if all sequence names only appear once.
+                if sequence_name in sequence_names_set:
+                    print(
+                        'Error: Sequence name "{0:s}" is not unique in FASTA file "{1:s}".'.format(
+                            sequence_name,
+                            fasta_filename
+                        ),
+                        file=sys.stderr
+                    )
+                    duplicated_sequences = True
+
+                sequence_names_list.append(sequence_name)
+                sequence_names_set.add(sequence_name)
+
+    if duplicated_sequences:
+        sys.exit(1)
+
+    return sequence_names_list
 
 
+def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_name):
+    # Score each region in FASTA file with Cluster-Buster
+    # for motif and get top CRM score for each region.
+    clusterbuster_command = [cluster_buster_path,
+                             '-f', '4',
+                             '-c', '0.0',
+                             '-r', '10000',
+                             '-t', '1',
+                             motif_filename,
+                             fasta_filename]
 
-def CRMmaxScore_Homo_Cluster(Merged_file_RAM, motif_order, regionOrder):
+    try:
+        pid = subprocess.Popen(args=clusterbuster_command,
+                               bufsize=1,
+                               executable=None,
+                               stdin=None,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE,
+                               preexec_fn=None,
+                               close_fds=False,
+                               shell=False,
+                               cwd=None,
+                               env=None,
+                               universal_newlines=False,
+                               startupinfo=None,
+                               creationflags=0)
+        stdout_data, stderr_data = pid.communicate()
+    except OSError as msg:
+        print("\nExecution error for: '" + ' '.join(clusterbuster_command) + "': " + str(msg),
+              file=sys.stderr)
+        sys.exit(1)
+
+    if pid.returncode != 0:
+        print("\nError: Non-zero exit status for: " + ' '.join(clusterbuster_command) + "'",
+              file=sys.stderr)
+        sys.exit(1)
+
+    crm_scores_df = pd.read_csv(
+        filepath_or_buffer=io.BytesIO(stdout_data),
+        sep='\t',
+        header=0,
+        names=['seq_name', 'crm_score', 'seq_number', 'rank'],
+        index_col='seq_name',
+        usecols=['seq_name', 'crm_score'],
+        dtype={'seq_name': str, 'crm_score': np.float32},
+        engine='c'
+    )
+
+    return motif_name, crm_scores_df
 
 
-    """
-    input file should have the format:
-    chr16:262550-262750    262678    262697    transfac_pro-M01652    0.747
-    chr16:262550-262750    262678    262697    transfac_pro-M01652    0.747
-    chr16:262550-262750    262678    262697    transfac_pro-M01652    0.747
-    """
+def main():
+    parser = argparse.ArgumentParser(
+        description='Make feature table.'
+    )
 
-    MaxScoredict = defaultdict(dict)
+    parser.add_argument(
+        '-f',
+        '--fasta',
+        dest='fasta_filename',
+        action='store',
+        type=str,
+        required=True,
+        help='FASTA filename which contains the regions to score with Cluster-Buster for each motif.'
+    )
 
-    ###---put regions to the dictionary:
-    reg_idx=dict()
-    i=0
-    for region_id in regionOrder:
-        reg_idx[region_id] = i
-        i=i+1
-    motif_idx=dict()
-    i=0
-    for motif in motif_order:
-        ###----remove cb extension----###
-        motif_idx[motif[:-3]]=i
-        i=i+1
-    ###-------------------------------###
-    ####-----Read merged results for cbust scoring------####
-    Merged_file_RAM = Merged_file_RAM.split("\n")
+    parser.add_argument(
+        '-M',
+        '--motifs_dir',
+        dest='motifs_dir',
+        action='store',
+        type=str,
+        required=True,
+        help='Path to motif directory.'
+    )
 
-    for line in Merged_file_RAM:
-        line=line.split()
-        if len(line) ==5:
-            regionID=line[0]
-            motifID=line[3]
-            score=float(line[4])
-            if regionID not in MaxScoredict:
-                MaxScoredict[regionID][motifID]=score
-            else:
-                if motifID not in MaxScoredict[regionID]:
-                    MaxScoredict[regionID][motifID]=score
-                else:
-                    if MaxScoredict[regionID][motifID]<score:
-                        MaxScoredict[regionID][motifID]=score
-    ###---initialize the matrix with values
-    featureMatrix_POS = np.zeros((len(regionOrder), len(motif_order)))
-    row_idx=0
-    col_idx=0
-    for region in reg_idx:
-        row_idx=reg_idx[region]
-        for motif in motif_idx:
-            col_idx=motif_idx[motif]
-            if region in MaxScoredict and motif in MaxScoredict[region]:
-                score=MaxScoredict[region][motif]
-                featureMatrix_POS[row_idx,col_idx] = score
-    return featureMatrix_POS
+    parser.add_argument(
+        '-m',
+        '--motifs',
+        dest='motifs_list_filename',
+        action='store',
+        type=str,
+        required=True,
+        help='Filename with list of motif names relative to the directory specified by "--motifs".'
+    )
+
+    parser.add_argument(
+        '-o',
+        '--output',
+        dest='feature_table_output_filename_prefix',
+        action='store',
+        type=str,
+        required=True,
+        help='Feature table output filename prefix.'
+    )
+
+    parser.add_argument(
+        '-c',
+        '--cbust',
+        dest='cluster_buster_path',
+        action='store',
+        type=str,
+        required=False,
+        default='cbust',
+        help='Path to Cluster-Buster (https://github.com/weng-lab/cluster-buster/). Default: "cbust".'
+    )
+
+    parser.add_argument(
+        '-t',
+        '--threads',
+        dest='nbr_threads',
+        action='store',
+        type=int,
+        required=False,
+        default=1,
+        help='Number of threads to use when scoring motifs. Default: 1.'
+    )
+
+    args = parser.parse_args()
+
+    if not os.path.exists(args.fasta_filename):
+        print(
+            'Error: FASTA filename "{0:s}" does not exist.'.format(args.fasta_filename),
+            file=sys.stderr
+        )
+        sys.exit(1)
+
+    if not os.path.exists(args.motifs_dir):
+        print(
+            'Error: Motif directory "{0:s}" does not exist.'.format(args.motifs_dir),
+            file=sys.stderr
+        )
+        sys.exit(1)
+
+    if not os.path.exists(args.fasta_filename):
+        print(
+            'Error: Motifs list filename "{0:s}" does not exist.'.format(args.motifs_list_filename),
+            file=sys.stderr
+        )
+        sys.exit(1)
+
+    motif_name_to_filename_dict = get_motif_name_to_filename_dict(
+        motifs_dir=args.motifs_dir,
+        motifs_list_filename=args.motifs_list_filename
+    )
+
+    sequence_names = get_sequence_names_from_fasta(args.fasta_filename)
+
+    # Create zeroed dataframe for all sequences vs all motif names.
+    df_feature_table = pd.DataFrame(
+        data=np.zeros((len(sequence_names),
+                       len(motif_name_to_filename_dict)),
+                      dtype=np.float32),
+        index=sequence_names,
+        columns=sorted(motif_name_to_filename_dict.keys())
+    )
+
+    nbr_motifs = len(motif_name_to_filename_dict)
+
+    def add_crm_scores_for_motif_to_df_feature_table(motif_name_and_crm_scores_df):
+        if 'nbr_of_scored_motifs' not in add_crm_scores_for_motif_to_df_feature_table.__dict__:
+            add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs = 0
+
+        motif_name, crm_scores_df = motif_name_and_crm_scores_df
+        df_feature_table.loc[crm_scores_df.index.tolist(), motif_name] = crm_scores_df['crm_score']
+
+        add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs += 1
+
+        print(
+            'Adding Cluster-Buster CRM scores ({0:d} of {1:d}) for motif "{2:s}".'.format(
+                add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs,
+                nbr_motifs,
+                motif_name
+            ),
+            file=sys.stderr
+        )
+
+    with mp.Pool(processes=args.nbr_threads) as pool:
+        for motif_name, motif_filename in motif_name_to_filename_dict.items():
+            pool.apply_async(func=run_cluster_buster_for_motif,
+                             args=[args.cluster_buster_path,
+                                   args.fasta_filename,
+                                   motif_filename,
+                                   motif_name],
+                             callback=add_crm_scores_for_motif_to_df_feature_table)
+
+        # Prevents any more task from being submitted to the pool.
+        pool.close()
+
+        # Wait for worker processes to exit.
+        pool.join()
+
+    print(
+        'Write feature table result table: "{0:s}".'.format(
+            args.feature_table_output_filename_prefix + '.tsv'
+        ),
+        file=sys.stderr
+    )
+    df_feature_table.to_csv(
+        path_or_buf=args.feature_table_output_filename_prefix + '.tsv',
+        sep='\t',
+        header=True,
+        index=True,
+        index_label="regions",
+    )
+
+    print(
+        'Write feature table result table (for R): "{0:s}".'.format(
+            args.feature_table_output_filename_prefix + '.for_R.tsv'
+        ),
+        file=sys.stderr
+    )
+    df_feature_table.to_csv(
+        path_or_buf=args.feature_table_output_filename_prefix + '.for_R.tsv',
+        sep='\t',
+        header=True,
+        index=True,
+        index_label=False,
+    )
+
+    print(
+        'Write feature table result table in feather format: "{0:s}".'.format(
+            args.feature_table_output_filename_prefix + '.feather'
+        ),
+        file=sys.stderr
+    )
+    df_feature_table.reset_index(inplace=True)
+    df_feature_table.to_feather(
+        fname=args.feature_table_output_filename_prefix + '.feather'
+    )
 
 
 if __name__ == '__main__':
-    ###---Run cbust scoring---###
-    FeatureOrder_list = readFetureOrder( PATH_TO_FEATURE_ORDER )
-    region_order_ref = read_fasta_IDs(PATH_TO_FASTA)
-    cbust_allmotifs_merged_results_ref = run_cbust_scan(FeatureOrder_list, PATH_TO_FASTA)
-    featureMatrix_region_ref = CRMmaxScore_Homo_Cluster(cbust_allmotifs_merged_results_ref, FeatureOrder_list, region_order_ref)
-
-    ###---Save FT in pandas format----###
-    FM_data_frame = pd.DataFrame(featureMatrix_region_ref, index=region_order_ref, columns=FeatureOrder_list)
-    print "Saving feature-table"
-    FM_data_frame.to_csv(PATH_TO_SAVE , sep='\t')
-    print "Done"
+    main()
