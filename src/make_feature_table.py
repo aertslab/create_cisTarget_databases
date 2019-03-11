@@ -280,6 +280,37 @@ def main():
         # Wait for worker processes to exit.
         pool.join()
 
+    def feature_table_write_tsv(df_feature_table, feature_table_output_filename, feature_table_output_format):
+        """ Write feature table TSV file manually instead of with pandas. """
+
+        # Get column names with all features.
+        column_names = df_feature_table.columns.tolist()
+
+        # Get row names with all regions.
+        row_names = df_feature_table.index.tolist()
+
+        # Get all CRM scores (numpy array).
+        crm_scores = df_feature_table.get_values()
+
+        # Write feature table TSV file.
+        with open(feature_table_output_filename, 'w') as feature_table_output_fh:
+            # Write header line.
+            if feature_table_output_format == 'tsv':
+                print('regions', end='\t', file=feature_table_output_fh)
+
+            print('\t'.join(column_names), end='\n', file=feature_table_output_fh)
+
+            # Write each row.
+            for row_idx in range(len(row_names)):
+                # Write region name.
+                print(row_names[row_idx], end='\t', file=feature_table_output_fh)
+
+                # Write CRM scores for all features for the current region.
+                crm_scores[row_idx].tofile(file=feature_table_output_fh, sep='\t')
+
+                # Write newline.
+                print(end='\n', file=feature_table_output_fh)
+
     if args.feature_table_output_format == 'tsv':
         print(
             'Write feature table result TSV table: "{0:s}".'.format(
@@ -287,15 +318,20 @@ def main():
             ),
             file=sys.stderr
         )
-        df_feature_table.to_csv(
-            path_or_buf=args.feature_table_output_filename,
-            sep='\t',
-            header=True,
-            index=True,
-            index_label="regions",
-            quoting=None,
-            chunksize=1000,
-        )
+
+        feature_table_write_tsv(df_feature_table=df_feature_table,
+                                feature_table_output_filename=args.feature_table_output_filename,
+                                feature_table_output_format=args.feature_table_output_format)
+        # Faster than the following code:
+        # df_feature_table.to_csv(
+        #     path_or_buf=args.feature_table_output_filename,
+        #     sep='\t',
+        #     header=True,
+        #     index=True,
+        #     index_label="regions",
+        #     quoting=None,
+        #     chunksize=1000,
+        #)
     elif args.feature_table_output_format == 'tsv_for_R':
         print(
             'Write feature table result TSV table for R: "{0:s}".'.format(
@@ -303,15 +339,20 @@ def main():
             ),
             file=sys.stderr
         )
-        df_feature_table.to_csv(
-            path_or_buf=args.feature_table_output_filename,
-            sep='\t',
-            header=True,
-            index=True,
-            index_label=False,
-            quoting=None,
-            chunksize=1000,
-        )
+
+        feature_table_write_tsv(df_feature_table=df_feature_table,
+                                feature_table_output_filename=args.feature_table_output_filename,
+                                feature_table_output_format=args.feature_table_output_format)
+        # Faster than the following code:
+        # df_feature_table.to_csv(
+        #     path_or_buf=args.feature_table_output_filename,
+        #     sep='\t',
+        #     header=True,
+        #     index=True,
+        #     index_label=False,
+        #     quoting=None,
+        #     chunksize=1000,
+        # )
     elif args.feature_table_output_format == 'feather':
         print(
             'Write feature table result table in feather format: "{0:s}".'.format(
