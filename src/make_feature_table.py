@@ -165,11 +165,23 @@ def main():
     parser.add_argument(
         '-o',
         '--output',
-        dest='feature_table_output_filename_prefix',
+        dest='feature_table_output_filename',
         action='store',
         type=str,
         required=True,
-        help='Feature table output filename prefix.'
+        help='Feature table output filename.'
+    )
+
+    parser.add_argument(
+        '-O',
+        '--output-format',
+        dest='feature_table_output_format',
+        action='store',
+        type=str,
+        required=False,
+        choices=['feather', 'tsv', 'tsv_for_R'],
+        default='feather',
+        help='Feature table output format. Default: "feather" (fast).'
     )
 
     parser.add_argument(
@@ -268,44 +280,49 @@ def main():
         # Wait for worker processes to exit.
         pool.join()
 
-    print(
-        'Write feature table result table: "{0:s}".'.format(
-            args.feature_table_output_filename_prefix + '.tsv'
-        ),
-        file=sys.stderr
-    )
-    df_feature_table.to_csv(
-        path_or_buf=args.feature_table_output_filename_prefix + '.tsv',
-        sep='\t',
-        header=True,
-        index=True,
-        index_label="regions",
-    )
-
-    print(
-        'Write feature table result table (for R): "{0:s}".'.format(
-            args.feature_table_output_filename_prefix + '.for_R.tsv'
-        ),
-        file=sys.stderr
-    )
-    df_feature_table.to_csv(
-        path_or_buf=args.feature_table_output_filename_prefix + '.for_R.tsv',
-        sep='\t',
-        header=True,
-        index=True,
-        index_label=False,
-    )
-
-    print(
-        'Write feature table result table in feather format: "{0:s}".'.format(
-            args.feature_table_output_filename_prefix + '.feather'
-        ),
-        file=sys.stderr
-    )
-    df_feature_table.reset_index(inplace=True)
-    df_feature_table.to_feather(
-        fname=args.feature_table_output_filename_prefix + '.feather'
-    )
+    if args.feature_table_output_format == 'tsv':
+        print(
+            'Write feature table result TSV table: "{0:s}".'.format(
+                args.feature_table_output_filename
+            ),
+            file=sys.stderr
+        )
+        df_feature_table.to_csv(
+            path_or_buf=args.feature_table_output_filename,
+            sep='\t',
+            header=True,
+            index=True,
+            index_label="regions",
+            quoting=None,
+            chunksize=1000,
+        )
+    elif args.feature_table_output_format == 'tsv_for_R':
+        print(
+            'Write feature table result TSV table for R: "{0:s}".'.format(
+                args.feature_table_output_filename
+            ),
+            file=sys.stderr
+        )
+        df_feature_table.to_csv(
+            path_or_buf=args.feature_table_output_filename,
+            sep='\t',
+            header=True,
+            index=True,
+            index_label=False,
+            quoting=None,
+            chunksize=1000,
+        )
+    elif args.feature_table_output_format == 'feather':
+        print(
+            'Write feature table result table in feather format: "{0:s}".'.format(
+                args.feature_table_output_filename
+            ),
+            file=sys.stderr
+        )
+        df_feature_table.reset_index(inplace=True)
+        df_feature_table.to_feather(
+            fname=args.feature_table_output_filename
+        )
 
 
 if __name__ == '__main__':
