@@ -45,35 +45,35 @@ def get_motif_name_to_filename_dict(motifs_dir, motifs_list_filename):
     return motif_name_to_filename_dict
 
 
-def get_sequence_names_from_fasta(fasta_filename):
-    sequence_names_list = list()
-    sequence_names_set = set()
-    duplicated_sequences = False
+def get_region_ids_from_fasta(fasta_filename):
+    region_ids_list = list()
+    region_ids_set = set()
+    duplicated_region_ids = False
 
     with open(fasta_filename, 'r') as fh:
         for line in fh:
             if line.startswith('>'):
-                # Get sequence name by getting everything after '>' up till the first whitespace.
-                sequence_name = line[1:].split(maxsplit=1)[0]
+                # Get region ID by getting everything after '>' up till the first whitespace.
+                region_id = line[1:].split(maxsplit=1)[0]
 
-                # Check if all sequence names only appear once.
-                if sequence_name in sequence_names_set:
+                # Check if all region IDs only appear once.
+                if region_id in region_ids_set:
                     print(
-                        'Error: Sequence name "{0:s}" is not unique in FASTA file "{1:s}".'.format(
-                            sequence_name,
+                        'Error: region ID "{0:s}" is not unique in FASTA file "{1:s}".'.format(
+                            region_id,
                             fasta_filename
                         ),
                         file=sys.stderr
                     )
-                    duplicated_sequences = True
+                    duplicated_region_ids = True
 
-                sequence_names_list.append(sequence_name)
-                sequence_names_set.add(sequence_name)
+                region_ids_list.append(region_id)
+                region_ids_set.add(region_id)
 
-    if duplicated_sequences:
+    if duplicated_region_ids:
         sys.exit(1)
 
-    return sequence_names_list
+    return region_ids_list
 
 
 def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_name):
@@ -234,14 +234,14 @@ def main():
         motifs_list_filename=args.motifs_list_filename
     )
 
-    sequence_names = get_sequence_names_from_fasta(args.fasta_filename)
+    region_ids = get_region_ids_from_fasta(args.fasta_filename)
 
-    # Create zeroed dataframe for all sequences vs all motif names.
+    # Create zeroed dataframe for all region IDs vs all motif names.
     df_feature_table = pd.DataFrame(
-        data=np.zeros((len(sequence_names),
+        data=np.zeros((len(region_ids),
                        len(motif_name_to_filename_dict)),
                       dtype=np.float32),
-        index=sequence_names,
+        index=region_ids,
         columns=sorted(motif_name_to_filename_dict.keys())
     )
 
@@ -252,6 +252,7 @@ def main():
             add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs = 0
 
         motif_name, crm_scores_df = motif_name_and_crm_scores_df
+
         df_feature_table.loc[crm_scores_df.index.tolist(), motif_name] = crm_scores_df['crm_score']
 
         add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs += 1
