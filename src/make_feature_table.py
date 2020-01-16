@@ -4,7 +4,7 @@
 """
 Purpose :      Make feature table.
 
-Copyright (C): 2019 - Gert Hulselmans
+Copyright (C): 2019-2020 - Gert Hulselmans
 """
 
 
