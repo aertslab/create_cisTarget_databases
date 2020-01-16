@@ -82,14 +82,14 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_r
                     region_ids.add(region_id)
 
     if extract_gene_id_from_region_id_regex_replace:
-        # Return gene IDs.
-        return sorted(gene_ids)
+        # Return ('genes', gene IDs).
+        return 'genes', sorted(gene_ids)
     else:
         if duplicated_region_ids:
             sys.exit(1)
 
-        # Return region IDs.
-        return sorted(region_ids)
+        # Return ('regions', region IDs).
+        return 'regions', sorted(region_ids)
 
 
 def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_name, extract_gene_id_from_region_id_regex_replace=None):
@@ -287,7 +287,10 @@ def main():
         motifs_list_filename=args.motifs_list_filename
     )
 
-    region_ids_or_gene_ids = get_region_ids_or_gene_ids_from_fasta(
+    # Get type of sequences ("regions" or "genes")
+    # and sorted list of region IDs or gene IDs.
+    (regions_or_genes_type,
+     region_ids_or_gene_ids) = get_region_ids_or_gene_ids_from_fasta(
         args.fasta_filename,
         args.extract_gene_id_from_region_id_regex_replace
     )
@@ -299,6 +302,14 @@ def main():
                       dtype=np.float32),
         index=region_ids_or_gene_ids,
         columns=sorted(motif_name_to_filename_dict.keys())
+    )
+
+    # Add index name: 'regions' or 'genes'.
+    df_feature_table.rename_axis(
+        index=regions_or_genes_type,
+        axis='index',
+        copy=False,
+        inplace=True
     )
 
     nbr_motifs = len(motif_name_to_filename_dict)
@@ -342,13 +353,13 @@ def main():
         # Wait for worker processes to exit.
         pool.join()
 
-    def feature_table_write_tsv(df_feature_table, feature_table_output_filename, feature_table_output_format, has_genes):
+    def feature_table_write_tsv(df_feature_table, feature_table_output_filename, feature_table_output_format, regions_or_genes_type):
         """ Write feature table TSV file manually instead of with pandas. """
 
         # Get column names with all features.
         column_names = df_feature_table.columns.tolist()
 
-        # Get row names with all regions.
+        # Get row names with all region IDs or gene IDs.
         row_names = df_feature_table.index.tolist()
 
         # Get all CRM scores (numpy array).
@@ -358,10 +369,7 @@ def main():
         with open(feature_table_output_filename, 'w') as feature_table_output_fh:
             # Write header line.
             if feature_table_output_format == 'tsv':
-                if has_genes:
-                    print('genes', end='\t', file=feature_table_output_fh)
-                else:
-                    print('regions', end='\t', file=feature_table_output_fh)
+                print(regions_or_genes_type, end='\t', file=feature_table_output_fh)
 
             print('\t'.join(column_names), end='\n', file=feature_table_output_fh)
 
@@ -388,7 +396,7 @@ def main():
             df_feature_table=df_feature_table,
             feature_table_output_filename=args.feature_table_output_filename,
             feature_table_output_format=args.feature_table_output_format,
-            has_genes=True if args.extract_gene_id_from_region_id_regex_replace else False
+            regions_or_genes_type=regions_or_genes_type
         )
         # Faster than the following code:
         # df_feature_table.to_csv(
@@ -396,7 +404,7 @@ def main():
         #     sep='\t',
         #     header=True,
         #     index=True,
-        #     index_label="regions",
+        #     index_label=regions_or_genes_type,
         #     quoting=None,
         #     chunksize=1000,
         #)
@@ -412,7 +420,7 @@ def main():
             df_feature_table=df_feature_table,
             feature_table_output_filename=args.feature_table_output_filename,
             feature_table_output_format=args.feature_table_output_format,
-            has_genes=True if args.extract_gene_id_from_region_id_regex_replace else False
+            regions_or_genes_type=regions_or_genes_type
         )
         # Faster than the following code:
         # df_feature_table.to_csv(
