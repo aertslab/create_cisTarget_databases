@@ -20,19 +20,19 @@ import pandas as pd
 import multiprocessing as mp
 
 
-def get_motif_name_to_filename_dict(motifs_dir, motifs_list_filename):
-    motif_name_to_filename_dict = dict()
+def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename):
+    motif_id_to_filename_dict = dict()
 
     with open(motifs_list_filename, 'r') as fh:
         for line in fh:
-            motif_name=line.rstrip()
+            motif_id=line.rstrip()
 
-            if motif_name and not motif_name.startswith('#'):
-                if motif_name.endswith('.cb'):
-                    # Remove ".cb" extension from motif name.
-                    motif_name = motif_name[:-3]
+            if motif_id and not motif_id.startswith('#'):
+                if motif_id.endswith('.cb'):
+                    # Remove ".cb" extension from motif ID.
+                    motif_id = motif_id[:-3]
 
-                motif_filename = os.path.join(motifs_dir, motif_name + '.cb')
+                motif_filename = os.path.join(motifs_dir, motif_id + '.cb')
 
                 if not os.path.exists(motif_filename):
                     print(
@@ -41,9 +41,9 @@ def get_motif_name_to_filename_dict(motifs_dir, motifs_list_filename):
                     )
                     sys.exit(1)
 
-                motif_name_to_filename_dict[motif_name] = motif_filename
+                motif_id_to_filename_dict[motif_id] = motif_filename
 
-    return motif_name_to_filename_dict
+    return motif_id_to_filename_dict
 
 
 def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_region_id_regex_replace):
@@ -92,7 +92,7 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_r
         return 'regions', sorted(region_ids)
 
 
-def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_name, extract_gene_id_from_region_id_regex_replace=None):
+def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_id, extract_gene_id_from_region_id_regex_replace=None):
     # Score each region in FASTA file with Cluster-Buster
     # for motif and get top CRM score for each region.
     clusterbuster_command = [cluster_buster_path,
@@ -164,7 +164,7 @@ def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_file
             )
         ).groupby('gene_ids').max()
 
-    return motif_name, crm_scores_df
+    return motif_id, crm_scores_df
 
 
 def main():
@@ -199,7 +199,7 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='Filename with list of motif names relative to the directory specified by "--motifs".'
+        help='Filename with list of motif IDs relative to the directory specified by "--motifs".'
     )
 
     parser.add_argument(
@@ -282,7 +282,7 @@ def main():
         )
         sys.exit(1)
 
-    motif_name_to_filename_dict = get_motif_name_to_filename_dict(
+    motif_id_to_filename_dict = get_motif_id_to_filename_dict(
         motifs_dir=args.motifs_dir,
         motifs_list_filename=args.motifs_list_filename
     )
@@ -295,13 +295,13 @@ def main():
         args.extract_gene_id_from_region_id_regex_replace
     )
 
-    # Create zeroed dataframe for all region IDs or gene IDs vs all motif names.
+    # Create zeroed dataframe for all region IDs or gene IDs vs all motif IDs.
     df_feature_table = pd.DataFrame(
         data=np.zeros((len(region_ids_or_gene_ids),
-                       len(motif_name_to_filename_dict)),
+                       len(motif_id_to_filename_dict)),
                       dtype=np.float32),
         index=region_ids_or_gene_ids,
-        columns=sorted(motif_name_to_filename_dict.keys())
+        columns=sorted(motif_id_to_filename_dict.keys())
     )
 
     # Add index name: 'regions' or 'genes'.
@@ -312,15 +312,15 @@ def main():
         inplace=True
     )
 
-    nbr_motifs = len(motif_name_to_filename_dict)
+    nbr_motifs = len(motif_id_to_filename_dict)
 
-    def add_crm_scores_for_motif_to_df_feature_table(motif_name_and_crm_scores_df):
+    def add_crm_scores_for_motif_to_df_feature_table(motif_id_and_crm_scores_df):
         if 'nbr_of_scored_motifs' not in add_crm_scores_for_motif_to_df_feature_table.__dict__:
             add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs = 0
 
-        motif_name, crm_scores_df = motif_name_and_crm_scores_df
+        motif_id, crm_scores_df = motif_id_and_crm_scores_df
 
-        df_feature_table.loc[crm_scores_df.index.tolist(), motif_name] = crm_scores_df['crm_score']
+        df_feature_table.loc[crm_scores_df.index.tolist(), motif_id] = crm_scores_df['crm_score']
 
         add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs += 1
 
@@ -328,20 +328,20 @@ def main():
             'Adding Cluster-Buster CRM scores ({0:d} of {1:d}) for motif "{2:s}".'.format(
                 add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs,
                 nbr_motifs,
-                motif_name
+                motif_id
             ),
             file=sys.stderr
         )
 
     with mp.Pool(processes=args.nbr_threads) as pool:
-        for motif_name, motif_filename in motif_name_to_filename_dict.items():
+        for motif_id, motif_filename in motif_id_to_filename_dict.items():
             pool.apply_async(
                 func=run_cluster_buster_for_motif,
                 args=[
                     args.cluster_buster_path,
                     args.fasta_filename,
                     motif_filename,
-                    motif_name,
+                    motif_id,
                     args.extract_gene_id_from_region_id_regex_replace
                 ],
                 callback=add_crm_scores_for_motif_to_df_feature_table
