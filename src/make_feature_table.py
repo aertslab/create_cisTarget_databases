@@ -20,23 +20,62 @@ import pandas as pd
 import multiprocessing as mp
 
 
-def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename):
+def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename, motif_md5_to_motif_id_filename=None):
     motif_id_to_filename_dict = dict()
+    motif_md5_to_motif_id_dict = dict()
+    motif_id_to_motif_md5_dict = dict()
 
+    # Create motif MD5 names to motif ID names mapping and vice versa
+    # if a motif MD5 to motif ID file was provided. This will be used
+    # later to map Cluster-Buster motif files in motifs_dir with motif
+    # MD5 names to motif IDs.
+    if motif_md5_to_motif_id_filename:
+        with open(motif_md5_to_motif_id_filename, 'r') as fh:
+            for line in fh:
+                line = line.rstrip()
+
+                if line and not line.startswith('#'):
+                    motif_md5, motif_id = line.rstrip().split('\t')[0:2]
+
+                    # Store motif MD5 to motif ID mapping as vice versa.
+                    motif_md5_to_motif_id_dict[motif_md5] = motif_id
+                    motif_id_to_motif_md5_dict[motif_id] = motif_md5
+
+    # Create motif ID to Cluster-Buster motif filename mapping.
     with open(motifs_list_filename, 'r') as fh:
         for line in fh:
-            motif_id=line.rstrip()
+            motif_md5_or_id = line.rstrip()
 
-            if motif_id and not motif_id.startswith('#'):
-                if motif_id.endswith('.cb'):
+            if motif_md5_or_id and not motif_md5_or_id.startswith('#'):
+                if motif_md5_or_id.endswith('.cb'):
                     # Remove ".cb" extension from motif ID.
-                    motif_id = motif_id[:-3]
+                    motif_md5_or_id = motif_md5_or_id[:-3]
 
-                motif_filename = os.path.join(motifs_dir, motif_id + '.cb')
+                if motif_md5_to_motif_id_dict:
+                    if motif_md5_or_id in motif_md5_to_motif_id_dict:
+                        # Get associated motif ID for motif MD5.
+                        motif_id = motif_md5_to_motif_id_dict[motif_md5_or_id]
+                        motif_md5 = motif_md5_or_id
+                    elif motif_md5_or_id in motif_id_to_motif_md5_dict:
+                        # Get associated motif MD5 for motif ID.
+                        motif_id = motif_md5_or_id
+                        motif_md5 = motif_id_to_motif_md5_dict[motif_md5_or_id]
+                    else:
+                        print(
+                            f'Error: Could not find motif MD5 <=> motif ID association for "{motif_md5_or_id}".',
+                            file=sys.stderr
+                        )
+                        sys.exit(1)
+
+                    # Cluster-Buster motif MD5 filename.
+                    motif_filename = os.path.join(motifs_dir, motif_md5 + '.cb')
+                else:
+                    motif_id = motif_md5_or_id
+                    motif_filename = os.path.join(motifs_dir, motif_id + '.cb')
 
                 if not os.path.exists(motif_filename):
                     print(
-                        'Error: Motif filename "{0:s}" does not exist.'.format(motif_filename),
+                        f'Error: Cluster-Buster motif filename "{motif_filename}" does not exist for motif {motif_id}.',
                         file=sys.stderr
                     )
                     sys.exit(1)
@@ -189,7 +228,7 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='Path to motif directory.'
+        help='Path to directory with Cluster-Buster motifs.'
     )
 
     parser.add_argument(
@@ -199,7 +238,17 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='Filename with list of motif IDs relative to the directory specified by "--motifs".'
+        help='Filename with list of motif IDs or motif MD5 names to be scored from directory specified by "--motifs_dir".'
+    )
+
+    parser.add_argument(
+        '-5',
+        '--md5',
+        dest='motif_md5_to_motif_id_filename',
+        action='store',
+        type=str,
+        required=False,
+        help='Filename with motif MD5 to motif ID mappings to map Cluster-Buster motif MD5 filenames to motif IDs.'
     )
 
     parser.add_argument(
@@ -275,6 +324,13 @@ def main():
         )
         sys.exit(1)
 
+    if args.motif_md5_to_motif_id_filename and not os.path.exists(args.motif_md5_to_motif_id_filename):
+        print(
+            'Error: Motif MD5 to motif ID mappings filename "{0:s}" does not exist.'.format(args.motif_md5_to_motif_id_filename),
+            file=sys.stderr
+        )
+        sys.exit(1)
+
     if not os.path.exists(args.fasta_filename):
         print(
             'Error: Motifs list filename "{0:s}" does not exist.'.format(args.motifs_list_filename),
@@ -284,7 +340,8 @@ def main():
 
     motif_id_to_filename_dict = get_motif_id_to_filename_dict(
         motifs_dir=args.motifs_dir,
-        motifs_list_filename=args.motifs_list_filename
+        motifs_list_filename=args.motifs_list_filename,
+        motif_md5_to_motif_id_filename=args.motif_md5_to_motif_id_filename
     )
 
     # Get type of sequences ("regions" or "genes")
