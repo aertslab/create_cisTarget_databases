@@ -144,7 +144,7 @@ def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_file
 
     try:
         pid = subprocess.Popen(args=clusterbuster_command,
-                               bufsize=1,
+                               bufsize=-1,
                                executable=None,
                                stdin=None,
                                stdout=subprocess.PIPE,
