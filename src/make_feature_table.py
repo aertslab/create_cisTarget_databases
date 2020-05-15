@@ -369,6 +369,14 @@ def main():
         inplace=True
     )
 
+    # Add column axis name: 'motifs'.
+    df_feature_table.rename_axis(
+        columns='motifs',
+        axis='columns',
+        copy=False,
+        inplace=True
+    )
+
     nbr_motifs = len(motif_id_to_filename_dict)
 
     def add_crm_scores_for_motif_to_df_feature_table(motif_id_and_crm_scores_df):
