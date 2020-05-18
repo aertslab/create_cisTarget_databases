@@ -447,6 +447,22 @@ def main():
         # Wait for worker processes to exit.
         pool.join()
 
+    if 'nbr_of_scored_motifs' not in add_crm_scores_for_motif_to_df_feature_table.__dict__:
+        print(
+            'Error: None of {0:d} motifs was scored succesfully'.format(nbr_motifs),
+            file=sys.stderr
+        )
+        sys.exit(1)
+    elif add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs != nbr_motifs:
+        print(
+            'Error: Only {0:d} of {1:d} motifs was scored succesfully'.format(
+                add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs,
+                nbr_motifs
+            ),
+            file=sys.stderr
+        )
+        sys.exit(1)
+
     def feature_table_write_tsv(df_feature_table, feature_table_output_filename, feature_table_output_format, regions_or_genes_type):
         """ Write feature table TSV file manually instead of with pandas. """
 
