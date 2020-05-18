@@ -365,10 +365,27 @@ def main():
         args.extract_gene_id_from_region_id_regex_replace
     )
 
+    nbr_region_ids_or_gene_ids = len(region_ids_or_gene_ids)
+    nbr_motifs = len(motif_id_to_filename_dict)
+
+    if nbr_region_ids_or_gene_ids == 0:
+        print(f'Error: No {regions_or_genes_type} provided.', file=sys.stderr)
+        sys.exit(1)
+
+    if nbr_motifs == 0:
+        print('Error: No motifs provided.', file=sys.stderr)
+        sys.exit(1)
+
+    print(
+        f'Initialize dataframe ({nbr_region_ids_or_gene_ids} {regions_or_genes_type} ' \
+        f'x {nbr_motifs} motifs) for storing CRM scores for each {regions_or_genes_type} ' \
+        'per motif.',
+        file=sys.stderr
+    )
+
     # Create zeroed dataframe for all region IDs or gene IDs vs all motif IDs.
     df_feature_table = pd.DataFrame(
-        data=np.zeros((len(region_ids_or_gene_ids),
-                       len(motif_id_to_filename_dict)),
+        data=np.zeros((nbr_region_ids_or_gene_ids, nbr_motifs),
                       dtype=np.float32),
         index=region_ids_or_gene_ids,
         columns=sorted(motif_id_to_filename_dict.keys())
@@ -389,8 +406,6 @@ def main():
         copy=False,
         inplace=True
     )
-
-    nbr_motifs = len(motif_id_to_filename_dict)
 
     def add_crm_scores_for_motif_to_df_feature_table(motif_id_and_crm_scores_df):
         if 'nbr_of_scored_motifs' not in add_crm_scores_for_motif_to_df_feature_table.__dict__:
