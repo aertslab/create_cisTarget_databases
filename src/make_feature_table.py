@@ -131,13 +131,14 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_r
         return 'regions', sorted(region_ids)
 
 
-def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_id, extract_gene_id_from_region_id_regex_replace=None):
+def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_id, extract_gene_id_from_region_id_regex_replace=None, bg_padding=0):
     # Score each region in FASTA file with Cluster-Buster
     # for motif and get top CRM score for each region.
     clusterbuster_command = [cluster_buster_path,
                              '-f', '4',
                              '-c', '0.0',
                              '-r', '10000',
+                             '-b', str(bg_padding),
                              '-t', '1',
                              motif_filename,
                              fasta_filename]
@@ -308,6 +309,18 @@ def main():
         'Examples: "gene_id#some_number": "#[0-9]+$" or "region_id@@gene_id": "^.+@@".'
     )
 
+    parser.add_argument(
+        '-b',
+        '--bgpadding',
+        dest='bg_padding',
+        action='store',
+        type=int,
+        required=False,
+        default=0,
+        help='Background padding in bp that was added for each sequence in FASTA file. Default: 0.'
+    )
+
+
     args = parser.parse_args()
 
     if not os.path.exists(args.fasta_filename):
@@ -407,7 +420,8 @@ def main():
                     args.fasta_filename,
                     motif_filename,
                     motif_id,
-                    args.extract_gene_id_from_region_id_regex_replace
+                    args.extract_gene_id_from_region_id_regex_replace,
+                    args.bg_padding
                 ],
                 callback=add_crm_scores_for_motif_to_df_feature_table
             )
