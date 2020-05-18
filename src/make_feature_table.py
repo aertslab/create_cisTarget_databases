@@ -160,14 +160,10 @@ def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_file
                                creationflags=0)
         stdout_data, stderr_data = pid.communicate()
     except OSError as msg:
-        print("\nExecution error for: '" + ' '.join(clusterbuster_command) + "': " + str(msg),
-              file=sys.stderr)
-        sys.exit(1)
+        raise RuntimeError("Execution error for: '" + ' '.join(clusterbuster_command) + "': " + str(msg))
 
     if pid.returncode != 0:
-        print("\nError: Non-zero exit status for: " + ' '.join(clusterbuster_command) + "'",
-              file=sys.stderr)
-        sys.exit(1)
+        raise RuntimeError("Error: Non-zero exit status for: '" + ' '.join(clusterbuster_command) + "'")
 
     crm_scores_df = pd.read_csv(
         filepath_or_buffer=io.BytesIO(stdout_data),
@@ -426,6 +422,9 @@ def main():
             file=sys.stderr
         )
 
+    def report_error(exception):
+        print(exception, file=sys.stderr)
+
     with mp.Pool(processes=args.nbr_threads) as pool:
         for motif_id, motif_filename in motif_id_to_filename_dict.items():
             pool.apply_async(
@@ -438,7 +437,8 @@ def main():
                     args.extract_gene_id_from_region_id_regex_replace,
                     args.bg_padding
                 ],
-                callback=add_crm_scores_for_motif_to_df_feature_table
+                callback=add_crm_scores_for_motif_to_df_feature_table,
+                error_callback=report_error
             )
 
         # Prevents any more task from being submitted to the pool.
