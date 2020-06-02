@@ -590,23 +590,47 @@ def main():
             # Rank CRM scores for each region/gene for the current motif and break ties:
             #   - Get current column with CRM scores for a certain motif and
             #     multiply by -1 (CRM scores >= 0) so sorting later will result
-            #     in ranking the highest CRM score first: (-crm_scores_with_ties_for_motif_numpy)
-            #   - Access the negated CRM scores in a random order
-            #     ((-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy])
-            #     so when sorting it CRM scores for regions/genes at the start
+            #     in ranking the highest CRM score first (descending):
+            #
+            #       (-crm_scores_with_ties_for_motif_numpy)
+            #
+            #   - Access the negated CRM scores in a random order:
+            #
+            #       (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy]
+            #
+            #     so when sorting it, CRM scores for regions/genes at the start
             #     of the array do not get artificially better rankings than
-            #     regions/genes more a the bottom of the array.
-            #   - Create ranking by sorting the negated CRM scores (which are
-            #     accessed in a random order) and returning an array with an
-            #     index that would sort those values (highest CRM score is rank 0):
-            #     ((-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort())
-            #   - Undo the random order access of the created ranking, so the
-            #     Create the final ranking array by undoing the random ordering
-            #     used before the sorting step, so the ranking is in the correct
-            #     order so it matches with the order of the input again.
+            #     regions/genes more at the bottom of the array (as argsort
+            #     works on a first come, first served basis).
+            #
+            #   - Sort the negated CRM scores (accessed in a random order) and
+            #     return an array with indices that would sort those CRM scores
+            #     from high to low (first position in the returned array
+            #     contains the index to the value in
+            #     crm_scores_with_ties_for_motif_numpy with the highest CRM
+            #     score):
+            #
+            #       (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
+            #
+            #   - Undo the random order access of the array created in the
+            #     previous step, so the indices that would sort
+            #     crm_scores_with_ties_for_motif_numpy from high CRM scores to
+            #     low CRM scores correspond again with the input array:
+            #
+            #       random_permutations_to_break_ties_numpy[
+            #           (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
+            #       ]
+            #
+            #   - Finally convert the array (previous step) which contains
+            #     indices which would sort crm_scores_with_ties_for_motif_numpy
+            #     from high CRM scores to low CRM scores and which would break
+            #     tied scores in a fair (random) way to a ranking (int32):
+            #
+            #       ... .argsort().astype(np.int32)
+            #
             rank_column_with_broken_ties_numpy = random_permutations_to_break_ties_numpy[
                 (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
-            ].astype(np.int32)
+            ].argsort().astype(np.int32)
 
             return rank_column_with_broken_ties_numpy
 
