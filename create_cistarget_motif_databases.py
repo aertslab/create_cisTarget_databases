@@ -2,22 +2,22 @@
 # -*- coding: utf-8 -*-
 
 """
-Purpose :      Make feature table.
+Purpose :      Create cisTarget motif databases.
 
 Copyright (C): 2019-2020 - Gert Hulselmans
 """
 
 
 import argparse
-
 import io
 import os
 import re
-import sys
 import subprocess
+import sys
+import multiprocessing as mp
+
 import numpy as np
 import pandas as pd
-import multiprocessing as mp
 
 
 def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename, motif_md5_to_motif_id_filename=None):
@@ -205,7 +205,7 @@ def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_file
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Make feature table.'
+        description='Create cisTarget motif databases.'
     )
 
     parser.add_argument(
@@ -315,7 +315,6 @@ def main():
         default=0,
         help='Background padding in bp that was added for each sequence in FASTA file. Default: 0.'
     )
-
 
     args = parser.parse_args()
 
