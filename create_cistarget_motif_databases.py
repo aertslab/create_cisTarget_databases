@@ -21,15 +21,21 @@ import pandas as pd
 
 
 def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename, motif_md5_to_motif_id_filename=None):
+    """
+    Create motif ID to Cluster-Buster motif file mapping.
+
+    :param motifs_dir: Directory with Cluster-Buster motif files (with motif MD5 name or motif ID motif files).
+    :param motifs_list_filename: File with Cluster-Buster motif MD5 names or motif IDs.
+    :param motif_md5_to_motif_id_filename: TSV file with motif MD5 names to motif IDs mapping (optional).
+    :return: motif_id_to_filename_dict: motif ID to CLuster-Buster motif filename mapping.
+    """
+
     motif_id_to_filename_dict = dict()
     motif_md5_to_motif_id_dict = dict()
     motif_id_to_motif_md5_dict = dict()
 
-    # Create motif MD5 names to motif ID names mapping and vice versa
-    # if a motif MD5 to motif ID file was provided. This will be used
-    # later to map Cluster-Buster motif files in motifs_dir with motif
-    # MD5 names to motif IDs.
     if motif_md5_to_motif_id_filename:
+        # Get motif MD5 name to motif ID mapping if motif_md5_to_motif_id_filename was provided.
         with open(motif_md5_to_motif_id_filename, 'r') as fh:
             for line in fh:
                 line = line.rstrip()
@@ -37,7 +43,7 @@ def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename, motif_md5_to
                 if line and not line.startswith('#'):
                     motif_md5, motif_id = line.rstrip().split('\t')[0:2]
 
-                    # Store motif MD5 to motif ID mapping as vice versa.
+                    # Store motif MD5 name to motif ID mapping and vice versa.
                     motif_md5_to_motif_id_dict[motif_md5] = motif_id
                     motif_id_to_motif_md5_dict[motif_id] = motif_md5
 
@@ -48,29 +54,35 @@ def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename, motif_md5_to
 
             if motif_md5_or_id and not motif_md5_or_id.startswith('#'):
                 if motif_md5_or_id.endswith('.cb'):
-                    # Remove ".cb" extension from motif ID.
+                    # Remove ".cb" extension from motif MD5 name or motif ID.
                     motif_md5_or_id = motif_md5_or_id[:-3]
 
                 if motif_md5_to_motif_id_dict:
+                    # A motif_md5_to_motif_id_filename was provided, so assume Cluster-Buster motif filenames in
+                    # motifs_dir have motif MD5 names.
                     if motif_md5_or_id in motif_md5_to_motif_id_dict:
-                        # Get associated motif ID for motif MD5.
+                        # Get associated motif ID for motif MD5 name if a motif MD5 name was provided.
                         motif_id = motif_md5_to_motif_id_dict[motif_md5_or_id]
                         motif_md5 = motif_md5_or_id
                     elif motif_md5_or_id in motif_id_to_motif_md5_dict:
-                        # Get associated motif MD5 for motif ID.
+                        # Get associated motif MD5 name for motif ID if a motif ID was provided.
                         motif_id = motif_md5_or_id
                         motif_md5 = motif_id_to_motif_md5_dict[motif_md5_or_id]
                     else:
                         print(
-                            f'Error: Could not find motif MD5 <=> motif ID association for "{motif_md5_or_id}".',
+                            f'Error: Could not find motif MD5 name <=> motif ID association for "{motif_md5_or_id}".',
                             file=sys.stderr
                         )
                         sys.exit(1)
 
-                    # Cluster-Buster motif MD5 filename.
+                    # Cluster-Buster motif MD5 name filename.
                     motif_filename = os.path.join(motifs_dir, motif_md5 + '.cb')
                 else:
+                    # No motif_md5_to_motif_id_filename was provided, so assume Cluster-Buster motif filenames in
+                    # motifs_dir have motif IDs.
+
                     motif_id = motif_md5_or_id
+                    # Cluster-Buster motif ID filename.
                     motif_filename = os.path.join(motifs_dir, motif_id + '.cb')
 
                 if not os.path.exists(motif_filename):
