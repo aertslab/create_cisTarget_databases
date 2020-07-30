@@ -97,7 +97,21 @@ def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename, motif_md5_to
     return motif_id_to_filename_dict
 
 
-def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_region_id_regex_replace):
+def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_region_id_regex_replace=None):
+    """
+    Get all region IDs or gene IDs from FASTA filename:
+      - When extract_gene_id_from_region_id_regex_replace=None, region IDs are returned and each region ID is only
+        allowed once in the FASTA file.
+      - When extract_gene_id_from_region_id_regex_replace is set to a regex to remove the non gene ID part from the
+        region IDs, gene IDs are returned and each gene is allowed to appear more than once in the FASTA file.
+
+    :param fasta_filename:
+         FASTA filename with sequences for region IDs or gene IDs.
+    :param extract_gene_id_from_region_id_regex_replace:
+         regex for removing unwanted parts from the region ID to extract the gene ID.
+    :return: ('regions', region_ids) or ('genes', gene_ids).
+    """
+
     gene_ids = set()
     region_ids = set()
     duplicated_region_ids = False
