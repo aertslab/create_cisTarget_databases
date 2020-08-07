@@ -191,7 +191,7 @@ def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_file
     if pid.returncode != 0:
         raise RuntimeError("Error: Non-zero exit status for: '" + ' '.join(clusterbuster_command) + "'")
 
-    crm_scores_df = pd.read_csv(
+    df_crm_scores = pd.read_csv(
         filepath_or_buffer=io.BytesIO(stdout_data),
         sep='\t',
         header=0,
@@ -218,15 +218,15 @@ def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_file
         #           "region1@@geneA", "region2@@geneB", "region3@@geneA"
         #       - gene IDs (output):
         #           "geneA", "geneB"
-        crm_scores_df = crm_scores_df.assign(
-            gene_ids=crm_scores_df.index.str.replace(
+        df_crm_scores = df_crm_scores.assign(
+            gene_ids=df_crm_scores.index.str.replace(
                 extract_gene_id_from_region_id_regex_replace,
                 '',
                 regex=True
             )
         ).groupby('gene_ids').max()
 
-    return motif_id, crm_scores_df
+    return motif_id, df_crm_scores
 
 
 def main():
@@ -405,7 +405,7 @@ def main():
     )
 
     # Create zeroed dataframe for all region IDs or gene IDs vs all motif IDs.
-    df_feature_table = pd.DataFrame(
+    df_scores__motifs_vs_regions_or_genes = pd.DataFrame(
         data=np.zeros((nbr_region_ids_or_gene_ids, nbr_motifs),
                       dtype=np.float32),
         index=region_ids_or_gene_ids,
@@ -413,7 +413,7 @@ def main():
     )
 
     # Add index name: 'regions' or 'genes'.
-    df_feature_table.rename_axis(
+    df_scores__motifs_vs_regions_or_genes.rename_axis(
         index=regions_or_genes_type,
         axis='index',
         copy=False,
@@ -421,26 +421,26 @@ def main():
     )
 
     # Add column axis name: 'motifs'.
-    df_feature_table.rename_axis(
+    df_scores__motifs_vs_regions_or_genes.rename_axis(
         columns='motifs',
         axis='columns',
         copy=False,
         inplace=True
     )
 
-    def add_crm_scores_for_motif_to_df_feature_table(motif_id_and_crm_scores_df):
-        if 'nbr_of_scored_motifs' not in add_crm_scores_for_motif_to_df_feature_table.__dict__:
-            add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs = 0
+    def write_crm_scores_for_motif_to_df_scores(df_motif_id_and_crm_scores):
+        if 'nbr_of_scored_motifs' not in write_crm_scores_for_motif_to_df_scores.__dict__:
+            write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs = 0
 
-        motif_id, crm_scores_df = motif_id_and_crm_scores_df
+        motif_id, df_crm_scores = df_motif_id_and_crm_scores
 
-        df_feature_table.loc[crm_scores_df.index.tolist(), motif_id] = crm_scores_df['crm_score']
+        df_scores__motifs_vs_regions_or_genes.loc[df_crm_scores.index, motif_id] = df_crm_scores['crm_score']
 
-        add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs += 1
+        write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs += 1
 
         print(
             'Adding Cluster-Buster CRM scores ({0:d} of {1:d}) for motif "{2:s}".'.format(
-                add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs,
+                write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs,
                 nbr_motifs,
                 motif_id
             ),
@@ -462,7 +462,7 @@ def main():
                     args.extract_gene_id_from_region_id_regex_replace,
                     args.bg_padding
                 ],
-                callback=add_crm_scores_for_motif_to_df_feature_table,
+                callback=write_crm_scores_for_motif_to_df_scores,
                 error_callback=report_error
             )
 
@@ -472,33 +472,33 @@ def main():
         # Wait for worker processes to exit.
         pool.join()
 
-    if 'nbr_of_scored_motifs' not in add_crm_scores_for_motif_to_df_feature_table.__dict__:
+    if 'nbr_of_scored_motifs' not in write_crm_scores_for_motif_to_df_scores.__dict__:
         print(
-            'Error: None of {0:d} motifs was scored succesfully'.format(nbr_motifs),
+            'Error: None of {0:d} motifs was scored successfully'.format(nbr_motifs),
             file=sys.stderr
         )
         sys.exit(1)
-    elif add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs != nbr_motifs:
+    elif write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs != nbr_motifs:
         print(
-            'Error: Only {0:d} of {1:d} motifs was scored succesfully'.format(
-                add_crm_scores_for_motif_to_df_feature_table.nbr_of_scored_motifs,
+            'Error: Only {0:d} of {1:d} motifs was scored successfully'.format(
+                write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs,
                 nbr_motifs
             ),
             file=sys.stderr
         )
         sys.exit(1)
 
-    def feature_table_write_tsv(df_feature_table, feature_table_output_filename, feature_table_output_format, regions_or_genes_type):
+    def feature_table_write_tsv(df_scores__motifs_vs_regions_or_genes, feature_table_output_filename, feature_table_output_format, regions_or_genes_type):
         """ Write feature table TSV file manually instead of with pandas. """
 
         # Get column names with all features.
-        column_names = df_feature_table.columns.tolist()
+        column_names = df_scores__motifs_vs_regions_or_genes.columns.tolist()
 
         # Get row names with all region IDs or gene IDs.
-        row_names = df_feature_table.index.tolist()
+        row_names = df_scores__motifs_vs_regions_or_genes.index.tolist()
 
         # Get all CRM scores (numpy array).
-        crm_scores = df_feature_table.get_values()
+        crm_scores = df_scores__motifs_vs_regions_or_genes.get_values()
 
         # Write feature table TSV file.
         with open(feature_table_output_filename, 'w') as feature_table_output_fh:
@@ -528,13 +528,13 @@ def main():
         )
 
         feature_table_write_tsv(
-            df_feature_table=df_feature_table,
+            df_scores__motifs_vs_regions_or_genes=df_scores__motifs_vs_regions_or_genes,
             feature_table_output_filename=args.feature_table_output_filename,
             feature_table_output_format=args.feature_table_output_format,
             regions_or_genes_type=regions_or_genes_type
         )
         # Faster than the following code:
-        # df_feature_table.to_csv(
+        # df_scores__motifs_vs_regions_or_genes.to_csv(
         #     path_or_buf=args.feature_table_output_filename,
         #     sep='\t',
         #     header=True,
@@ -552,13 +552,13 @@ def main():
         )
 
         feature_table_write_tsv(
-            df_feature_table=df_feature_table,
+            df_scores__motifs_vs_regions_or_genes=df_scores__motifs_vs_regions_or_genes,
             feature_table_output_filename=args.feature_table_output_filename,
             feature_table_output_format=args.feature_table_output_format,
             regions_or_genes_type=regions_or_genes_type
         )
         # Faster than the following code:
-        # df_feature_table.to_csv(
+        # df_scores__motifs_vs_regions_or_genes.to_csv(
         #     path_or_buf=args.feature_table_output_filename,
         #     sep='\t',
         #     header=True,
@@ -569,7 +569,7 @@ def main():
         # )
     elif args.feature_table_output_format == 'feather':
         print(
-            'Write feature table result tables in feather format: ' \
+            'Write cisTarget motif databases in feather format: ' \
             f'"{args.feature_table_output_filename}.*.*.feather".',
             file=sys.stderr
         )
@@ -581,13 +581,13 @@ def main():
             file=sys.stderr
         )
 
-        df_feature_table.reset_index(inplace=True)
-        df_feature_table.to_feather(
+        df_scores__motifs_vs_regions_or_genes.reset_index(inplace=True)
+        df_scores__motifs_vs_regions_or_genes.to_feather(
             path=f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather'
         )
-        df_feature_table.set_index(regions_or_genes_type, inplace=True)
+        df_scores__motifs_vs_regions_or_genes.set_index(regions_or_genes_type, inplace=True)
         # Add column axis name: 'motifs'.
-        df_feature_table.rename_axis(
+        df_scores__motifs_vs_regions_or_genes.rename_axis(
             columns='motifs',
             axis='columns',
             copy=False,
@@ -601,12 +601,12 @@ def main():
             file=sys.stderr
         )
 
-        df_feature_table_regions = df_feature_table.transpose()
-        df_feature_table_regions.reset_index(inplace=True)
-        df_feature_table_regions.to_feather(
+        df_scores__regions_or_genes_vs_genes = df_scores__motifs_vs_regions_or_genes.transpose()
+        df_scores__regions_or_genes_vs_genes.reset_index(inplace=True)
+        df_scores__regions_or_genes_vs_genes.to_feather(
             path=f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.scores.feather'
         )
-        del df_feature_table_regions
+        del df_scores__regions_or_genes_vs_genes
 
         def rank_CRM_scores_and_assign_random_ranking_in_range_for_ties_func(crm_scores_with_ties_for_motif_numpy):
             # Create random permutation so tied scores will have a different ranking each time.
@@ -665,7 +665,7 @@ def main():
         )
 
         # Create feature table ranking.
-        df_feature_table_ranking = df_feature_table.apply(
+        df_ranking__motifs_vs_regions_or_genes = df_scores__motifs_vs_regions_or_genes.apply(
             rank_CRM_scores_and_assign_random_ranking_in_range_for_ties_func,
             axis='index',
             raw=True
@@ -678,13 +678,13 @@ def main():
             file=sys.stderr
         )
 
-        df_feature_table_ranking.reset_index(inplace=True)
-        df_feature_table_ranking.to_feather(
+        df_ranking__motifs_vs_regions_or_genes.reset_index(inplace=True)
+        df_ranking__motifs_vs_regions_or_genes.to_feather(
             path=f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.rankings.feather'
         )
-        df_feature_table_ranking.set_index(regions_or_genes_type, inplace=True)
+        df_ranking__motifs_vs_regions_or_genes.set_index(regions_or_genes_type, inplace=True)
 
-        del df_feature_table
+        del df_scores__motifs_vs_regions_or_genes
 
         print(
             f'Write rankings of {regions_or_genes_type} for each motif in ' \
@@ -693,9 +693,9 @@ def main():
             file=sys.stderr
         )
 
-        df_feature_table_ranking_regions = df_feature_table_ranking.transpose()
-        df_feature_table_ranking_regions.reset_index(inplace=True)
-        df_feature_table_ranking_regions.to_feather(
+        df_ranking__regions_or_genes_vs_motifs = df_ranking__motifs_vs_regions_or_genes.transpose()
+        df_ranking__regions_or_genes_vs_motifs.reset_index(inplace=True)
+        df_ranking__regions_or_genes_vs_motifs.to_feather(
             path=f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.rankings.feather'
         )
 
