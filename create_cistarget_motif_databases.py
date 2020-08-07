@@ -157,9 +157,26 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_r
         return 'regions', sorted(region_ids)
 
 
-def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_id, extract_gene_id_from_region_id_regex_replace=None, bg_padding=0):
-    # Score each region in FASTA file with Cluster-Buster
-    # for motif and get top CRM score for each region.
+def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_id,
+                                 extract_gene_id_from_region_id_regex_replace=None, bg_padding=0):
+    """
+    Score each sequence in the FASTA file with Cluster-Buster and only keep the top CRM score per region ID/gene ID.
+
+    :param cluster_buster_path: Path to Cluster-Buster binary.
+    :param fasta_filename:      FASTA filename with regions to score.
+    :param motif_filename:      Cluster-Buster motif filename which contains the motif to score all regions with.
+    :param motif_id:            Motif ID.
+    :param extract_gene_id_from_region_id_regex_replace:
+                                Define a regex which will remove the non-gene part of the region ID of each sequence
+                                name in the FASTA file, so only the gene ID remains. If set to None the whole region ID
+                                will be kept instead. In case of region IDs, the best CRM score per region is kept.
+                                In case of gene IDs, the best CRM score from multiple regions is kept.
+    :param bg_padding:          Use X bp at start and end of each sequence only for calculating the background
+                                nucleotide frequency, but not for scoring the motif itself.
+    :return:                    (motif_id, df_crm_scores): motif ID and dataframe with top CRM score per region/gene ID.
+    """
+
+    # Score each region in FASTA file with Cluster-Buster for the provided motif and get top CRM score for each region.
     clusterbuster_command = [cluster_buster_path,
                              '-f', '4',
                              '-c', '0.0',
@@ -204,6 +221,7 @@ def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_file
 
     if extract_gene_id_from_region_id_regex_replace:
         # Extract gene ID from the region ID by removing the non-gene part.
+        #
         # Take the top CRM score for each gene ID by taking the maximum CRM
         # score of all region IDs that belong to the same gene ID.
         #
