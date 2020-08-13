@@ -78,7 +78,6 @@ class FeatureIDs:
         self.feature_ids = tuple(sorted(set(feature_ids)))
         self.features_type = features_type
 
-    @memoize
     def __len__(self) -> int:
         return len(self.feature_ids)
 
@@ -106,7 +105,6 @@ class MotifsOrTracksIDs:
         self.motif_or_track_ids = tuple(sorted(set(motif_or_track_ids)))
         self.motifs_or_tracks_type = motifs_or_tracks_type
 
-    @memoize
     def __len__(self) -> int:
         return len(self.motif_or_track_ids)
 
@@ -119,11 +117,11 @@ class DatabaseTypes(Enum):
 
     def __init__(self, scores_or_rankings: str, column_kind: str, row_kind: str):
         # Type of data contained in the cisTarget database: scores or rankings.
-        self.scores_or_rankings = scores_or_rankings
+        self._scores_or_rankings = scores_or_rankings
         # Describe type of data in the column index of the cisTarget database.
-        self.column_kind = column_kind
+        self._column_kind = column_kind
         # Describe type of data in the row index of the cisTarget database.
-        self.row_kind = row_kind
+        self._row_kind = row_kind
 
     SCORES_DB_MOTIFS_VS_REGIONS = ('scores', 'motifs', 'regions')
     SCORES_DB_MOTIFS_VS_GENES = ('scores', 'motifs', 'genes')
@@ -223,4 +221,55 @@ class DatabaseTypes(Enum):
         :return: Database filename.
         """
 
-        return f'{db_prefix}.{self.column_kind}_vs_{self.row_kind}.{self.scores_or_rankings}.{extension}'
+        return f'{db_prefix}.{self._column_kind}_vs_{self._row_kind}.{self._scores_or_rankings}.{extension}'
+
+    @property
+    def is_scores_db(self):
+        """Check if cisTarget database contains scores."""
+        return 'scores' == self._scores_or_rankings
+
+    @property
+    def is_rankings_db(self):
+        """Check if cisTarget database contains rankings."""
+        return 'rankings' == self._scores_or_rankings
+
+    def _is_some_kind_of_db_by_checking_column_and_row_kind(self, some_kind: str):
+        """Check if cisTarget database has some_kind set in column_kind or row_kind."""
+        return some_kind == self._column_kind or some_kind == self._row_kind
+
+    @property
+    def is_regions_db(self):
+        """Check if cisTarget database has regions in columns or rows."""
+        return self._is_some_kind_of_db_by_checking_column_and_row_kind('regions')
+
+    @property
+    def is_genes_db(self):
+        """Check if cisTarget database has genes in columns or rows."""
+        return self._is_some_kind_of_db_by_checking_column_and_row_kind('genes')
+
+    @property
+    def is_motifs_db(self):
+        """Check if cisTarget database has motifs in columns or rows."""
+        return self._is_some_kind_of_db_by_checking_column_and_row_kind('motifs')
+
+    @property
+    def is_tracks_db(self):
+        """Check if cisTarget database has tracks in columns or rows."""
+        return self._is_some_kind_of_db_by_checking_column_and_row_kind('tracks')
+
+    @property
+    def scores_or_rankings(self):
+        """Return 'scores' or 'rankings' for DatabaseTypes member."""
+        return self._scores_or_rankings
+
+    @property
+    def column_kind(self):
+        """Return column kind for DatabaseTypes member."""
+        return self._column_kind
+
+    @property
+    def row_kind(self):
+        """Return row kind for DatabaseTypes member."""
+        return self._row_kind
+
+

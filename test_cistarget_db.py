@@ -171,3 +171,30 @@ def test_DatabaseTypes_create_db_filename():
         db_prefix='/some/path/test_db',
         extension='feather'
     ) == '/some/path/test_db.regions_vs_motifs.rankings.feather'
+
+
+def test_DatabaseTypes_properties():
+    """
+    Check properties of member of DatabaseType Enum.
+    """
+    scores_db_tracks_vs_genes = DatabaseTypes.SCORES_DB_TRACKS_VS_GENES
+    assert scores_db_tracks_vs_genes.is_scores_db is True
+    assert scores_db_tracks_vs_genes.is_rankings_db is False
+    assert scores_db_tracks_vs_genes.is_regions_db is False
+    assert scores_db_tracks_vs_genes.is_genes_db is True
+    assert scores_db_tracks_vs_genes.is_motifs_db is False
+    assert scores_db_tracks_vs_genes.is_tracks_db is True
+    assert scores_db_tracks_vs_genes.scores_or_rankings == 'scores'
+    assert scores_db_tracks_vs_genes.column_kind == 'tracks'
+    assert scores_db_tracks_vs_genes.row_kind == 'genes'
+
+    rankings_db_region_vs_motifs = DatabaseTypes.RANKINGS_DB_REGIONS_VS_MOTIFS
+    assert rankings_db_region_vs_motifs.is_scores_db is False
+    assert rankings_db_region_vs_motifs.is_rankings_db is True
+    assert rankings_db_region_vs_motifs.is_regions_db is True
+    assert rankings_db_region_vs_motifs.is_genes_db is False
+    assert rankings_db_region_vs_motifs.is_motifs_db is True
+    assert rankings_db_region_vs_motifs.is_tracks_db is False
+    assert rankings_db_region_vs_motifs.scores_or_rankings == 'rankings'
+    assert rankings_db_region_vs_motifs.column_kind == 'regions'
+    assert rankings_db_region_vs_motifs.row_kind == 'motifs'
