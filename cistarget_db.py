@@ -237,52 +237,89 @@ class DatabaseTypes(Enum):
         return f'{db_prefix}.{self._column_kind}_vs_{self._row_kind}.{self._scores_or_rankings}.{extension}'
 
     @property
-    def is_scores_db(self):
+    def is_scores_db(self) -> bool:
         """Check if cisTarget database contains scores."""
         return 'scores' == self._scores_or_rankings
 
     @property
-    def is_rankings_db(self):
+    def is_rankings_db(self) -> bool:
         """Check if cisTarget database contains rankings."""
         return 'rankings' == self._scores_or_rankings
 
-    def _is_some_kind_of_db_by_checking_column_and_row_kind(self, some_kind: str):
+    def _is_some_kind_of_db_by_checking_column_and_row_kind(self, some_kind: str) -> bool:
         """Check if cisTarget database has some_kind set in column_kind or row_kind."""
         return some_kind == self._column_kind or some_kind == self._row_kind
 
     @property
-    def is_regions_db(self):
+    def is_regions_db(self) -> bool:
         """Check if cisTarget database has regions in columns or rows."""
         return self._is_some_kind_of_db_by_checking_column_and_row_kind('regions')
 
     @property
-    def is_genes_db(self):
+    def is_genes_db(self) -> bool:
         """Check if cisTarget database has genes in columns or rows."""
         return self._is_some_kind_of_db_by_checking_column_and_row_kind('genes')
 
     @property
-    def is_motifs_db(self):
+    def is_motifs_db(self) -> bool:
         """Check if cisTarget database has motifs in columns or rows."""
         return self._is_some_kind_of_db_by_checking_column_and_row_kind('motifs')
 
     @property
-    def is_tracks_db(self):
+    def is_tracks_db(self) -> bool:
         """Check if cisTarget database has tracks in columns or rows."""
         return self._is_some_kind_of_db_by_checking_column_and_row_kind('tracks')
 
     @property
-    def scores_or_rankings(self):
+    def scores_or_rankings(self) -> str:
         """Return 'scores' or 'rankings' for DatabaseTypes member."""
         return self._scores_or_rankings
 
     @property
-    def column_kind(self):
+    def features_type(self) -> 'FeaturesType':
+        """Return FeaturesType Enum member for DatabaseTypes member."""
+        if self.is_regions_db:
+            return FeaturesType.REGIONS
+        elif self.is_genes_db:
+            return FeaturesType.GENES
+
+    @property
+    def motifs_or_tracks_type(self) -> 'MotifsOrTracksType':
+        """Return MotifsOrTracksType Enum member for DatabaseTypes member."""
+        if self.is_motifs_db:
+            return MotifsOrTracksType.MOTIFS
+        elif self.is_tracks_db:
+            return MotifsOrTracksType.TRACKS
+
+    @property
+    def column_kind(self) -> str:
         """Return column kind for DatabaseTypes member."""
         return self._column_kind
 
     @property
-    def row_kind(self):
+    def row_kind(self) -> str:
         """Return row kind for DatabaseTypes member."""
         return self._row_kind
 
+    def get_dtype(self, nbr_rows: int) -> Type[Union[np.core.single, np.core.short, np.core.intc]]:
+        """
+        Get optimal dtype for storing values in cisTarget database.
+
+        :param nbr_rows: Number of rows in the database.
+        :return: dtype most suited for DatabaseTypes member.
+        """
+
+        if self.is_scores_db:
+            # The precision of a 32-bit float should be good enough for storing scores in the database.
+            return np.float32
+        elif self.is_rankings_db:
+            # Rankings databases store the zero-based rankings as optimally as possible in a:
+            #   - 16-bit signed integer: max value = 2^15 - 1 = 32767 ==> can store 32768 rankings.
+            #   - 32-bit signed integer: max value = 2^31 - 1 = 2147483647 ==> can store 2147483648
+            if nbr_rows <= 2 ** 15:
+                # Range int16: -2^15 (= -32768) to 2^15 - 1 (= 32767).
+                return np.int16
+            else:
+                # Range int32: -2^31 (= -2147483648) to 2^31 - 1 (= 2147483647).
+                return np.int32
 

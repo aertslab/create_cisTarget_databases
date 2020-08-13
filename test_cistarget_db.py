@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from cistarget_db import FeaturesType, MotifsOrTracksType, FeatureIDs, MotifsOrTracksIDs, DatabaseTypes
@@ -117,6 +118,7 @@ def test_DatabaseTypes():
                     MotifsOrTracksType[motif_or_tracks_type].value,
                     FeaturesType[feature_type].value
                 )
+                del database_type_name
 
                 database_type_name = f'{scores_or_rankings.upper()}_DB_{FeaturesType[feature_type].value.upper()}_VS_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}'
                 assert database_type_name in DatabaseTypes.__members__
@@ -131,6 +133,7 @@ def test_DatabaseTypes():
                     FeaturesType[feature_type].value,
                     MotifsOrTracksType[motif_or_tracks_type].value
                 )
+                del database_type_name
 
     with pytest.raises(ValueError, match=r'Unsupported DatabaseTypes "NON_EXISTING_DB_TYPE".'):
         DatabaseTypes.from_str('NON_EXISTING_DB_TYPE')
@@ -185,7 +188,7 @@ def test_DatabaseTypes_create_db_filename():
     ) == '/some/path/test_db.regions_vs_motifs.rankings.feather'
 
 
-def test_DatabaseTypes_properties():
+def test_DatabaseTypes_properties_and_get_dtype():
     """
     Check properties of member of DatabaseType Enum.
     """
@@ -197,8 +200,20 @@ def test_DatabaseTypes_properties():
     assert scores_db_tracks_vs_genes.is_motifs_db is False
     assert scores_db_tracks_vs_genes.is_tracks_db is True
     assert scores_db_tracks_vs_genes.scores_or_rankings == 'scores'
+    assert scores_db_tracks_vs_genes.features_type == FeaturesType.GENES
+    assert scores_db_tracks_vs_genes.motifs_or_tracks_type == MotifsOrTracksType.TRACKS
     assert scores_db_tracks_vs_genes.column_kind == 'tracks'
     assert scores_db_tracks_vs_genes.row_kind == 'genes'
+
+    # Score databases always store the data as 32-bit floats.
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=20000) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=32766) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=32767) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=32768) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=32769) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=1000000) == np.float32
+
+    del scores_db_tracks_vs_genes
 
     rankings_db_region_vs_motifs = DatabaseTypes.RANKINGS_DB_REGIONS_VS_MOTIFS
     assert rankings_db_region_vs_motifs.is_scores_db is False
@@ -208,5 +223,19 @@ def test_DatabaseTypes_properties():
     assert rankings_db_region_vs_motifs.is_motifs_db is True
     assert rankings_db_region_vs_motifs.is_tracks_db is False
     assert rankings_db_region_vs_motifs.scores_or_rankings == 'rankings'
+    assert rankings_db_region_vs_motifs.features_type == FeaturesType.REGIONS
+    assert rankings_db_region_vs_motifs.motifs_or_tracks_type == MotifsOrTracksType.MOTIFS
     assert rankings_db_region_vs_motifs.column_kind == 'regions'
     assert rankings_db_region_vs_motifs.row_kind == 'motifs'
+
+    # Rankings databases store the zero-based rankings as optimally as possible in a:
+    #   - 16-bit signed integer: max value = 2^15 - 1 = 32767 ==> can store 32768 rankings.
+    #   - 32-bit signed integer: max value = 2^31 - 1 = 2147483647 ==> can store 2147483648
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=20000) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=32766) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=32767) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=32768) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=32769) == np.int32
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=1000000) == np.int32
+
+    del rankings_db_region_vs_motifs
