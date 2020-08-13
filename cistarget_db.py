@@ -78,6 +78,12 @@ class FeatureIDs:
         self.feature_ids = tuple(sorted(set(feature_ids)))
         self.features_type = features_type
 
+    def __repr__(self) -> str:
+        return f'FeatureIDs(\n  feature_ids={self.feature_ids},\n  features_type={self.features_type}\n)'
+
+    def __eq__(self, other: 'FeatureIDs'):
+        return self.features_type == other.features_type and self.feature_ids == other.feature_ids
+
     def __len__(self) -> int:
         return len(self.feature_ids)
 
@@ -104,6 +110,13 @@ class MotifsOrTracksIDs:
 
         self.motif_or_track_ids = tuple(sorted(set(motif_or_track_ids)))
         self.motifs_or_tracks_type = motifs_or_tracks_type
+
+    def __repr__(self) -> str:
+        return f'MotifsOrTracksIDs(\n  motif_or_track_ids={self.motif_or_track_ids},\n  motifs_or_tracks_type={self.motifs_or_tracks_type}\n)'
+
+    def __eq__(self, other: 'MotifsOrTracksIDs'):
+        return (self.motifs_or_tracks_type == other.motifs_or_tracks_type and
+                self.motif_or_track_ids == other.motif_or_track_ids)
 
     def __len__(self) -> int:
         return len(self.motif_or_track_ids)

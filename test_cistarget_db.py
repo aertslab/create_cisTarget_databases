@@ -33,6 +33,8 @@ def test_FeatureIDs_with_regions():
     assert features_ids_instance.features_type == FeaturesType.REGIONS
     assert features_ids_instance.feature_ids == ('reg1', 'reg2', 'reg6')
 
+    assert eval(features_ids_instance.__repr__()) == features_ids_instance
+
 
 def test_FeatureIDs_with_genes():
     """Check if a FeatureIDs object can be constructed from a set of gene IDs."""
@@ -41,6 +43,8 @@ def test_FeatureIDs_with_genes():
     )
     assert features_ids_instance.features_type == FeaturesType.GENES
     assert features_ids_instance.feature_ids == ('gene1', 'gene2', 'gene6')
+
+    assert eval(features_ids_instance.__repr__()) == features_ids_instance
 
 
 def test_FeatureIDs_with_features_type_str():
@@ -53,6 +57,8 @@ def test_FeatureIDs_with_features_type_str():
     assert features_ids_instance.features_type == FeaturesType.GENES
     assert features_ids_instance.feature_ids == ('gene1', 'gene2', 'gene6')
 
+    assert eval(features_ids_instance.__repr__()) == features_ids_instance
+
 
 def test_MotifsOrTracksIDs_with_motifs():
     """Check if a MotifsOrTracksIDs object can be constructed from a list of motif IDs."""
@@ -62,6 +68,8 @@ def test_MotifsOrTracksIDs_with_motifs():
     assert motif_or_track_ids_instance.motifs_or_tracks_type == MotifsOrTracksType.MOTIFS
     assert motif_or_track_ids_instance.motif_or_track_ids == ('motif10', 'motif3', 'motif5')
 
+    assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
+
 
 def test_MotifsOrTracksIDs_with_tracks():
     """Check if a MotifsOrTracksIDs object can be constructed from a set of track IDs."""
@@ -70,6 +78,8 @@ def test_MotifsOrTracksIDs_with_tracks():
     )
     assert motif_or_track_ids_instance.motifs_or_tracks_type == MotifsOrTracksType.TRACKS
     assert motif_or_track_ids_instance.motif_or_track_ids == ('track10', 'track3', 'track5')
+
+    assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
 
 
 def test_MotifsOrTracksIDs_with_motifs_or_tracks_type_str():
@@ -82,6 +92,8 @@ def test_MotifsOrTracksIDs_with_motifs_or_tracks_type_str():
     )
     assert motif_or_track_ids_instance.motifs_or_tracks_type == MotifsOrTracksType.TRACKS
     assert motif_or_track_ids_instance.motif_or_track_ids == ('track10', 'track3', 'track5')
+
+    assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
 
 
 def test_DatabaseTypes():
