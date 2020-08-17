@@ -166,6 +166,9 @@ class DatabaseTypes(Enum):
         """
 
         database_type = database_type.upper()
+        if database_type.startswith('DATABASETYPES.'):
+            database_type = database_type[14:]
+
         database_type_instance = cls.__members__.get(database_type)
         if database_type_instance:
             return database_type_instance

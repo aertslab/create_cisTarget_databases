@@ -113,6 +113,9 @@ def test_DatabaseTypes():
                     FeaturesType[feature_type].value
                 )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(database_type_name)
+                assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(
+                    f'DatabaseTypes.{database_type_name}'
+                )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_strings(
                     scores_or_rankings,
                     MotifsOrTracksType[motif_or_tracks_type].value,
@@ -128,6 +131,9 @@ def test_DatabaseTypes():
                     MotifsOrTracksType[motif_or_tracks_type].value
                 )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(database_type_name)
+                assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(
+                    f'DatabaseTypes.{database_type_name}'
+                )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_strings(
                     scores_or_rankings,
                     FeaturesType[feature_type].value,
