@@ -391,3 +391,38 @@ def test_cistargetdatabase():
     del ct_scores_db_genes_vs_tracks_db_filename
     del ct_scores_db_genes_vs_tracks_numpy
     del ct_scores_db_genes_vs_tracks_read_from_feather
+
+
+def test_cistargetdatabase_transpose():
+    # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
+    features_ids_instance = FeatureIDs(
+        feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5'], features_type=FeaturesType.REGIONS
+    )
+    motif_or_track_ids_instance = MotifsOrTracksIDs(
+        motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
+    )
+
+    ct_scores_db_motifs_vs_regions = CisTargetDatabase.create_db(
+        db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
+        feature_ids=features_ids_instance,
+        motif_or_track_ids=motif_or_track_ids_instance
+    )
+
+    # Create numpy array with values which will be written to the cisTarget database dataframe.
+    ct_scores_db_motifs_vs_regions_numpy = np.array(
+        [[1.2, 0., 0.3, 0.],
+         [6.7, 0., 4.3, 0.],
+         [3.5, 0., 0., 0.],
+         [0.0, 0., 0., 0.],
+         [2.4, 0., 7.8, 0.]],
+        dtype=np.float32
+    )
+
+    ct_scores_db_motifs_vs_regions.df.iloc[:, :] = ct_scores_db_motifs_vs_regions_numpy
+
+    # Create a cisTarget SCORES_DB_MOTIFS_VS_REGIONS database by transposing the cisTarget SCORES_DB_MOTIFS_VS_REGIONS
+    # database.
+    ct_scores_db_regions_vs_motifs = ct_scores_db_motifs_vs_regions.transpose()
+
+    assert np.all(ct_scores_db_regions_vs_motifs.df.to_numpy() == ct_scores_db_motifs_vs_regions_numpy.transpose())
+    assert ct_scores_db_regions_vs_motifs.db_type == DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS

@@ -546,3 +546,24 @@ class CisTargetDatabase:
         self.df.columns.set_names([self.db_type.column_kind], inplace=True)
 
         return db_filename
+
+    def transpose(self, copy: bool = False):
+        """
+        Transpose cisTarget database (switch rows and columns).
+
+        For example transpose a cisTarget database of DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS
+        to DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS.
+
+        :param copy: Copy data or not.
+        :return: Transposed CisTargetDatabase object.
+        """
+
+        # Transpose dataframe (switch rows and columns) and change database type.
+        return CisTargetDatabase(
+            db_type=DatabaseTypes.from_strings(
+                scores_or_rankings=self.db_type.scores_or_rankings,
+                column_kind=self.db_type.row_kind,
+                row_kind=self.db_type.column_kind
+            ),
+            df=self.df.transpose(copy=copy)
+        )
