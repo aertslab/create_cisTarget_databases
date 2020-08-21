@@ -1,7 +1,8 @@
 import numpy as np
+import pandas as pd
 import pytest
 
-from cistarget_db import FeaturesType, MotifsOrTracksType, FeatureIDs, MotifsOrTracksIDs, DatabaseTypes
+from cistarget_db import FeaturesType, MotifsOrTracksType, FeatureIDs, MotifsOrTracksIDs, DatabaseTypes, CisTargetDatabase
 
 
 def test_FeaturesType_from_str():
@@ -245,3 +246,148 @@ def test_DatabaseTypes_properties_and_get_dtype():
     assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=1000000) == np.int32
 
     del rankings_db_region_vs_motifs
+
+
+def test_cistargetdatabase():
+    # Test cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
+
+    # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
+    features_ids_instance = FeatureIDs(
+        feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5'], features_type=FeaturesType.REGIONS
+    )
+    motif_or_track_ids_instance = MotifsOrTracksIDs(
+        motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
+    )
+
+    ct_scores_db_motifs_vs_regions = CisTargetDatabase.create_db(
+        db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
+        feature_ids=features_ids_instance,
+        motif_or_track_ids=motif_or_track_ids_instance
+    )
+
+    # Check if creation of zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database succeeded (float32 datatype).
+    assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == np.zeros((5, 4), dtype=np.float32))
+    # Columns contain motifs.
+    assert ct_scores_db_motifs_vs_regions.df.columns.to_list() == list(motif_or_track_ids_instance.motif_or_track_ids)
+    # Rows contain regions.
+    assert ct_scores_db_motifs_vs_regions.df.index.to_list() == list(features_ids_instance.feature_ids)
+
+    # Update values for some regions for "motif3" in cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
+    ct_scores_db_motifs_vs_regions.update_scores_for_motif_or_track(
+        motif_or_track_id='motif3',
+        df_scores_for_motif_or_track=pd.DataFrame(
+            np.array(
+                [[2.4, 4.3],
+                 [4.5, 0.3],
+                 [6.7, 7.8]],
+                dtype=np.float32
+            ),
+            index=['reg2', 'reg1', 'reg5'],
+            columns=['some_random_column', 'crm_score']
+        )
+    )
+
+    ct_scores_db_motifs_vs_regions_numpy = np.array(
+        [[0., 0., 0.3, 0.],
+         [0., 0., 4.3, 0.],
+         [0., 0., 0., 0.],
+         [0., 0., 0., 0.],
+         [0., 0., 7.8, 0.]],
+        dtype=np.float32
+    )
+
+    assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == ct_scores_db_motifs_vs_regions_numpy)
+
+    # Write cisTarget database to Feather file.
+    ct_scores_db_motifs_vs_regions_db_filename = ct_scores_db_motifs_vs_regions.write_db(
+        db_prefix='test/ct_scores_db_motifs_vs_regions'
+    )
+
+    # Read cisTarget database from Feather file.
+    ct_scores_db_motifs_vs_regions_read_from_feather = CisTargetDatabase.read_db(
+        db_filename=ct_scores_db_motifs_vs_regions_db_filename
+    )
+
+    # Check if the cisTarget database object read from the Feather file is the same than the one that was written
+    # to the Feather file.
+    assert ct_scores_db_motifs_vs_regions.db_type == ct_scores_db_motifs_vs_regions_read_from_feather.db_type
+    assert np.all(ct_scores_db_motifs_vs_regions.df == ct_scores_db_motifs_vs_regions_read_from_feather.df)
+
+    # Delete some objects so we don't accidentally reuse them in the next section.
+    del features_ids_instance
+    del motif_or_track_ids_instance
+    del ct_scores_db_motifs_vs_regions
+    del ct_scores_db_motifs_vs_regions_db_filename
+    del ct_scores_db_motifs_vs_regions_numpy
+    del ct_scores_db_motifs_vs_regions_read_from_feather
+
+    # Test cisTarget SCORES_DB_GENES_VS_TRACKS database.
+
+    # Create zeroed cisTarget SCORES_DB_GENES_VS_TRACKS database.
+    features_ids_instance = FeatureIDs(
+        feature_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5'], features_type=FeaturesType.GENES
+    )
+    motif_or_track_ids_instance = MotifsOrTracksIDs(
+        motif_or_track_ids=['track1', 'track2', 'track3', 'track4'], motifs_or_tracks_type=MotifsOrTracksType.TRACKS
+    )
+
+    ct_scores_db_genes_vs_tracks = CisTargetDatabase.create_db(
+        db_type=DatabaseTypes.SCORES_DB_GENES_VS_TRACKS,
+        feature_ids=features_ids_instance,
+        motif_or_track_ids=motif_or_track_ids_instance
+    )
+
+    # Check if creation of zeroed isTarget SCORES_DB_GENES_VS_TRACKS database succeeded (float32 datatype).
+    assert np.all(ct_scores_db_genes_vs_tracks.df.to_numpy() == np.zeros((4, 5), dtype=np.float32))
+    # Columns contain genes.motif
+    assert ct_scores_db_genes_vs_tracks.df.columns.to_list() == list(features_ids_instance.feature_ids)
+    # Rows contain tracks.
+    assert ct_scores_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.motif_or_track_ids)
+
+    # Update values for some regions for "track3" in cisTarget SCORES_DB_GENES_VS_TRACKS database.
+    ct_scores_db_genes_vs_tracks.update_scores_for_motif_or_track(
+        motif_or_track_id='track3',
+        df_scores_for_motif_or_track=pd.DataFrame(
+            np.array(
+                [[2.4, 4.3],
+                 [4.5, 0.3],
+                 [6.7, 7.8]],
+                dtype=np.float32
+            ),
+            index=['gene2', 'gene1', 'gene5'],
+            columns=['some_random_column', 'track_score']
+        )
+    )
+
+    ct_scores_db_genes_vs_tracks_numpy = np.array(
+        [[0., 0., 0., 0., 0.],
+         [0., 0., 0., 0., 0.],
+         [0.3, 4.3, 0., 0., 7.8],
+         [0., 0., 0., 0., 0.]],
+        dtype=np.float32
+    )
+
+    assert np.all(ct_scores_db_genes_vs_tracks.df.to_numpy() == ct_scores_db_genes_vs_tracks_numpy)
+
+    # Write cisTarget database to Feather file.
+    ct_scores_db_genes_vs_tracks_db_filename = ct_scores_db_genes_vs_tracks.write_db(
+        db_prefix='test/ct_scores_db_motifs_vs_regions'
+    )
+
+    # Read cisTarget database from Feather file.
+    ct_scores_db_genes_vs_tracks_read_from_feather = CisTargetDatabase.read_db(
+        db_filename=ct_scores_db_genes_vs_tracks_db_filename
+    )
+
+    # Check if the cisTarget database object read from the Feather file is the same than the one that was written
+    # to the Feather file.
+    assert ct_scores_db_genes_vs_tracks.db_type == ct_scores_db_genes_vs_tracks_read_from_feather.db_type
+    assert np.all(ct_scores_db_genes_vs_tracks.df == ct_scores_db_genes_vs_tracks_read_from_feather.df)
+
+    # Delete some objects so we don't accidentally reuse them in the next section.
+    del features_ids_instance
+    del motif_or_track_ids_instance
+    del ct_scores_db_genes_vs_tracks
+    del ct_scores_db_genes_vs_tracks_db_filename
+    del ct_scores_db_genes_vs_tracks_numpy
+    del ct_scores_db_genes_vs_tracks_read_from_feather
