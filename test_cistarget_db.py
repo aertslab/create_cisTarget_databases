@@ -267,6 +267,13 @@ def test_cistargetdatabase():
 
     # Check if creation of zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database succeeded (float32 datatype).
     assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == np.zeros((5, 4), dtype=np.float32))
+    assert ct_scores_db_motifs_vs_regions.shape == (5, 4)
+    assert ct_scores_db_motifs_vs_regions.nbr_rows == 5
+    assert ct_scores_db_motifs_vs_regions.nbr_columns == 4
+    assert ct_scores_db_motifs_vs_regions.dtype == np.float32
+    # Check if feature IDs and motif and track IDs are properly set.
+    assert ct_scores_db_motifs_vs_regions.feature_ids == features_ids_instance
+    assert ct_scores_db_motifs_vs_regions.motif_or_track_ids == motif_or_track_ids_instance
     # Columns contain motifs.
     assert ct_scores_db_motifs_vs_regions.df.columns.to_list() == list(motif_or_track_ids_instance.motif_or_track_ids)
     # Rows contain regions.
@@ -339,7 +346,14 @@ def test_cistargetdatabase():
 
     # Check if creation of zeroed isTarget SCORES_DB_GENES_VS_TRACKS database succeeded (float32 datatype).
     assert np.all(ct_scores_db_genes_vs_tracks.df.to_numpy() == np.zeros((4, 5), dtype=np.float32))
-    # Columns contain genes.motif
+    assert ct_scores_db_genes_vs_tracks.shape == (4, 5)
+    assert ct_scores_db_genes_vs_tracks.nbr_rows == 4
+    assert ct_scores_db_genes_vs_tracks.nbr_columns == 5
+    assert ct_scores_db_genes_vs_tracks.dtype == np.float32
+    # Check if feature IDs and motif and track IDs are properly set.
+    assert ct_scores_db_genes_vs_tracks.feature_ids == features_ids_instance
+    assert ct_scores_db_genes_vs_tracks.motif_or_track_ids == motif_or_track_ids_instance
+    # Columns contain genes.
     assert ct_scores_db_genes_vs_tracks.df.columns.to_list() == list(features_ids_instance.feature_ids)
     # Rows contain tracks.
     assert ct_scores_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.motif_or_track_ids)

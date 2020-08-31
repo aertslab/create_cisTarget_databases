@@ -467,6 +467,88 @@ class CisTargetDatabase:
         self.db_type: DatabaseTypes = db_type
         self.df: pd.DataFrame = df
 
+    @property
+    def feature_ids(self) -> FeatureIDs:
+        """
+        Get Feature IDs present in the cisTarget database.
+
+        :return: feature_ids
+        """
+
+        if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
+            feature_ids = FeatureIDs(
+                feature_ids=self.df.columns.to_list(),
+                features_type=FeaturesType.from_str(feature_type=self.db_type.column_kind)
+            )
+        elif self.db_type.row_kind == 'regions' or self.db_type.row_kind == 'genes':
+            feature_ids = FeatureIDs(
+                feature_ids=self.df.index.to_list(),
+                features_type=FeaturesType.from_str(feature_type=self.db_type.row_kind)
+            )
+
+        return feature_ids
+
+    @property
+    def motif_or_track_ids(self) -> MotifsOrTracksIDs:
+        """
+        Get MotifsOrTracksIDs present in the cisTarget database.
+
+        :return: motif_or_track_ids
+        """
+
+        if self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
+            motif_or_track_ids = MotifsOrTracksIDs(
+                motif_or_track_ids=self.df.columns.to_list(),
+                motifs_or_tracks_type=MotifsOrTracksType.from_str(motifs_or_tracks_type=self.db_type.column_kind)
+            )
+        elif self.db_type.row_kind == 'motifs' or self.db_type.row_kind == 'tracks':
+            motif_or_track_ids = MotifsOrTracksIDs(
+                motif_or_track_ids=self.df.index.to_list(),
+                motifs_or_tracks_type=MotifsOrTracksType.from_str(motifs_or_tracks_type=self.db_type.row_kind)
+            )
+
+        return motif_or_track_ids
+
+    @property
+    def dtype(self) -> Union[np.float32, np.int16, np.int32]:
+        """
+        Get dtype of scores or rankings stored in the cisTarget database.
+
+        :return: numpy dtype
+        """
+
+        return self.df.iloc[0, 0].dtype.type
+
+    @property
+    def shape(self) -> (int, int):
+        """
+        Get shape of cisTarget database Dataframe.
+
+        :return: shape
+        """
+
+        return self.df.shape
+
+    @property
+    def nbr_rows(self) -> int:
+        """
+        Get number of rows in cisTarget database.
+
+        :return: nbr_rows
+        """
+
+        return self.df.shape[0]
+
+    @property
+    def nbr_columns(self) -> int:
+        """
+        Get number of columns in cisTarget database.
+
+        :return: nbr_columns
+        """
+
+        return self.df.shape[1]
+
     def update_scores_for_motif_or_track(self, motif_or_track_id: str, df_scores_for_motif_or_track: pd.DataFrame):
         """
         Update CRM or track scores for 1 motif or track ID for specific region or gene IDs in cisTarget scores database.
