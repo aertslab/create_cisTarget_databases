@@ -76,22 +76,22 @@ class FeatureIDs:
         if isinstance(features_type, str):
             features_type = FeaturesType.from_str(features_type)
 
-        self.feature_ids = tuple(sorted(set(feature_ids)))
-        self.features_type = features_type
+        self.ids = tuple(sorted(set(feature_ids)))
+        self.type = features_type
 
     def __repr__(self) -> str:
-        return f'FeatureIDs(\n  feature_ids={self.feature_ids},\n  features_type={self.features_type}\n)'
+        return f'FeatureIDs(\n  feature_ids={self.ids},\n  features_type={self.type}\n)'
 
     def __eq__(self, other: 'FeatureIDs'):
-        return self.features_type == other.features_type and self.feature_ids == other.feature_ids
+        return self.type == other.type and self.ids == other.ids
 
     def __len__(self) -> int:
-        return len(self.feature_ids)
+        return len(self.ids)
 
 
-class MotifsOrTracksIDs:
+class MotifOrTrackIDs:
     """
-    MotifsOrTracksIDs class represents a unique sorted tuple of motif IDs or track IDs for constructing a Pandas
+    MotifOrTrackIDs class represents a unique sorted tuple of motif IDs or track IDs for constructing a Pandas
     dataframe index for a cisTarget database.
     """
 
@@ -109,18 +109,18 @@ class MotifsOrTracksIDs:
         if isinstance(motifs_or_tracks_type, str):
             motifs_or_tracks_type = MotifsOrTracksType.from_str(motifs_or_tracks_type)
 
-        self.motif_or_track_ids = tuple(sorted(set(motif_or_track_ids)))
-        self.motifs_or_tracks_type = motifs_or_tracks_type
+        self.ids = tuple(sorted(set(motif_or_track_ids)))
+        self.type = motifs_or_tracks_type
 
     def __repr__(self) -> str:
-        return f'MotifsOrTracksIDs(\n  motif_or_track_ids={self.motif_or_track_ids},\n  motifs_or_tracks_type={self.motifs_or_tracks_type}\n)'
+        return f'MotifOrTrackIDs(\n  motif_or_track_ids={self.ids},\n  motifs_or_tracks_type={self.type}\n)'
 
-    def __eq__(self, other: 'MotifsOrTracksIDs'):
-        return (self.motifs_or_tracks_type == other.motifs_or_tracks_type and
-                self.motif_or_track_ids == other.motif_or_track_ids)
+    def __eq__(self, other: 'MotifOrTrackIDs'):
+        return (self.type == other.type and
+                self.ids == other.ids)
 
     def __len__(self) -> int:
-        return len(self.motif_or_track_ids)
+        return len(self.ids)
 
 
 @unique
@@ -336,10 +336,10 @@ class CisTargetDatabase:
     @staticmethod
     def create_db(db_type: Union['DatabaseTypes', str],
                   feature_ids: FeatureIDs,
-                  motif_or_track_ids: MotifsOrTracksIDs) -> 'CisTargetDatabase':
+                  motif_or_track_ids: MotifOrTrackIDs) -> 'CisTargetDatabase':
         """
         Create zeroed cisTarget scores or rankings database of one of the DatabaseTypes types
-        for FeatureIDs vs MotifsOrTracksIDs or vice versa.
+        for FeatureIDs vs MotifOrTrackIDs or vice versa.
 
         :param db_type: Type of database.
         :param feature_ids: FeatureIDs object or list, set or tuple of feature IDs.
@@ -364,30 +364,30 @@ class CisTargetDatabase:
             else:
                 raise ValueError('feature_ids must be of "FeatureIDs" type.')
         else:
-            if feature_ids.features_type != db_type.features_type:
-                raise ValueError(f'"feature_ids" type ({feature_ids.features_type}) is not of the same as the one defined for "db_type" ({db_type.features_type}).')
+            if feature_ids.type != db_type.features_type:
+                raise ValueError(f'"feature_ids" type ({feature_ids.type}) is not of the same as the one defined for "db_type" ({db_type.features_type}).')
 
-        if not isinstance(motif_or_track_ids, MotifsOrTracksIDs):
+        if not isinstance(motif_or_track_ids, MotifOrTrackIDs):
             if isinstance(motif_or_track_ids, List) or isinstance(motif_or_track_ids, Set) or isinstance(motif_or_track_ids, Tuple):
-                # If motif or track IDs were given as a list, set or tuple, convert it to a MotifsOrTracksIDs object.
-                motif_or_track_ids = MotifsOrTracksIDs(
+                # If motif or track IDs were given as a list, set or tuple, convert it to a MotifOrTrackIDs object.
+                motif_or_track_ids = MotifOrTrackIDs(
                     motif_or_track_ids=motif_or_track_ids,
                     motifs_or_tracks_type=db_type.motifs_or_tracks_type
                 )
             else:
-                raise ValueError('motif_or_track_ids must be of "MotifsOrTracksIDs" type.')
+                raise ValueError('motif_or_track_ids must be of "MotifOrTrackIDs" type.')
         else:
-            if motif_or_track_ids.motifs_or_tracks_type != db_type.motifs_or_tracks_type:
-                raise ValueError(f'"motif_or_track_ids" type ({motif_or_track_ids.motifs_or_tracks_type}) is not of the same as the one defined for "db_type" ({db_type.motifs_or_tracks_type}).')
+            if motif_or_track_ids.type != db_type.motifs_or_tracks_type:
+                raise ValueError(f'"motif_or_track_ids" type ({motif_or_track_ids.type}) is not of the same as the one defined for "db_type" ({db_type.motifs_or_tracks_type}).')
 
         # Create feature IDs index and motif or track IDs index.
         feature_ids_idx = pd.Index(
-            data=feature_ids.feature_ids,
-            name=feature_ids.features_type.value
+            data=feature_ids.ids,
+            name=feature_ids.type.value
         )
         motif_or_track_ids_idx = pd.Index(
-            data=motif_or_track_ids.motif_or_track_ids,
-            name=motif_or_track_ids.motifs_or_tracks_type.value
+            data=motif_or_track_ids.ids,
+            name=motif_or_track_ids.type.value
         )
 
         if db_type.column_kind == 'regions' or db_type.column_kind == 'genes':
@@ -489,20 +489,20 @@ class CisTargetDatabase:
         return feature_ids
 
     @property
-    def motif_or_track_ids(self) -> MotifsOrTracksIDs:
+    def motif_or_track_ids(self) -> MotifOrTrackIDs:
         """
-        Get MotifsOrTracksIDs present in the cisTarget database.
+        Get MotifOrTrackIDs present in the cisTarget database.
 
         :return: motif_or_track_ids
         """
 
         if self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
-            motif_or_track_ids = MotifsOrTracksIDs(
+            motif_or_track_ids = MotifOrTrackIDs(
                 motif_or_track_ids=self.df.columns.to_list(),
                 motifs_or_tracks_type=MotifsOrTracksType.from_str(motifs_or_tracks_type=self.db_type.column_kind)
             )
         elif self.db_type.row_kind == 'motifs' or self.db_type.row_kind == 'tracks':
-            motif_or_track_ids = MotifsOrTracksIDs(
+            motif_or_track_ids = MotifOrTrackIDs(
                 motif_or_track_ids=self.df.index.to_list(),
                 motifs_or_tracks_type=MotifsOrTracksType.from_str(motifs_or_tracks_type=self.db_type.row_kind)
             )

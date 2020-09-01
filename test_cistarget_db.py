@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cistarget_db import FeaturesType, MotifsOrTracksType, FeatureIDs, MotifsOrTracksIDs, DatabaseTypes, CisTargetDatabase
+from cistarget_db import FeaturesType, MotifsOrTracksType, FeatureIDs, MotifOrTrackIDs, DatabaseTypes, CisTargetDatabase
 
 
 def test_FeaturesType_from_str():
@@ -32,8 +32,8 @@ def test_FeatureIDs_with_regions():
     features_ids_instance = FeatureIDs(
         feature_ids=['reg2', 'reg1', 'reg6', 'reg2'], features_type=FeaturesType.REGIONS
     )
-    assert features_ids_instance.features_type == FeaturesType.REGIONS
-    assert features_ids_instance.feature_ids == ('reg1', 'reg2', 'reg6')
+    assert features_ids_instance.type == FeaturesType.REGIONS
+    assert features_ids_instance.ids == ('reg1', 'reg2', 'reg6')
 
     assert eval(features_ids_instance.__repr__()) == features_ids_instance
 
@@ -43,8 +43,8 @@ def test_FeatureIDs_with_genes():
     features_ids_instance = FeatureIDs(
         feature_ids={'gene2', 'gene1', 'gene6', 'gene2'}, features_type=FeaturesType.GENES
     )
-    assert features_ids_instance.features_type == FeaturesType.GENES
-    assert features_ids_instance.feature_ids == ('gene1', 'gene2', 'gene6')
+    assert features_ids_instance.type == FeaturesType.GENES
+    assert features_ids_instance.ids == ('gene1', 'gene2', 'gene6')
 
     assert eval(features_ids_instance.__repr__()) == features_ids_instance
 
@@ -56,44 +56,44 @@ def test_FeatureIDs_with_features_type_str():
     features_ids_instance = FeatureIDs(
         feature_ids=('gene2', 'gene1', 'gene6', 'gene2'), features_type='gEnES'
     )
-    assert features_ids_instance.features_type == FeaturesType.GENES
-    assert features_ids_instance.feature_ids == ('gene1', 'gene2', 'gene6')
+    assert features_ids_instance.type == FeaturesType.GENES
+    assert features_ids_instance.ids == ('gene1', 'gene2', 'gene6')
 
     assert eval(features_ids_instance.__repr__()) == features_ids_instance
 
 
 def test_MotifsOrTracksIDs_with_motifs():
-    """Check if a MotifsOrTracksIDs object can be constructed from a list of motif IDs."""
-    motif_or_track_ids_instance = MotifsOrTracksIDs(
+    """Check if a MotifOrTrackIDs object can be constructed from a list of motif IDs."""
+    motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['motif5', 'motif10', 'motif3', 'motif10'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
     )
-    assert motif_or_track_ids_instance.motifs_or_tracks_type == MotifsOrTracksType.MOTIFS
-    assert motif_or_track_ids_instance.motif_or_track_ids == ('motif10', 'motif3', 'motif5')
+    assert motif_or_track_ids_instance.type == MotifsOrTracksType.MOTIFS
+    assert motif_or_track_ids_instance.ids == ('motif10', 'motif3', 'motif5')
 
     assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
 
 
 def test_MotifsOrTracksIDs_with_tracks():
-    """Check if a MotifsOrTracksIDs object can be constructed from a set of track IDs."""
-    motif_or_track_ids_instance = MotifsOrTracksIDs(
+    """Check if a MotifOrTrackIDs object can be constructed from a set of track IDs."""
+    motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids={'track5', 'track10', 'track3', 'track10'}, motifs_or_tracks_type=MotifsOrTracksType.TRACKS
     )
-    assert motif_or_track_ids_instance.motifs_or_tracks_type == MotifsOrTracksType.TRACKS
-    assert motif_or_track_ids_instance.motif_or_track_ids == ('track10', 'track3', 'track5')
+    assert motif_or_track_ids_instance.type == MotifsOrTracksType.TRACKS
+    assert motif_or_track_ids_instance.ids == ('track10', 'track3', 'track5')
 
     assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
 
 
 def test_MotifsOrTracksIDs_with_motifs_or_tracks_type_str():
     """
-    Check if a MotifsOrTracksIDs object can be constructed from a tuple of track IDs,
+    Check if a MotifOrTrackIDs object can be constructed from a tuple of track IDs,
     where motifs_or_tracks_type is given as a string.
     """
-    motif_or_track_ids_instance = MotifsOrTracksIDs(
+    motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=('track5', 'track10', 'track3', 'track10'), motifs_or_tracks_type='tracks'
     )
-    assert motif_or_track_ids_instance.motifs_or_tracks_type == MotifsOrTracksType.TRACKS
-    assert motif_or_track_ids_instance.motif_or_track_ids == ('track10', 'track3', 'track5')
+    assert motif_or_track_ids_instance.type == MotifsOrTracksType.TRACKS
+    assert motif_or_track_ids_instance.ids == ('track10', 'track3', 'track5')
 
     assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
 
@@ -255,7 +255,7 @@ def test_cistargetdatabase_basic():
     features_ids_instance = FeatureIDs(
         feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5'], features_type=FeaturesType.REGIONS
     )
-    motif_or_track_ids_instance = MotifsOrTracksIDs(
+    motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
     )
 
@@ -275,9 +275,9 @@ def test_cistargetdatabase_basic():
     assert ct_scores_db_motifs_vs_regions.feature_ids == features_ids_instance
     assert ct_scores_db_motifs_vs_regions.motif_or_track_ids == motif_or_track_ids_instance
     # Columns contain motifs.
-    assert ct_scores_db_motifs_vs_regions.df.columns.to_list() == list(motif_or_track_ids_instance.motif_or_track_ids)
+    assert ct_scores_db_motifs_vs_regions.df.columns.to_list() == list(motif_or_track_ids_instance.ids)
     # Rows contain regions.
-    assert ct_scores_db_motifs_vs_regions.df.index.to_list() == list(features_ids_instance.feature_ids)
+    assert ct_scores_db_motifs_vs_regions.df.index.to_list() == list(features_ids_instance.ids)
 
     # Delete some objects so we don't accidentally reuse them in the next section.
     del features_ids_instance
@@ -290,7 +290,7 @@ def test_cistargetdatabase_basic():
     features_ids_instance = FeatureIDs(
         feature_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5'], features_type=FeaturesType.GENES
     )
-    motif_or_track_ids_instance = MotifsOrTracksIDs(
+    motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['track1', 'track2', 'track3', 'track4'], motifs_or_tracks_type=MotifsOrTracksType.TRACKS
     )
 
@@ -310,9 +310,9 @@ def test_cistargetdatabase_basic():
     assert ct_scores_db_genes_vs_tracks.feature_ids == features_ids_instance
     assert ct_scores_db_genes_vs_tracks.motif_or_track_ids == motif_or_track_ids_instance
     # Columns contain genes.
-    assert ct_scores_db_genes_vs_tracks.df.columns.to_list() == list(features_ids_instance.feature_ids)
+    assert ct_scores_db_genes_vs_tracks.df.columns.to_list() == list(features_ids_instance.ids)
     # Rows contain tracks.
-    assert ct_scores_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.motif_or_track_ids)
+    assert ct_scores_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.ids)
 
     # Delete some objects so we don't accidentally reuse them in the next section.
     del features_ids_instance
@@ -328,7 +328,7 @@ def ct_scores_db_motifs_vs_regions():
     features_ids_instance = FeatureIDs(
         feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5', 'reg6', 'reg7'], features_type=FeaturesType.REGIONS
     )
-    motif_or_track_ids_instance = MotifsOrTracksIDs(
+    motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
     )
 
@@ -361,7 +361,7 @@ def ct_rankings_db_genes_vs_tracks():
     features_ids_instance = FeatureIDs(
         feature_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5', 'gene6', 'gene7'], features_type=FeaturesType.GENES
     )
-    motif_or_track_ids_instance = MotifsOrTracksIDs(
+    motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['track1', 'track2', 'track3', 'track4'], motifs_or_tracks_type=MotifsOrTracksType.TRACKS
     )
 
