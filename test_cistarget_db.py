@@ -407,10 +407,13 @@ def test_cistargetdatabase():
     del ct_scores_db_genes_vs_tracks_read_from_feather
 
 
-def test_cistargetdatabase_transpose():
+@pytest.fixture
+def ct_scores_db_motifs_vs_regions():
+    # Create cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
+
     # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
     features_ids_instance = FeatureIDs(
-        feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5'], features_type=FeaturesType.REGIONS
+        feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5', 'reg6', 'reg7'], features_type=FeaturesType.REGIONS
     )
     motif_or_track_ids_instance = MotifsOrTracksIDs(
         motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
@@ -423,20 +426,71 @@ def test_cistargetdatabase_transpose():
     )
 
     # Create numpy array with values which will be written to the cisTarget database dataframe.
-    ct_scores_db_motifs_vs_regions_numpy = np.array(
-        [[1.2, 0., 0.3, 0.],
-         [6.7, 0., 4.3, 0.],
-         [3.5, 0., 0., 0.],
-         [0.0, 0., 0., 0.],
-         [2.4, 0., 7.8, 0.]],
+    ct_scores_db_motifs_vs_regions.df.iloc[:, :] = np.array(
+        [[1.2, 3.0, 0.3, 5.6],
+         [6.7, 3.0, 4.3, 5.6],
+         [3.5, 3.0, 0.0, 0.0],
+         [0.0, 3.0, 0.0, 5.6],
+         [2.4, 3.0, 7.8, 1.2],
+         [2.4, 3.0, 0.6, 0.0],
+         [2.4, 3.0, 7.7, 0.0]],
         dtype=np.float32
     )
 
-    ct_scores_db_motifs_vs_regions.df.iloc[:, :] = ct_scores_db_motifs_vs_regions_numpy
+    return ct_scores_db_motifs_vs_regions
 
-    # Create a cisTarget SCORES_DB_MOTIFS_VS_REGIONS database by transposing the cisTarget SCORES_DB_MOTIFS_VS_REGIONS
+
+@pytest.fixture
+def ct_rankings_db_genes_vs_tracks():
+    # Create cisTarget RANKINGS_DB_GENES_VS_TRACKS database.
+
+    # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database.
+    features_ids_instance = FeatureIDs(
+        feature_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5', 'gene6', 'gene7'], features_type=FeaturesType.GENES
+    )
+    motif_or_track_ids_instance = MotifsOrTracksIDs(
+        motif_or_track_ids=['track1', 'track2', 'track3', 'track4'], motifs_or_tracks_type=MotifsOrTracksType.TRACKS
+    )
+
+    ct_rankings_db_genes_vs_tracks = CisTargetDatabase.create_db(
+        db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
+        feature_ids=features_ids_instance,
+        motif_or_track_ids=motif_or_track_ids_instance
+    )
+
+    # Create numpy array with values which will be written to the cisTarget database dataframe.
+    ct_rankings_db_genes_vs_tracks.df.iloc[:, :] = np.array(
+        [[0, 1, 2, 3, 4, 5, 6],
+         [2, 4, 3, 0, 1, 6, 5],
+         [0, 6, 2, 4, 1, 3, 5],
+         [2, 0, 4, 6, 5, 3, 1]],
+        dtype=np.int16
+    )
+
+    return ct_rankings_db_genes_vs_tracks
+
+
+def test_cistargetdatabase_transpose(ct_scores_db_motifs_vs_regions, ct_rankings_db_genes_vs_tracks):
+    # Create a cisTarget SCORES_DB_REGIONS_VS_MOTIFS database by transposing the cisTarget SCORES_DB_MOTIFS_VS_REGIONS
     # database.
     ct_scores_db_regions_vs_motifs = ct_scores_db_motifs_vs_regions.transpose()
 
-    assert np.all(ct_scores_db_regions_vs_motifs.df.to_numpy() == ct_scores_db_motifs_vs_regions_numpy.transpose())
+    assert np.all(
+        ct_scores_db_regions_vs_motifs.df.to_numpy() == ct_scores_db_motifs_vs_regions.df.to_numpy().transpose()
+    )
     assert ct_scores_db_regions_vs_motifs.db_type == DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS
+
+    del ct_scores_db_motifs_vs_regions
+    del ct_scores_db_regions_vs_motifs
+
+    # Create a cisTarget RANKINGS_DB_TRACKS_VS_GENES database by transposing the cisTarget RANKINGS_DB_GENES_VS_TRACKS
+    # database.
+    ct_rankings_db_tracks_vs_genes = ct_rankings_db_genes_vs_tracks.transpose()
+
+    assert np.all(
+        ct_rankings_db_tracks_vs_genes.df.to_numpy() == ct_rankings_db_genes_vs_tracks.df.to_numpy().transpose()
+    )
+    assert ct_rankings_db_tracks_vs_genes.db_type == DatabaseTypes.RANKINGS_DB_TRACKS_VS_GENES
+
+    del ct_rankings_db_genes_vs_tracks
+    del ct_rankings_db_tracks_vs_genes
