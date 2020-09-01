@@ -525,3 +525,57 @@ def test_cistargetdatabase_update_scores_for_motif_or_track(ct_scores_db_motifs_
 
     del ct_scores_db_regions_vs_motifs
     del ct_scores_db_regions_vs_motifs_numpy
+
+
+def test_cistargetdatabase_convert_scores_db_to_rankings_db(ct_scores_db_motifs_vs_regions):
+    # Initialize random number generator.
+    rng = np.random.default_rng(seed=123456)
+
+    # Check the shape.
+    assert ct_scores_db_motifs_vs_regions.shape == (7, 4)
+
+    # Get 4 times a permutation (once for each motif) as those same values will be used later in
+    # convert_scores_db_to_rankings_db for sorting ties.
+    assert np.all(rng.permutation(np.arange(7)) == np.array([2, 0, 5, 4, 6, 1, 3]))
+    assert np.all(rng.permutation(np.arange(7)) == np.array([0, 3, 5, 6, 1, 2, 4]))
+    assert np.all(rng.permutation(np.arange(7)) == np.array([5, 1, 3, 0, 6, 4, 2]))
+    assert np.all(rng.permutation(np.arange(7)) == np.array([5, 3, 2, 6, 1, 4, 0]))
+
+    # Convert cisTarget SCORES_DB_MOTIFS_VS_REGIONS database to cisTarget RANKINGS_DB_MOTIFS_VS_REGIONS database.
+    ct_rankings_db_motifs_vs_regions = ct_scores_db_motifs_vs_regions.convert_scores_db_to_rankings_db(rand_seed=123456)
+
+    assert ct_rankings_db_motifs_vs_regions.db_type == DatabaseTypes.RANKINGS_DB_MOTIFS_VS_REGIONS
+    assert ct_rankings_db_motifs_vs_regions.dtype == np.int16
+
+    ct_rankings_db_motifs_vs_regions_numpy = np.array(
+        [[5, 0, 4, 2],
+         [0, 4, 2, 1],
+         [1, 5, 6, 5],
+         [6, 1, 5, 0],
+         [3, 6, 0, 3],
+         [2, 2, 3, 4],
+         [4, 3, 1, 6]],
+        dtype=np.int16
+    )
+
+    # Check if it creates this ranking when rand_seed is set to 123456 (to resolve ties).
+    assert np.all(ct_rankings_db_motifs_vs_regions.df.to_numpy() == ct_rankings_db_motifs_vs_regions_numpy)
+
+    # Create a cisTarget SCORES_DB_REGIONS_VS_MOTIFS database by transposing the cisTarget SCORES_DB_MOTIFS_VS_REGIONS
+    # database.
+    ct_scores_db_regions_vs_motifs = ct_scores_db_motifs_vs_regions.transpose()
+    ct_rankings_db_regions_vs_motifs_numpy = ct_rankings_db_motifs_vs_regions_numpy.transpose()
+
+    del ct_scores_db_motifs_vs_regions
+    del ct_rankings_db_motifs_vs_regions
+    del ct_rankings_db_motifs_vs_regions_numpy
+
+    # Convert cisTarget SCORES_DB_REGIONS_VS_MOTIFS database to cisTarget RANKINGS_DB_REGIONS_VS_MOTIFS database.
+    ct_rankings_db_regions_vs_motifs = ct_scores_db_regions_vs_motifs.convert_scores_db_to_rankings_db(rand_seed=123456)
+
+    assert ct_rankings_db_regions_vs_motifs.db_type == DatabaseTypes.RANKINGS_DB_REGIONS_VS_MOTIFS
+    assert ct_rankings_db_regions_vs_motifs.dtype == np.int16
+
+    # Check if it creates this ranking when rand_seed is set to 123456 (to resolve ties).
+    assert np.all(ct_rankings_db_regions_vs_motifs.df.to_numpy() == ct_rankings_db_regions_vs_motifs_numpy)
+

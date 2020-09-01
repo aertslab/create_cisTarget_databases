@@ -650,3 +650,92 @@ class CisTargetDatabase:
                     motif_or_track_id
                 ] = df_scores_for_motif_or_track[score_name]
 
+    def convert_scores_db_to_rankings_db(self, rand_seed: Union[int, None] = None) -> 'CisTargetDatabase':
+        """
+        Convert scores cisTarget database to rankings database.
+
+        :param rand_seed: Set seed for random number generator if generating the same rankings database
+                          from the same scores database is required.
+                          If set to None, unpredictable entropy will be pulled from the OS.
+        :return: rankings cisTarget database
+        """
+
+        assert self.db_type.is_scores_db, 'cisTarget database must be a scores database.'
+
+        # Initialize random number generator, so same rankings database can be generated if the same seed is set.
+        rng = np.random.default_rng(seed=rand_seed)
+
+        def rank_scores_and_assign_random_ranking_in_range_for_ties(scores_with_ties_for_motif_or_track_numpy):
+            # Create random permutation so tied scores will have a different ranking each time.
+            random_permutations_to_break_ties_numpy = rng.permutation(
+                scores_with_ties_for_motif_or_track_numpy.shape[0]
+            )
+
+            # Rank scores for each region/gene for the current motif/track and break ties:
+            #   - Get scores for each region/gene for a certain motif/track and multiply by -1 (scores >= 0) so sorting
+            #     later will result in ranking the highest score first (descending):
+            #
+            #       (-scores_with_ties_for_motif_or_track_numpy)
+            #
+            #   - Access the negated scores in a random order:
+            #
+            #       (-scores_with_ties_for_motif_or_track_numpy)[random_permutations_to_break_ties_numpy]
+            #
+            #     so when sorting it, scores for regions/genes at the start of the array do not get artificially better
+            #     rankings than regions/genes more at the bottom of the array (as argsort works on a first come, first
+            #     served basis).
+            #
+            #   - Sort the negated scores (accessed in a random order) and return an array with indices that would sort
+            #     those scores from high to low (first position in the returned array contains the index to the value in
+            #     scores_with_ties_for_motif_or_track_numpy with the highest score):
+            #
+            #       (-scores_with_ties_for_motif_or_track_numpy)[random_permutations_to_break_ties_numpy].argsort()
+            #
+            #   - Undo the random order access of the array created in the previous step, so the indices that would sort
+            #     scores_with_ties_for_motif_or_track_numpy from high scores to low scores correspond again with the
+            #     input array:
+            #
+            #       random_permutations_to_break_ties_numpy[
+            #           (-scores_with_ties_for_motif_or_track_numpy)[random_permutations_to_break_ties_numpy].argsort()
+            #       ]
+            #
+            #   - Finally convert the array (previous step) which contains indices which would sort
+            #     scores_with_ties_for_motif_or_track_numpy from high scores to low scores and which would break tied
+            #     scores in a fair (random) way to a ranking (and store the result in a int16 or int32 numpy array):
+            #
+            #       ... .argsort().astype(rankings_db_dtype)
+            #
+            ranking_with_broken_ties_for_motif_or_track_numpy = random_permutations_to_break_ties_numpy[
+                (-scores_with_ties_for_motif_or_track_numpy)[random_permutations_to_break_ties_numpy].argsort()
+            ].argsort().astype(rankings_db_dtype)
+
+            return ranking_with_broken_ties_for_motif_or_track_numpy
+
+        # Create zeroed rankings database.
+        rankings_db = CisTargetDatabase.create_db(
+            db_type=DatabaseTypes.from_strings(
+                scores_or_rankings='rankings',
+                column_kind=self.db_type.column_kind,
+                row_kind=self.db_type.row_kind
+            ),
+            feature_ids=self.feature_ids,
+            motif_or_track_ids=self.motif_or_track_ids
+        )
+
+        # Get dtype of rankings cisTarget database as this is used to return a numpy array of the correct type in
+        # rank_scores_and_assign_random_ranking_in_range_for_ties function.
+        rankings_db_dtype = rankings_db.dtype
+
+        # Rank all scores per motif/track and assign a random ranking in range for regions/genes with the same score.
+        if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
+            for row_idx in range(self.nbr_rows):
+                rankings_db.df.iloc[row_idx, :] = rank_scores_and_assign_random_ranking_in_range_for_ties(
+                    self.df.iloc[row_idx, :].to_numpy()
+                )
+        elif self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
+            for column_idx in range(self.nbr_columns):
+                rankings_db.df.iloc[:, column_idx] = rank_scores_and_assign_random_ranking_in_range_for_ties(
+                    self.df.iloc[:, column_idx].to_numpy()
+                )
+
+        return rankings_db
