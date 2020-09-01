@@ -549,54 +549,6 @@ class CisTargetDatabase:
 
         return self.df.shape[1]
 
-    def update_scores_for_motif_or_track(self, motif_or_track_id: str, df_scores_for_motif_or_track: pd.DataFrame):
-        """
-        Update CRM or track scores for 1 motif or track ID for specific region or gene IDs in cisTarget scores database.
-
-        :param motif_or_track_id:
-            motif or track ID for which scores are provided.
-        :param df_scores_for_motif_or_track:
-            Dataframe with region IDs or gene IDs as index
-            and motif or track scores in the first column (and only column) or in 'crm_score' or 'track_score' column.
-        :return:
-        """
-
-        assert self.db_type.is_scores_db, 'cisTarget database must be a scores database.'
-
-        # Write CRM or track scores for motif ID or track ID to cisTarget scores dataframe.
-        if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
-            assert motif_or_track_id in self.df.index, \
-                f'"{motif_or_track_id}" not found in row of CisTargetDatabase dataframe.'
-
-            # Column names contain regions or genes.
-            if df_scores_for_motif_or_track.shape[1] == 1:
-                self.df.loc[
-                    motif_or_track_id,
-                    df_scores_for_motif_or_track.index,
-                ] = df_scores_for_motif_or_track.iloc[:, 0]
-            else:
-                score_name = 'crm_score' if self.db_type.is_motifs_db else 'track_score'
-                self.df.loc[
-                    motif_or_track_id,
-                    df_scores_for_motif_or_track.index,
-                ] = df_scores_for_motif_or_track[score_name]
-        elif self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
-            assert motif_or_track_id in self.df.columns, \
-                f'"{motif_or_track_id}" not found in column of CisTargetDatabase dataframe.'
-
-            # Row names contain regions or genes.
-            if df_scores_for_motif_or_track.shape[1] == 1:
-                self.df.loc[
-                    df_scores_for_motif_or_track.index,
-                    motif_or_track_id
-                ] = df_scores_for_motif_or_track.iloc[:, 0]
-            else:
-                score_name = 'crm_score' if self.db_type.is_motifs_db else 'track_score'
-                self.df.loc[
-                    df_scores_for_motif_or_track.index,
-                    motif_or_track_id
-                ] = df_scores_for_motif_or_track[score_name]
-
     def write_db(self, db_prefix: str = None, db_filename: str = None) -> str:
         """
         Write cisTarget database to Feather file.
@@ -649,3 +601,52 @@ class CisTargetDatabase:
             ),
             df=self.df.transpose(copy=copy)
         )
+
+    def update_scores_for_motif_or_track(self, motif_or_track_id: str, df_scores_for_motif_or_track: pd.DataFrame):
+        """
+        Update CRM or track scores for 1 motif or track ID for specific region or gene IDs in cisTarget scores database.
+
+        :param motif_or_track_id:
+            motif or track ID for which scores are provided.
+        :param df_scores_for_motif_or_track:
+            Dataframe with region IDs or gene IDs as index
+            and motif or track scores in the first column (and only column) or in 'crm_score' or 'track_score' column.
+        :return:
+        """
+
+        assert self.db_type.is_scores_db, 'cisTarget database must be a scores database.'
+
+        # Write CRM or track scores for motif ID or track ID to cisTarget scores dataframe.
+        if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
+            assert motif_or_track_id in self.df.index, \
+                f'"{motif_or_track_id}" not found in row of CisTargetDatabase dataframe.'
+
+            # Column names contain regions or genes.
+            if df_scores_for_motif_or_track.shape[1] == 1:
+                self.df.loc[
+                    motif_or_track_id,
+                    df_scores_for_motif_or_track.index,
+                ] = df_scores_for_motif_or_track.iloc[:, 0]
+            else:
+                score_name = 'crm_score' if self.db_type.is_motifs_db else 'track_score'
+                self.df.loc[
+                    motif_or_track_id,
+                    df_scores_for_motif_or_track.index,
+                ] = df_scores_for_motif_or_track[score_name]
+        elif self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
+            assert motif_or_track_id in self.df.columns, \
+                f'"{motif_or_track_id}" not found in column of CisTargetDatabase dataframe.'
+
+            # Row names contain regions or genes.
+            if df_scores_for_motif_or_track.shape[1] == 1:
+                self.df.loc[
+                    df_scores_for_motif_or_track.index,
+                    motif_or_track_id
+                ] = df_scores_for_motif_or_track.iloc[:, 0]
+            else:
+                score_name = 'crm_score' if self.db_type.is_motifs_db else 'track_score'
+                self.df.loc[
+                    df_scores_for_motif_or_track.index,
+                    motif_or_track_id
+                ] = df_scores_for_motif_or_track[score_name]
+
