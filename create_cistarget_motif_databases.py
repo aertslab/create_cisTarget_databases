@@ -303,18 +303,6 @@ def main():
     )
 
     parser.add_argument(
-        '-O',
-        '--output-format',
-        dest='feature_table_output_format',
-        action='store',
-        type=str,
-        required=False,
-        choices=['feather', 'tsv', 'tsv_for_R'],
-        default='feather',
-        help='Feature table output format. Default: "feather" (fast).'
-    )
-
-    parser.add_argument(
         '-c',
         '--cbust',
         dest='cluster_buster_path',
@@ -506,216 +494,137 @@ def main():
         )
         sys.exit(1)
 
-    def feature_table_write_tsv(df_scores__motifs_vs_regions_or_genes, feature_table_output_filename, feature_table_output_format, regions_or_genes_type):
-        """ Write feature table TSV file manually instead of with pandas. """
+    print(
+        'Write cisTarget motif databases in feather format: ' \
+        f'"{args.feature_table_output_filename}.*.*.feather".',
+        file=sys.stderr
+    )
 
-        # Get column names with all features.
-        column_names = df_scores__motifs_vs_regions_or_genes.columns.tolist()
+    print(
+        f'Write CRM scores of {regions_or_genes_type} for each motif in ' \
+        f'motifs vs {regions_or_genes_type} style to ' \
+        f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather',
+        file=sys.stderr
+    )
 
-        # Get row names with all region IDs or gene IDs.
-        row_names = df_scores__motifs_vs_regions_or_genes.index.tolist()
+    df_scores__motifs_vs_regions_or_genes.reset_index(inplace=True)
+    df_scores__motifs_vs_regions_or_genes.to_feather(
+        path=f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather'
+    )
+    df_scores__motifs_vs_regions_or_genes.set_index(regions_or_genes_type, inplace=True)
+    # Add column axis name: 'motifs'.
+    df_scores__motifs_vs_regions_or_genes.rename_axis(
+        columns='motifs',
+        axis='columns',
+        copy=False,
+        inplace=True
+    )
 
-        # Get all CRM scores (numpy array).
-        crm_scores = df_scores__motifs_vs_regions_or_genes.get_values()
+    print(
+        f'Write CRM scores of {regions_or_genes_type} for each motif in ' \
+        f'{regions_or_genes_type} vs motifs style to ' \
+        f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.scores.feather',
+        file=sys.stderr
+    )
 
-        # Write feature table TSV file.
-        with open(feature_table_output_filename, 'w') as feature_table_output_fh:
-            # Write header line.
-            if feature_table_output_format == 'tsv':
-                print(regions_or_genes_type, end='\t', file=feature_table_output_fh)
+    df_scores__regions_or_genes_vs_genes = df_scores__motifs_vs_regions_or_genes.transpose()
+    df_scores__regions_or_genes_vs_genes.reset_index(inplace=True)
+    df_scores__regions_or_genes_vs_genes.to_feather(
+        path=f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.scores.feather'
+    )
+    del df_scores__regions_or_genes_vs_genes
 
-            print('\t'.join(column_names), end='\n', file=feature_table_output_fh)
+    def rank_CRM_scores_and_assign_random_ranking_in_range_for_ties_func(crm_scores_with_ties_for_motif_numpy):
+        rng = np.random.default_rng()
+        # Create random permutation so tied scores will have a different ranking each time.
+        random_permutations_to_break_ties_numpy = rng.permutation(crm_scores_with_ties_for_motif_numpy.shape[0])
 
-            # Write each row.
-            for row_idx in range(len(row_names)):
-                # Write region ID or gene ID.
-                print(row_names[row_idx], end='\t', file=feature_table_output_fh)
+        # Rank CRM scores for each region/gene for the current motif and break ties:
+        #   - Get current column with CRM scores for a certain motif and
+        #     multiply by -1 (CRM scores >= 0) so sorting later will result
+        #     in ranking the highest CRM score first (descending):
+        #
+        #       (-crm_scores_with_ties_for_motif_numpy)
+        #
+        #   - Access the negated CRM scores in a random order:
+        #
+        #       (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy]
+        #
+        #     so when sorting it, CRM scores for regions/genes at the start
+        #     of the array do not get artificially better rankings than
+        #     regions/genes more at the bottom of the array (as argsort
+        #     works on a first come, first served basis).
+        #
+        #   - Sort the negated CRM scores (accessed in a random order) and
+        #     return an array with indices that would sort those CRM scores
+        #     from high to low (first position in the returned array
+        #     contains the index to the value in
+        #     crm_scores_with_ties_for_motif_numpy with the highest CRM
+        #     score):
+        #
+        #       (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
+        #
+        #   - Undo the random order access of the array created in the
+        #     previous step, so the indices that would sort
+        #     crm_scores_with_ties_for_motif_numpy from high CRM scores to
+        #     low CRM scores correspond again with the input array:
+        #
+        #       random_permutations_to_break_ties_numpy[
+        #           (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
+        #       ]
+        #
+        #   - Finally convert the array (previous step) which contains
+        #     indices which would sort crm_scores_with_ties_for_motif_numpy
+        #     from high CRM scores to low CRM scores and which would break
+        #     tied scores in a fair (random) way to a ranking (int32):
+        #
+        #       ... .argsort().astype(np.int32)
+        #
+        rank_column_with_broken_ties_numpy = random_permutations_to_break_ties_numpy[
+            (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
+        ].argsort().astype(np.int32)
 
-                # Write CRM scores for all features for the current region or gene.
-                crm_scores[row_idx].tofile(file=feature_table_output_fh, sep='\t')
+        return rank_column_with_broken_ties_numpy
 
-                # Write newline.
-                print(end='\n', file=feature_table_output_fh)
+    print(
+        f'Create rankings from {args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather',
+        file=sys.stderr
+    )
 
-    if args.feature_table_output_format == 'tsv':
-        print(
-            'Write feature table result TSV table: "{0:s}".'.format(
-                args.feature_table_output_filename
-            ),
-            file=sys.stderr
-        )
+    # Create feature table ranking.
+    df_ranking__motifs_vs_regions_or_genes = df_scores__motifs_vs_regions_or_genes.apply(
+        rank_CRM_scores_and_assign_random_ranking_in_range_for_ties_func,
+        axis='index',
+        raw=True
+    )
 
-        feature_table_write_tsv(
-            df_scores__motifs_vs_regions_or_genes=df_scores__motifs_vs_regions_or_genes,
-            feature_table_output_filename=args.feature_table_output_filename,
-            feature_table_output_format=args.feature_table_output_format,
-            regions_or_genes_type=regions_or_genes_type
-        )
-        # Faster than the following code:
-        # df_scores__motifs_vs_regions_or_genes.to_csv(
-        #     path_or_buf=args.feature_table_output_filename,
-        #     sep='\t',
-        #     header=True,
-        #     index=True,
-        #     index_label=regions_or_genes_type,
-        #     quoting=None,
-        #     chunksize=1000,
-        #)
-    elif args.feature_table_output_format == 'tsv_for_R':
-        print(
-            'Write feature table result TSV table for R: "{0:s}".'.format(
-                args.feature_table_output_filename
-            ),
-            file=sys.stderr
-        )
+    print(
+        f'Write rankings of {regions_or_genes_type} for each motif in ' \
+        f'motifs vs {regions_or_genes_type} style to ' \
+        f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.rankings.feather',
+        file=sys.stderr
+    )
 
-        feature_table_write_tsv(
-            df_scores__motifs_vs_regions_or_genes=df_scores__motifs_vs_regions_or_genes,
-            feature_table_output_filename=args.feature_table_output_filename,
-            feature_table_output_format=args.feature_table_output_format,
-            regions_or_genes_type=regions_or_genes_type
-        )
-        # Faster than the following code:
-        # df_scores__motifs_vs_regions_or_genes.to_csv(
-        #     path_or_buf=args.feature_table_output_filename,
-        #     sep='\t',
-        #     header=True,
-        #     index=True,
-        #     index_label=False,
-        #     quoting=None,
-        #     chunksize=1000,
-        # )
-    elif args.feature_table_output_format == 'feather':
-        print(
-            'Write cisTarget motif databases in feather format: ' \
-            f'"{args.feature_table_output_filename}.*.*.feather".',
-            file=sys.stderr
-        )
+    df_ranking__motifs_vs_regions_or_genes.reset_index(inplace=True)
+    df_ranking__motifs_vs_regions_or_genes.to_feather(
+        path=f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.rankings.feather'
+    )
+    df_ranking__motifs_vs_regions_or_genes.set_index(regions_or_genes_type, inplace=True)
 
-        print(
-            f'Write CRM scores of {regions_or_genes_type} for each motif in ' \
-            f'motifs vs {regions_or_genes_type} style to ' \
-            f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather',
-            file=sys.stderr
-        )
+    del df_scores__motifs_vs_regions_or_genes
 
-        df_scores__motifs_vs_regions_or_genes.reset_index(inplace=True)
-        df_scores__motifs_vs_regions_or_genes.to_feather(
-            path=f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather'
-        )
-        df_scores__motifs_vs_regions_or_genes.set_index(regions_or_genes_type, inplace=True)
-        # Add column axis name: 'motifs'.
-        df_scores__motifs_vs_regions_or_genes.rename_axis(
-            columns='motifs',
-            axis='columns',
-            copy=False,
-            inplace=True
-        )
+    print(
+        f'Write rankings of {regions_or_genes_type} for each motif in ' \
+        f'{regions_or_genes_type} vs motifs style to ' \
+        f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.rankings.feather',
+        file=sys.stderr
+    )
 
-        print(
-            f'Write CRM scores of {regions_or_genes_type} for each motif in ' \
-            f'{regions_or_genes_type} vs motifs style to ' \
-            f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.scores.feather',
-            file=sys.stderr
-        )
-
-        df_scores__regions_or_genes_vs_genes = df_scores__motifs_vs_regions_or_genes.transpose()
-        df_scores__regions_or_genes_vs_genes.reset_index(inplace=True)
-        df_scores__regions_or_genes_vs_genes.to_feather(
-            path=f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.scores.feather'
-        )
-        del df_scores__regions_or_genes_vs_genes
-
-        def rank_CRM_scores_and_assign_random_ranking_in_range_for_ties_func(crm_scores_with_ties_for_motif_numpy):
-            # Create random permutation so tied scores will have a different ranking each time.
-            random_permutations_to_break_ties_numpy = np.random.permutation(crm_scores_with_ties_for_motif_numpy.shape[0])
-
-            # Rank CRM scores for each region/gene for the current motif and break ties:
-            #   - Get current column with CRM scores for a certain motif and
-            #     multiply by -1 (CRM scores >= 0) so sorting later will result
-            #     in ranking the highest CRM score first (descending):
-            #
-            #       (-crm_scores_with_ties_for_motif_numpy)
-            #
-            #   - Access the negated CRM scores in a random order:
-            #
-            #       (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy]
-            #
-            #     so when sorting it, CRM scores for regions/genes at the start
-            #     of the array do not get artificially better rankings than
-            #     regions/genes more at the bottom of the array (as argsort
-            #     works on a first come, first served basis).
-            #
-            #   - Sort the negated CRM scores (accessed in a random order) and
-            #     return an array with indices that would sort those CRM scores
-            #     from high to low (first position in the returned array
-            #     contains the index to the value in
-            #     crm_scores_with_ties_for_motif_numpy with the highest CRM
-            #     score):
-            #
-            #       (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
-            #
-            #   - Undo the random order access of the array created in the
-            #     previous step, so the indices that would sort
-            #     crm_scores_with_ties_for_motif_numpy from high CRM scores to
-            #     low CRM scores correspond again with the input array:
-            #
-            #       random_permutations_to_break_ties_numpy[
-            #           (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
-            #       ]
-            #
-            #   - Finally convert the array (previous step) which contains
-            #     indices which would sort crm_scores_with_ties_for_motif_numpy
-            #     from high CRM scores to low CRM scores and which would break
-            #     tied scores in a fair (random) way to a ranking (int32):
-            #
-            #       ... .argsort().astype(np.int32)
-            #
-            rank_column_with_broken_ties_numpy = random_permutations_to_break_ties_numpy[
-                (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
-            ].argsort().astype(np.int32)
-
-            return rank_column_with_broken_ties_numpy
-
-        print(
-            f'Create rankings from {args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather',
-            file=sys.stderr
-        )
-
-        # Create feature table ranking.
-        df_ranking__motifs_vs_regions_or_genes = df_scores__motifs_vs_regions_or_genes.apply(
-            rank_CRM_scores_and_assign_random_ranking_in_range_for_ties_func,
-            axis='index',
-            raw=True
-        )
-
-        print(
-            f'Write rankings of {regions_or_genes_type} for each motif in ' \
-            f'motifs vs {regions_or_genes_type} style to ' \
-            f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.rankings.feather',
-            file=sys.stderr
-        )
-
-        df_ranking__motifs_vs_regions_or_genes.reset_index(inplace=True)
-        df_ranking__motifs_vs_regions_or_genes.to_feather(
-            path=f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.rankings.feather'
-        )
-        df_ranking__motifs_vs_regions_or_genes.set_index(regions_or_genes_type, inplace=True)
-
-        del df_scores__motifs_vs_regions_or_genes
-
-        print(
-            f'Write rankings of {regions_or_genes_type} for each motif in ' \
-            f'{regions_or_genes_type} vs motifs style to ' \
-            f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.rankings.feather',
-            file=sys.stderr
-        )
-
-        df_ranking__regions_or_genes_vs_motifs = df_ranking__motifs_vs_regions_or_genes.transpose()
-        df_ranking__regions_or_genes_vs_motifs.reset_index(inplace=True)
-        df_ranking__regions_or_genes_vs_motifs.to_feather(
-            path=f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.rankings.feather'
-        )
+    df_ranking__regions_or_genes_vs_motifs = df_ranking__motifs_vs_regions_or_genes.transpose()
+    df_ranking__regions_or_genes_vs_motifs.reset_index(inplace=True)
+    df_ranking__regions_or_genes_vs_motifs.to_feather(
+        path=f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.rankings.feather'
+    )
 
 
 if __name__ == '__main__':
