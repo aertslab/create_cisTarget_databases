@@ -305,28 +305,11 @@ def test_cistargetdatabase():
 
     assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == ct_scores_db_motifs_vs_regions_numpy)
 
-    # Write cisTarget database to Feather file.
-    ct_scores_db_motifs_vs_regions_db_filename = ct_scores_db_motifs_vs_regions.write_db(
-        db_prefix='test/ct_scores_db_motifs_vs_regions'
-    )
-
-    # Read cisTarget database from Feather file.
-    ct_scores_db_motifs_vs_regions_read_from_feather = CisTargetDatabase.read_db(
-        db_filename=ct_scores_db_motifs_vs_regions_db_filename
-    )
-
-    # Check if the cisTarget database object read from the Feather file is the same than the one that was written
-    # to the Feather file.
-    assert ct_scores_db_motifs_vs_regions.db_type == ct_scores_db_motifs_vs_regions_read_from_feather.db_type
-    assert np.all(ct_scores_db_motifs_vs_regions.df == ct_scores_db_motifs_vs_regions_read_from_feather.df)
-
     # Delete some objects so we don't accidentally reuse them in the next section.
     del features_ids_instance
     del motif_or_track_ids_instance
     del ct_scores_db_motifs_vs_regions
-    del ct_scores_db_motifs_vs_regions_db_filename
     del ct_scores_db_motifs_vs_regions_numpy
-    del ct_scores_db_motifs_vs_regions_read_from_feather
 
     # Test cisTarget SCORES_DB_GENES_VS_TRACKS database.
 
@@ -383,28 +366,11 @@ def test_cistargetdatabase():
 
     assert np.all(ct_scores_db_genes_vs_tracks.df.to_numpy() == ct_scores_db_genes_vs_tracks_numpy)
 
-    # Write cisTarget database to Feather file.
-    ct_scores_db_genes_vs_tracks_db_filename = ct_scores_db_genes_vs_tracks.write_db(
-        db_prefix='test/ct_scores_db_motifs_vs_regions'
-    )
-
-    # Read cisTarget database from Feather file.
-    ct_scores_db_genes_vs_tracks_read_from_feather = CisTargetDatabase.read_db(
-        db_filename=ct_scores_db_genes_vs_tracks_db_filename
-    )
-
-    # Check if the cisTarget database object read from the Feather file is the same than the one that was written
-    # to the Feather file.
-    assert ct_scores_db_genes_vs_tracks.db_type == ct_scores_db_genes_vs_tracks_read_from_feather.db_type
-    assert np.all(ct_scores_db_genes_vs_tracks.df == ct_scores_db_genes_vs_tracks_read_from_feather.df)
-
     # Delete some objects so we don't accidentally reuse them in the next section.
     del features_ids_instance
     del motif_or_track_ids_instance
     del ct_scores_db_genes_vs_tracks
-    del ct_scores_db_genes_vs_tracks_db_filename
     del ct_scores_db_genes_vs_tracks_numpy
-    del ct_scores_db_genes_vs_tracks_read_from_feather
 
 
 @pytest.fixture
@@ -468,6 +434,56 @@ def ct_rankings_db_genes_vs_tracks():
     )
 
     return ct_rankings_db_genes_vs_tracks
+
+
+def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, ct_rankings_db_genes_vs_tracks):
+    # Write cisTarget database to Feather file.
+    ct_scores_db_motifs_vs_regions_db_filename = ct_scores_db_motifs_vs_regions.write_db(
+        db_prefix='test/ct_scores_db_motifs_vs_regions'
+    )
+
+    # Read cisTarget database from Feather file.
+    ct_scores_db_motifs_vs_regions_read_from_feather = CisTargetDatabase.read_db(
+        db_filename=ct_scores_db_motifs_vs_regions_db_filename
+    )
+
+    # Check if the cisTarget database object read from the Feather file is the same than the one that was written
+    # to the Feather file.
+    assert ct_scores_db_motifs_vs_regions_read_from_feather.db_type == ct_scores_db_motifs_vs_regions.db_type
+    assert ct_scores_db_motifs_vs_regions_read_from_feather.dtype == ct_scores_db_motifs_vs_regions.dtype
+    assert ct_scores_db_motifs_vs_regions_read_from_feather.shape == ct_scores_db_motifs_vs_regions.shape
+    assert ct_scores_db_motifs_vs_regions_read_from_feather.feature_ids == ct_scores_db_motifs_vs_regions.feature_ids
+    assert ct_scores_db_motifs_vs_regions_read_from_feather.motif_or_track_ids == ct_scores_db_motifs_vs_regions.motif_or_track_ids
+    assert np.all(ct_scores_db_motifs_vs_regions_read_from_feather.df == ct_scores_db_motifs_vs_regions.df)
+
+    # Delete some objects so we don't accidentally reuse them in the next section.
+    del ct_scores_db_motifs_vs_regions
+    del ct_scores_db_motifs_vs_regions_db_filename
+    del ct_scores_db_motifs_vs_regions_read_from_feather
+
+    # Write cisTarget database to Feather file.
+    ct_rankings_db_genes_vs_tracks_db_filename = ct_rankings_db_genes_vs_tracks.write_db(
+        db_prefix='test/ct_rankings_db_genes_vs_tracks'
+    )
+
+    # Read cisTarget database from Feather file.
+    ct_rankings_db_genes_vs_tracks_read_from_feather = CisTargetDatabase.read_db(
+        db_filename=ct_rankings_db_genes_vs_tracks_db_filename
+    )
+
+    # Check if the cisTarget database object read from the Feather file is the same than the one that was written
+    # to the Feather file.
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather.db_type == ct_rankings_db_genes_vs_tracks.db_type
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather.dtype == ct_rankings_db_genes_vs_tracks.dtype
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather.shape == ct_rankings_db_genes_vs_tracks.shape
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather.feature_ids == ct_rankings_db_genes_vs_tracks.feature_ids
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather.motif_or_track_ids == ct_rankings_db_genes_vs_tracks.motif_or_track_ids
+    assert np.all(ct_rankings_db_genes_vs_tracks_read_from_feather.df == ct_rankings_db_genes_vs_tracks.df)
+
+    # Delete some objects so we don't accidentally reuse them in the next section.
+    del ct_rankings_db_genes_vs_tracks
+    del ct_rankings_db_genes_vs_tracks_db_filename
+    del ct_rankings_db_genes_vs_tracks_read_from_feather
 
 
 def test_cistargetdatabase_transpose(ct_scores_db_motifs_vs_regions, ct_rankings_db_genes_vs_tracks):
