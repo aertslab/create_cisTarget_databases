@@ -248,7 +248,7 @@ def test_DatabaseTypes_properties_and_get_dtype():
     del rankings_db_region_vs_motifs
 
 
-def test_cistargetdatabase():
+def test_cistargetdatabase_basic():
     # Test cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
 
     # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
@@ -279,37 +279,10 @@ def test_cistargetdatabase():
     # Rows contain regions.
     assert ct_scores_db_motifs_vs_regions.df.index.to_list() == list(features_ids_instance.feature_ids)
 
-    # Update values for some regions for "motif3" in cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
-    ct_scores_db_motifs_vs_regions.update_scores_for_motif_or_track(
-        motif_or_track_id='motif3',
-        df_scores_for_motif_or_track=pd.DataFrame(
-            np.array(
-                [[2.4, 4.3],
-                 [4.5, 0.3],
-                 [6.7, 7.8]],
-                dtype=np.float32
-            ),
-            index=['reg2', 'reg1', 'reg5'],
-            columns=['some_random_column', 'crm_score']
-        )
-    )
-
-    ct_scores_db_motifs_vs_regions_numpy = np.array(
-        [[0., 0., 0.3, 0.],
-         [0., 0., 4.3, 0.],
-         [0., 0., 0., 0.],
-         [0., 0., 0., 0.],
-         [0., 0., 7.8, 0.]],
-        dtype=np.float32
-    )
-
-    assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == ct_scores_db_motifs_vs_regions_numpy)
-
     # Delete some objects so we don't accidentally reuse them in the next section.
     del features_ids_instance
     del motif_or_track_ids_instance
     del ct_scores_db_motifs_vs_regions
-    del ct_scores_db_motifs_vs_regions_numpy
 
     # Test cisTarget SCORES_DB_GENES_VS_TRACKS database.
 
@@ -341,36 +314,10 @@ def test_cistargetdatabase():
     # Rows contain tracks.
     assert ct_scores_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.motif_or_track_ids)
 
-    # Update values for some regions for "track3" in cisTarget SCORES_DB_GENES_VS_TRACKS database.
-    ct_scores_db_genes_vs_tracks.update_scores_for_motif_or_track(
-        motif_or_track_id='track3',
-        df_scores_for_motif_or_track=pd.DataFrame(
-            np.array(
-                [[2.4, 4.3],
-                 [4.5, 0.3],
-                 [6.7, 7.8]],
-                dtype=np.float32
-            ),
-            index=['gene2', 'gene1', 'gene5'],
-            columns=['some_random_column', 'track_score']
-        )
-    )
-
-    ct_scores_db_genes_vs_tracks_numpy = np.array(
-        [[0., 0., 0., 0., 0.],
-         [0., 0., 0., 0., 0.],
-         [0.3, 4.3, 0., 0., 7.8],
-         [0., 0., 0., 0., 0.]],
-        dtype=np.float32
-    )
-
-    assert np.all(ct_scores_db_genes_vs_tracks.df.to_numpy() == ct_scores_db_genes_vs_tracks_numpy)
-
     # Delete some objects so we don't accidentally reuse them in the next section.
     del features_ids_instance
     del motif_or_track_ids_instance
     del ct_scores_db_genes_vs_tracks
-    del ct_scores_db_genes_vs_tracks_numpy
 
 
 @pytest.fixture
@@ -510,3 +457,71 @@ def test_cistargetdatabase_transpose(ct_scores_db_motifs_vs_regions, ct_rankings
 
     del ct_rankings_db_genes_vs_tracks
     del ct_rankings_db_tracks_vs_genes
+
+
+def test_cistargetdatabase_update_scores_for_motif_or_track(ct_scores_db_motifs_vs_regions):
+    # Update values (from "crm_score" column of df_scores_for_motif_or_track) for some regions for "motif3" in
+    # cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
+    ct_scores_db_motifs_vs_regions.update_scores_for_motif_or_track(
+        motif_or_track_id='motif3',
+        df_scores_for_motif_or_track=pd.DataFrame(
+            np.array(
+                [[2.4, 6.7],
+                 [4.5, 7.3],
+                 [6.7, 0.2]],
+                dtype=np.float32
+            ),
+            index=['reg2', 'reg7', 'reg5'],
+            columns=['some_random_column', 'crm_score']
+        )
+    )
+
+    # Create numpy array with updated values which will be written to the cisTarget database dataframe.
+    ct_scores_db_motifs_vs_regions_numpy = np.array(
+        [[1.2, 3.0, 0.3, 5.6],
+         [6.7, 3.0, 6.7, 5.6],
+         [3.5, 3.0, 0.0, 0.0],
+         [0.0, 3.0, 0.0, 5.6],
+         [2.4, 3.0, 0.2, 1.2],
+         [2.4, 3.0, 0.6, 0.0],
+         [2.4, 3.0, 7.3, 0.0]],
+        dtype=np.float32
+    )
+
+    assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == ct_scores_db_motifs_vs_regions_numpy)
+
+    # Create a cisTarget SCORES_DB_REGIONS_VS_MOTIFS database by transposing the cisTarget SCORES_DB_MOTIFS_VS_REGIONS
+    # database.
+    ct_scores_db_regions_vs_motifs = ct_scores_db_motifs_vs_regions.transpose()
+
+    del ct_scores_db_motifs_vs_regions
+    del ct_scores_db_motifs_vs_regions_numpy
+
+    # Update values (from first column of df_scores_for_motifs_or_track) for some regions for "motif2" in cisTarget
+    # SCORES_DB_REGIONS_VS_MOTIFS database.
+    ct_scores_db_regions_vs_motifs.update_scores_for_motif_or_track(
+        motif_or_track_id='motif2',
+        df_scores_for_motif_or_track=pd.DataFrame(
+            np.array(
+                [[2.4],
+                 [4.5],
+                 [6.7]],
+                dtype=np.float32
+            ),
+            index=['reg6', 'reg1', 'reg3'],
+        )
+    )
+
+    # Create numpy array with updated values which will be written to the cisTarget database dataframe.
+    ct_scores_db_regions_vs_motifs_numpy = np.array(
+        [[1.2, 6.7, 3.5, 0.0, 2.4, 2.4, 2.4],
+         [4.5, 3.0, 6.7, 3.0, 3.0, 2.4, 3.0],
+         [0.3, 6.7, 0.0, 0.0, 0.2, 0.6, 7.3],
+         [5.6, 5.6, 0.0, 5.6, 1.2, 0.0, 0.0]],
+        dtype=np.float32
+    )
+
+    assert np.all(ct_scores_db_regions_vs_motifs.df.to_numpy() == ct_scores_db_regions_vs_motifs_numpy)
+
+    del ct_scores_db_regions_vs_motifs
+    del ct_scores_db_regions_vs_motifs_numpy
