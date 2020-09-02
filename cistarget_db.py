@@ -628,14 +628,14 @@ class CisTargetDatabase:
             df=self.df.transpose(copy=copy)
         )
 
-    def update_scores_for_motif_or_track(self, motif_or_track_id: str, df_scores_for_motif_or_track: pd.DataFrame):
+    def update_scores_for_motif_or_track(self, motif_or_track_id: str, df_scores_for_motif_or_track: Union[pd.Series, pd.DataFrame]):
         """
         Update CRM or track scores for 1 motif or track ID for specific region or gene IDs in cisTarget scores database.
 
         :param motif_or_track_id:
             motif or track ID for which scores are provided.
         :param df_scores_for_motif_or_track:
-            Dataframe with region IDs or gene IDs as index
+            Dataframe (or Series) with region IDs or gene IDs as index
             and motif or track scores in the first column (and only column) or in 'crm_score' or 'track_score' column.
         :return:
         """
@@ -648,7 +648,12 @@ class CisTargetDatabase:
                 f'"{motif_or_track_id}" not found in row of CisTargetDatabase dataframe.'
 
             # Column names contain regions or genes.
-            if df_scores_for_motif_or_track.shape[1] == 1:
+            if len(df_scores_for_motif_or_track.shape) == 1:
+                self.df.loc[
+                    motif_or_track_id,
+                    df_scores_for_motif_or_track.index,
+                ] = df_scores_for_motif_or_track
+            elif df_scores_for_motif_or_track.shape[1] == 1:
                 self.df.loc[
                     motif_or_track_id,
                     df_scores_for_motif_or_track.index,
@@ -664,7 +669,12 @@ class CisTargetDatabase:
                 f'"{motif_or_track_id}" not found in column of CisTargetDatabase dataframe.'
 
             # Row names contain regions or genes.
-            if df_scores_for_motif_or_track.shape[1] == 1:
+            if len(df_scores_for_motif_or_track.shape) == 1:
+                self.df.loc[
+                    df_scores_for_motif_or_track.index,
+                    motif_or_track_id
+                ] = df_scores_for_motif_or_track
+            elif df_scores_for_motif_or_track.shape[1] == 1:
                 self.df.loc[
                     df_scores_for_motif_or_track.index,
                     motif_or_track_id
