@@ -3,9 +3,7 @@ import pandas as pd
 import pyarrow.feather as pf
 
 from enum import Enum, unique
-from typing import Dict, List, Set, Tuple, Type, Union
-
-from cytoolz import memoize
+from typing import List, Optional, Set, Tuple, Type, Union
 
 
 @unique
@@ -82,7 +80,10 @@ class FeatureIDs:
     def __repr__(self) -> str:
         return f'FeatureIDs(\n  feature_ids={self.ids},\n  features_type={self.type}\n)'
 
-    def __eq__(self, other: 'FeatureIDs'):
+    def __eq__(self, other: object):
+        if not isinstance(other, FeatureIDs):
+            return NotImplemented
+
         return self.type == other.type and self.ids == other.ids
 
     def __len__(self) -> int:
@@ -115,9 +116,11 @@ class MotifOrTrackIDs:
     def __repr__(self) -> str:
         return f'MotifOrTrackIDs(\n  motif_or_track_ids={self.ids},\n  motifs_or_tracks_type={self.type}\n)'
 
-    def __eq__(self, other: 'MotifOrTrackIDs'):
-        return (self.type == other.type and
-                self.ids == other.ids)
+    def __eq__(self, other: object):
+        if not isinstance(other, MotifOrTrackIDs):
+            return NotImplemented
+
+        return self.type == other.type and self.ids == other.ids
 
     def __len__(self) -> int:
         return len(self.ids)
@@ -410,7 +413,7 @@ class CisTargetDatabase:
         return CisTargetDatabase(db_type, df)
 
     @staticmethod
-    def read_db(db_filename: str, db_type: Union['DatabaseTypes', str] = None) -> 'CisTargetDatabase':
+    def read_db(db_filename: str, db_type: Optional[Union['DatabaseTypes', str]] = None) -> 'CisTargetDatabase':
         """
         Read cisTarget database from Feather file to CisTargetDatabase object.
 
@@ -549,7 +552,7 @@ class CisTargetDatabase:
 
         return self.df.shape[1]
 
-    def write_db(self, db_prefix: str = None, db_filename: str = None) -> str:
+    def write_db(self, db_prefix: Optional[str] = None, db_filename: Optional[str] = None) -> str:
         """
         Write cisTarget database to Feather file.
         If db_prefix is used, the database type will be encoded in the Feather database filename.
@@ -665,7 +668,7 @@ class CisTargetDatabase:
                     motif_or_track_id
                 ] = df_scores_for_motif_or_track[score_name]
 
-    def convert_scores_db_to_rankings_db(self, rand_seed: Union[int, None] = None) -> 'CisTargetDatabase':
+    def convert_scores_db_to_rankings_db(self, rand_seed: Optional[int] = None) -> 'CisTargetDatabase':
         """
         Convert scores cisTarget database to rankings database.
 
