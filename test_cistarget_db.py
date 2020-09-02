@@ -451,9 +451,37 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
     assert np.all(ct_rankings_db_genes_vs_tracks_read_from_feather.df == ct_rankings_db_genes_vs_tracks.df)
 
     # Delete some objects so we don't accidentally reuse them in the next section.
-    del ct_rankings_db_genes_vs_tracks
     del ct_rankings_db_genes_vs_tracks_db_filename
     del ct_rankings_db_genes_vs_tracks_read_from_feather
+
+    # Write cisTarget database to Feather file with a custom name.
+    ct_rankings_db_genes_vs_tracks_db_filename_with_custom_name_returned = ct_rankings_db_genes_vs_tracks.write_db(
+        db_filename='test/ct_rankings_db_genes_vs_tracks_with_custom_name.db'
+    )
+
+    # Check if the correct database name is used by write_db.
+    assert ct_rankings_db_genes_vs_tracks_db_filename_with_custom_name_returned \
+           == 'test/ct_rankings_db_genes_vs_tracks_with_custom_name.db'
+
+    # Read cisTarget database from Feather file with a custom name (database type can not be automatically retrieved).
+    ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name = CisTargetDatabase.read_db(
+        db_filename=ct_rankings_db_genes_vs_tracks_db_filename_with_custom_name_returned,
+        db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS
+    )
+
+    # Check if the cisTarget database object read from the Feather file is the same than the one that was written
+    # to the Feather file.
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.db_type == ct_rankings_db_genes_vs_tracks.db_type
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.dtype == ct_rankings_db_genes_vs_tracks.dtype
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.shape == ct_rankings_db_genes_vs_tracks.shape
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.feature_ids == ct_rankings_db_genes_vs_tracks.feature_ids
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.motif_or_track_ids == ct_rankings_db_genes_vs_tracks.motif_or_track_ids
+    assert np.all(ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.df == ct_rankings_db_genes_vs_tracks.df)
+
+    # Delete some objects so we don't accidentally reuse them in the next section.
+    del ct_rankings_db_genes_vs_tracks
+    del ct_rankings_db_genes_vs_tracks_db_filename_with_custom_name_returned
+    del ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name
 
 
 def test_cistargetdatabase_transpose(ct_scores_db_motifs_vs_regions, ct_rankings_db_genes_vs_tracks):
