@@ -290,6 +290,8 @@ class DatabaseTypes(Enum):
         elif self.is_genes_db:
             return FeaturesType.GENES
 
+        assert False, f'"features_type" is not handled for {self}'
+
     @property
     def motifs_or_tracks_type(self) -> 'MotifsOrTracksType':
         """Return MotifsOrTracksType Enum member for DatabaseTypes member."""
@@ -297,6 +299,8 @@ class DatabaseTypes(Enum):
             return MotifsOrTracksType.MOTIFS
         elif self.is_tracks_db:
             return MotifsOrTracksType.TRACKS
+
+        assert False, f'"motifs_or_tracks_type" is not handled for {self}'
 
     @property
     def column_kind(self) -> str:
@@ -329,6 +333,8 @@ class DatabaseTypes(Enum):
             else:
                 # Range int32: -2^31 (= -2147483648) to 2^31 - 1 (= 2147483647).
                 return np.int32
+
+        assert False, f'"get_dtype" is not handled for {self}'
 
 
 class CisTargetDatabase:
@@ -523,7 +529,7 @@ class CisTargetDatabase:
         return self.df.iloc[0, 0].dtype.type
 
     @property
-    def shape(self) -> (int, int):
+    def shape(self) -> Tuple[int, int]:
         """
         Get shape of cisTarget database Dataframe.
 
