@@ -569,10 +569,12 @@ class CisTargetDatabase:
         :return: db_filename: cisTarget database filename (constructed from db_prefix).
         """
 
-        assert db_filename is not None or db_prefix is not None
+        assert isinstance(db_prefix, str) and db_filename is None or db_prefix is None and isinstance(db_filename, str)
 
         if db_prefix:
             db_filename = self.create_db_filename_from_db_prefix(db_prefix=db_prefix, extension='feather')
+
+        assert isinstance(db_filename, str)
 
         # Temporarily add the index column with the name of the row kind to the dataframe,
         # so row names of the dataframe are written to the Feather file.
