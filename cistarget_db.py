@@ -563,7 +563,7 @@ class CisTargetDatabase:
         assert db_filename is not None or db_prefix is not None
 
         if db_prefix:
-            db_filename = self.db_type.create_db_filename(db_prefix=db_prefix, extension='feather')
+            db_filename = self.create_db_filename_from_db_prefix(db_prefix=db_prefix, extension='feather')
 
         # Temporarily add the index column with the name of the row kind to the dataframe,
         # so row names of the dataframe are written to the Feather file.
@@ -580,6 +580,21 @@ class CisTargetDatabase:
         self.df.columns.set_names([self.db_type.column_kind], inplace=True)
 
         return db_filename
+
+    def create_db_filename_from_db_prefix(self, db_prefix: str, extension: str = 'feather') -> str:
+        """
+        Create cisTarget database filename based on a database prefix string and extension.
+        Between the database prefix string and extension the database type will be encoded.
+
+        :param db_prefix: Database prefix.
+        :param extension: Database extension.
+        :return: Database filename.
+        """
+
+        return self.db_type.create_db_filename(
+            db_prefix=db_prefix,
+            extension=extension
+        )
 
     def transpose(self, copy: bool = False):
         """
