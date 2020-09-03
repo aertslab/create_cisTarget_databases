@@ -14,13 +14,21 @@ import os
 import re
 import subprocess
 import sys
+import time
 import multiprocessing as mp
+
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
+from cistarget_db import FeaturesType, MotifsOrTracksType, FeatureIDs, MotifOrTrackIDs, DatabaseTypes, CisTargetDatabase
 
-def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename, motif_md5_to_motif_id_filename=None):
+
+def get_motif_id_to_filename_dict(motifs_dir: str,
+                                  motifs_list_filename: str,
+                                  motif_md5_to_motif_id_filename: Optional[str] = None
+                                  ) -> Dict[str, str]:
     """
     Create motif ID to Cluster-Buster motif file mapping.
 
@@ -97,7 +105,9 @@ def get_motif_id_to_filename_dict(motifs_dir, motifs_list_filename, motif_md5_to
     return motif_id_to_filename_dict
 
 
-def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_region_id_regex_replace=None):
+def get_region_ids_or_gene_ids_from_fasta(fasta_filename: str,
+                                          extract_gene_id_from_region_id_regex_replace: Optional[str] = None
+                                          ) -> FeatureIDs:
     """
     Get all region IDs or gene IDs from FASTA filename:
       - When extract_gene_id_from_region_id_regex_replace=None, region IDs are returned and each region ID is only
@@ -109,7 +119,7 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_r
          FASTA filename with sequences for region IDs or gene IDs.
     :param extract_gene_id_from_region_id_regex_replace:
          regex for removing unwanted parts from the region ID to extract the gene ID.
-    :return: ('regions', region_ids) or ('genes', gene_ids).
+    :return: FeatureIDs object for regions or genes.
     """
 
     gene_ids = set()
@@ -147,18 +157,18 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename, extract_gene_id_from_r
                     region_ids.add(region_id)
 
     if extract_gene_id_from_region_id_regex_replace:
-        # Return ('genes', gene IDs).
-        return 'genes', sorted(gene_ids)
+        return FeatureIDs(feature_ids=gene_ids, features_type=FeaturesType.GENES)
     else:
         if duplicated_region_ids:
             sys.exit(1)
 
-        # Return ('regions', region IDs).
-        return 'regions', sorted(region_ids)
+        return FeatureIDs(feature_ids=region_ids, features_type=FeaturesType.REGIONS)
 
 
-def run_cluster_buster_for_motif(cluster_buster_path, fasta_filename, motif_filename, motif_id,
-                                 extract_gene_id_from_region_id_regex_replace=None, bg_padding=0):
+def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, motif_filename: str, motif_id: str,
+                                 extract_gene_id_from_region_id_regex_replace: Optional[str] = None,
+                                 bg_padding: int = 0
+                                 ) -> Tuple[str, pd.DataFrame]:
     """
     Score each sequence in the FASTA file with Cluster-Buster and only keep the top CRM score per region ID/gene ID.
 
@@ -295,11 +305,11 @@ def main():
     parser.add_argument(
         '-o',
         '--output',
-        dest='feature_table_output_filename',
+        dest='db_prefix',
         action='store',
         type=str,
         required=True,
-        help='Feature table output filename.'
+        help='Feather database prefix output filename.'
     )
 
     parser.add_argument(
@@ -384,19 +394,23 @@ def main():
         motif_md5_to_motif_id_filename=args.motif_md5_to_motif_id_filename
     )
 
-    # Get type of sequences ("regions" or "genes")
-    # and sorted list of region IDs or gene IDs.
-    (regions_or_genes_type,
-     region_ids_or_gene_ids) = get_region_ids_or_gene_ids_from_fasta(
+    # Get region IDs or gene IDs from FASTA sequence names as a FeaturesIDs object.
+    region_ids_or_gene_ids = get_region_ids_or_gene_ids_from_fasta(
         args.fasta_filename,
         args.extract_gene_id_from_region_id_regex_replace
+    )
+
+    # Create MotifOrTracksIDs object from plain motif IDs.
+    motif_ids = MotifOrTrackIDs(
+        motif_or_track_ids=set(motif_id_to_filename_dict),
+        motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
     )
 
     nbr_region_ids_or_gene_ids = len(region_ids_or_gene_ids)
     nbr_motifs = len(motif_id_to_filename_dict)
 
     if nbr_region_ids_or_gene_ids == 0:
-        print(f'Error: No {regions_or_genes_type} provided.', file=sys.stderr)
+        print(f'Error: No {region_ids_or_gene_ids.type.value} provided.', file=sys.stderr)
         sys.exit(1)
 
     if nbr_motifs == 0:
@@ -404,56 +418,45 @@ def main():
         sys.exit(1)
 
     print(
-        f'Initialize dataframe ({nbr_region_ids_or_gene_ids} {regions_or_genes_type} ' \
-        f'x {nbr_motifs} motifs) for storing CRM scores for each {regions_or_genes_type} ' \
+        f'Initialize dataframe ({nbr_region_ids_or_gene_ids} {region_ids_or_gene_ids.type.value} ' \
+        f'x {nbr_motifs} motifs) for storing CRM scores for each {region_ids_or_gene_ids.type.value} ' \
         'per motif.',
         file=sys.stderr
     )
 
-    # Create zeroed dataframe for all region IDs or gene IDs vs all motif IDs.
-    df_scores__motifs_vs_regions_or_genes = pd.DataFrame(
-        data=np.zeros((nbr_region_ids_or_gene_ids, nbr_motifs),
-                      dtype=np.float32),
-        index=region_ids_or_gene_ids,
-        columns=sorted(motif_id_to_filename_dict.keys())
+    ct_scores_db_motifs_vs_regions_or_genes = CisTargetDatabase.create_db(
+        db_type=DatabaseTypes.from_strings(
+            scores_or_rankings='scores',
+            column_kind='motifs',
+            row_kind=region_ids_or_gene_ids.type.value
+        ),
+        feature_ids=region_ids_or_gene_ids,
+        motif_or_track_ids=motif_ids
     )
 
-    # Add index name: 'regions' or 'genes'.
-    df_scores__motifs_vs_regions_or_genes.rename_axis(
-        index=regions_or_genes_type,
-        axis='index',
-        copy=False,
-        inplace=True
-    )
-
-    # Add column axis name: 'motifs'.
-    df_scores__motifs_vs_regions_or_genes.rename_axis(
-        columns='motifs',
-        axis='columns',
-        copy=False,
-        inplace=True
-    )
-
-    def write_crm_scores_for_motif_to_df_scores(df_motif_id_and_crm_scores):
-        if 'nbr_of_scored_motifs' not in write_crm_scores_for_motif_to_df_scores.__dict__:
-            write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs = 0
+    def write_crm_scores_for_motif_to_ct_scores_db(df_motif_id_and_crm_scores: Tuple[str, pd.DataFrame]) -> None:
+        if 'nbr_of_scored_motifs' not in write_crm_scores_for_motif_to_ct_scores_db.__dict__:
+            write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs = 0
 
         motif_id, df_crm_scores = df_motif_id_and_crm_scores
 
-        df_scores__motifs_vs_regions_or_genes.loc[df_crm_scores.index, motif_id] = df_crm_scores['crm_score']
+        ct_scores_db_motifs_vs_regions_or_genes.update_scores_for_motif_or_track(
+            motif_or_track_id=motif_id,
+            df_scores_for_motif_or_track=df_crm_scores['crm_score']
+        )
 
-        write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs += 1
+        write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs += 1
 
         print(
             'Adding Cluster-Buster CRM scores ({0:d} of {1:d}) for motif "{2:s}".'.format(
-                write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs,
+                write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs,
                 nbr_motifs,
                 motif_id
             ),
             file=sys.stderr
         )
 
-    def report_error(exception):
+    def report_error(exception: BaseException) -> None:
         print(exception, file=sys.stderr)
 
     with mp.Pool(processes=args.nbr_threads) as pool:
@@ -468,7 +471,7 @@ def main():
                     args.extract_gene_id_from_region_id_regex_replace,
                     args.bg_padding
                 ],
-                callback=write_crm_scores_for_motif_to_df_scores,
+                callback=write_crm_scores_for_motif_to_ct_scores_db,
                 error_callback=report_error
             )
 
@@ -478,153 +481,89 @@ def main():
         # Wait for worker processes to exit.
         pool.join()
 
-    if 'nbr_of_scored_motifs' not in write_crm_scores_for_motif_to_df_scores.__dict__:
+    if 'nbr_of_scored_motifs' not in write_crm_scores_for_motif_to_ct_scores_db.__dict__:
         print(
             'Error: None of {0:d} motifs was scored successfully'.format(nbr_motifs),
             file=sys.stderr
         )
         sys.exit(1)
-    elif write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs != nbr_motifs:
+    elif write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs != nbr_motifs:
         print(
-            'Error: Only {0:d} of {1:d} motifs was scored successfully'.format(
-                write_crm_scores_for_motif_to_df_scores.nbr_of_scored_motifs,
+            'Error: Only {0:d} out of {1:d} motifs were scored successfully'.format(
+                write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs,
                 nbr_motifs
             ),
             file=sys.stderr
         )
         sys.exit(1)
 
+    print('', file=sys.stderr)
+
+    def write_db(ct_db: CisTargetDatabase, db_prefix: str):
+        """
+        Write cisTarget database to a Feather file and print database location and elapsed time.
+
+        :param ct_db: cisTarget database object.
+        :param db_prefix: Feather database file prefix.
+        :return:
+        """
+        db_filename = ct_db.create_db_filename_from_db_prefix(db_prefix=db_prefix, extension='feather')
+
+        print(
+            f'Write {ct_db.db_type.scores_or_rankings} of {ct_db.feature_ids.type.value} for each motif in ' \
+            f'{ct_db.db_type.column_kind} vs {ct_db.db_type.row_kind} style to ' \
+            f'"{db_filename}".',
+            file=sys.stderr
+        )
+
+        start_time = time.monotonic()
+        ct_db.write_db(
+            db_prefix=args.db_prefix
+        )
+        elapsed_time = time.monotonic() - start_time
+
+        print(f'Database written in {elapsed_time:0.6f} seconds.\n', file=sys.stderr)
+
+    # Write cisTarget scores database (motifs vs regions or genes) to Feather file.
+    write_db(ct_db=ct_scores_db_motifs_vs_regions_or_genes, db_prefix=args.db_prefix)
+
+    # Create cisTarget scores database (regions or genes vs motifs) from (motifs vs regions or genes) version.
+    ct_scores_db_regions_or_genes_vs_motifs = ct_scores_db_motifs_vs_regions_or_genes.transpose(copy=False)
+
+    # Write cisTarget scores database (regions or genes vs motifs) to Feather file.
+    write_db(ct_db=ct_scores_db_regions_or_genes_vs_motifs, db_prefix=args.db_prefix)
+
+    # Create cisTarget rankings database (motifs vs regions or genes) from cisTarget scores database filename
+    # (motifs vs regions or genes).
     print(
-        'Write cisTarget motif databases in feather format: ' \
-        f'"{args.feature_table_output_filename}.*.*.feather".',
+        f'''Create rankings from "{
+            ct_scores_db_motifs_vs_regions_or_genes.create_db_filename_from_db_prefix(
+                db_prefix=args.db_prefix,
+                extension='feather'
+            )
+        }".''',
         file=sys.stderr
     )
 
-    print(
-        f'Write CRM scores of {regions_or_genes_type} for each motif in ' \
-        f'motifs vs {regions_or_genes_type} style to ' \
-        f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather',
-        file=sys.stderr
-    )
+    start_time = time.monotonic()
+    ct_rankings_db_motifs_vs_regions_or_genes = \
+        ct_scores_db_motifs_vs_regions_or_genes.convert_scores_db_to_rankings_db(rand_seed=123456)
+    elapsed_time = time.monotonic() - start_time
 
-    df_scores__motifs_vs_regions_or_genes.reset_index(inplace=True)
-    df_scores__motifs_vs_regions_or_genes.to_feather(
-        path=f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather'
-    )
-    df_scores__motifs_vs_regions_or_genes.set_index(regions_or_genes_type, inplace=True)
-    # Add column axis name: 'motifs'.
-    df_scores__motifs_vs_regions_or_genes.rename_axis(
-        columns='motifs',
-        axis='columns',
-        copy=False,
-        inplace=True
-    )
+    print(f'Creating rankings from scores database took {elapsed_time:.06f} seconds.\n', file=sys.stderr)
 
-    print(
-        f'Write CRM scores of {regions_or_genes_type} for each motif in ' \
-        f'{regions_or_genes_type} vs motifs style to ' \
-        f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.scores.feather',
-        file=sys.stderr
-    )
+    # Reclaim memory occupied by cisTarget scores databases.
+    del ct_scores_db_motifs_vs_regions_or_genes
+    del ct_scores_db_regions_or_genes_vs_motifs
 
-    df_scores__regions_or_genes_vs_genes = df_scores__motifs_vs_regions_or_genes.transpose()
-    df_scores__regions_or_genes_vs_genes.reset_index(inplace=True)
-    df_scores__regions_or_genes_vs_genes.to_feather(
-        path=f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.scores.feather'
-    )
-    del df_scores__regions_or_genes_vs_genes
+    # Write cisTarget rankings database (motifs vs regions or genes) to Feather file.
+    write_db(ct_db=ct_rankings_db_motifs_vs_regions_or_genes, db_prefix=args.db_prefix)
 
-    def rank_CRM_scores_and_assign_random_ranking_in_range_for_ties_func(crm_scores_with_ties_for_motif_numpy):
-        rng = np.random.default_rng()
-        # Create random permutation so tied scores will have a different ranking each time.
-        random_permutations_to_break_ties_numpy = rng.permutation(crm_scores_with_ties_for_motif_numpy.shape[0])
+    # Create cisTarget rankings database (regions or genes vs motifs) from (motifs vs regions or genes) version.
+    ct_rankings_db_regions_or_genes_vs_motifs = ct_rankings_db_motifs_vs_regions_or_genes.transpose(copy=False)
 
-        # Rank CRM scores for each region/gene for the current motif and break ties:
-        #   - Get current column with CRM scores for a certain motif and
-        #     multiply by -1 (CRM scores >= 0) so sorting later will result
-        #     in ranking the highest CRM score first (descending):
-        #
-        #       (-crm_scores_with_ties_for_motif_numpy)
-        #
-        #   - Access the negated CRM scores in a random order:
-        #
-        #       (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy]
-        #
-        #     so when sorting it, CRM scores for regions/genes at the start
-        #     of the array do not get artificially better rankings than
-        #     regions/genes more at the bottom of the array (as argsort
-        #     works on a first come, first served basis).
-        #
-        #   - Sort the negated CRM scores (accessed in a random order) and
-        #     return an array with indices that would sort those CRM scores
-        #     from high to low (first position in the returned array
-        #     contains the index to the value in
-        #     crm_scores_with_ties_for_motif_numpy with the highest CRM
-        #     score):
-        #
-        #       (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
-        #
-        #   - Undo the random order access of the array created in the
-        #     previous step, so the indices that would sort
-        #     crm_scores_with_ties_for_motif_numpy from high CRM scores to
-        #     low CRM scores correspond again with the input array:
-        #
-        #       random_permutations_to_break_ties_numpy[
-        #           (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
-        #       ]
-        #
-        #   - Finally convert the array (previous step) which contains
-        #     indices which would sort crm_scores_with_ties_for_motif_numpy
-        #     from high CRM scores to low CRM scores and which would break
-        #     tied scores in a fair (random) way to a ranking (int32):
-        #
-        #       ... .argsort().astype(np.int32)
-        #
-        rank_column_with_broken_ties_numpy = random_permutations_to_break_ties_numpy[
-            (-crm_scores_with_ties_for_motif_numpy)[random_permutations_to_break_ties_numpy].argsort()
-        ].argsort().astype(np.int32)
-
-        return rank_column_with_broken_ties_numpy
-
-    print(
-        f'Create rankings from {args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.scores.feather',
-        file=sys.stderr
-    )
-
-    # Create feature table ranking.
-    df_ranking__motifs_vs_regions_or_genes = df_scores__motifs_vs_regions_or_genes.apply(
-        rank_CRM_scores_and_assign_random_ranking_in_range_for_ties_func,
-        axis='index',
-        raw=True
-    )
-
-    print(
-        f'Write rankings of {regions_or_genes_type} for each motif in ' \
-        f'motifs vs {regions_or_genes_type} style to ' \
-        f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.rankings.feather',
-        file=sys.stderr
-    )
-
-    df_ranking__motifs_vs_regions_or_genes.reset_index(inplace=True)
-    df_ranking__motifs_vs_regions_or_genes.to_feather(
-        path=f'{args.feature_table_output_filename}.motifs_vs_{regions_or_genes_type}.rankings.feather'
-    )
-    df_ranking__motifs_vs_regions_or_genes.set_index(regions_or_genes_type, inplace=True)
-
-    del df_scores__motifs_vs_regions_or_genes
-
-    print(
-        f'Write rankings of {regions_or_genes_type} for each motif in ' \
-        f'{regions_or_genes_type} vs motifs style to ' \
-        f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.rankings.feather',
-        file=sys.stderr
-    )
-
-    df_ranking__regions_or_genes_vs_motifs = df_ranking__motifs_vs_regions_or_genes.transpose()
-    df_ranking__regions_or_genes_vs_motifs.reset_index(inplace=True)
-    df_ranking__regions_or_genes_vs_motifs.to_feather(
-        path=f'{args.feature_table_output_filename}.{regions_or_genes_type}_vs_motifs.rankings.feather'
-    )
+    # Write cisTarget rankings database (regions or genes vs motifs) to Feather file.
+    write_db(ct_db=ct_rankings_db_regions_or_genes_vs_motifs, db_prefix=args.db_prefix)
 
 
 if __name__ == '__main__':
