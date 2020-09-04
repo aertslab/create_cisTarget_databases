@@ -686,20 +686,21 @@ class CisTargetDatabase:
                     motif_or_track_id
                 ] = df_scores_for_motif_or_track[score_name]
 
-    def convert_scores_db_to_rankings_db(self, rand_seed: Optional[int] = None) -> 'CisTargetDatabase':
+    def convert_scores_db_to_rankings_db(self, seed: Optional[int] = None) -> 'CisTargetDatabase':
         """
         Convert scores cisTarget database to rankings database.
 
-        :param rand_seed: Set seed for random number generator if generating the same rankings database
-                          from the same scores database is required.
-                          If set to None, unpredictable entropy will be pulled from the OS.
+        :param seed:
+            Set seed for random number generator if generating the same rankings database from the same scores database
+            is required.
+            If set to None, unpredictable entropy will be pulled from the OS.
         :return: rankings cisTarget database
         """
 
         assert self.db_type.is_scores_db, 'cisTarget database must be a scores database.'
 
         # Initialize random number generator, so same rankings database can be generated if the same seed is set.
-        rng = np.random.default_rng(seed=rand_seed)
+        rng = np.random.default_rng(seed=seed)
 
         def rank_scores_and_assign_random_ranking_in_range_for_ties(scores_with_ties_for_motif_or_track_numpy):
             # Create random permutation so tied scores will have a different ranking each time.

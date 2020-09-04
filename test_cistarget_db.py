@@ -619,7 +619,7 @@ def test_cistargetdatabase_convert_scores_db_to_rankings_db(ct_scores_db_motifs_
     assert np.all(rng.permutation(np.arange(7)) == np.array([5, 3, 2, 6, 1, 4, 0]))
 
     # Convert cisTarget SCORES_DB_MOTIFS_VS_REGIONS database to cisTarget RANKINGS_DB_MOTIFS_VS_REGIONS database.
-    ct_rankings_db_motifs_vs_regions = ct_scores_db_motifs_vs_regions.convert_scores_db_to_rankings_db(rand_seed=123456)
+    ct_rankings_db_motifs_vs_regions = ct_scores_db_motifs_vs_regions.convert_scores_db_to_rankings_db(seed=123456)
 
     assert ct_rankings_db_motifs_vs_regions.db_type == DatabaseTypes.RANKINGS_DB_MOTIFS_VS_REGIONS
     assert ct_rankings_db_motifs_vs_regions.dtype == np.int16
@@ -635,7 +635,7 @@ def test_cistargetdatabase_convert_scores_db_to_rankings_db(ct_scores_db_motifs_
         dtype=np.int16
     )
 
-    # Check if it creates this ranking when rand_seed is set to 123456 (to resolve ties).
+    # Check if it creates this ranking when seed is set to 123456 (to resolve ties).
     assert np.all(ct_rankings_db_motifs_vs_regions.df.to_numpy() == ct_rankings_db_motifs_vs_regions_numpy)
 
     # Create a cisTarget SCORES_DB_REGIONS_VS_MOTIFS database by transposing the cisTarget SCORES_DB_MOTIFS_VS_REGIONS
@@ -648,11 +648,11 @@ def test_cistargetdatabase_convert_scores_db_to_rankings_db(ct_scores_db_motifs_
     del ct_rankings_db_motifs_vs_regions_numpy
 
     # Convert cisTarget SCORES_DB_REGIONS_VS_MOTIFS database to cisTarget RANKINGS_DB_REGIONS_VS_MOTIFS database.
-    ct_rankings_db_regions_vs_motifs = ct_scores_db_regions_vs_motifs.convert_scores_db_to_rankings_db(rand_seed=123456)
+    ct_rankings_db_regions_vs_motifs = ct_scores_db_regions_vs_motifs.convert_scores_db_to_rankings_db(seed=123456)
 
     assert ct_rankings_db_regions_vs_motifs.db_type == DatabaseTypes.RANKINGS_DB_REGIONS_VS_MOTIFS
     assert ct_rankings_db_regions_vs_motifs.dtype == np.int16
 
-    # Check if it creates this ranking when rand_seed is set to 123456 (to resolve ties).
+    # Check if it creates this ranking when seed is set to 123456 (to resolve ties).
     assert np.all(ct_rankings_db_regions_vs_motifs.df.to_numpy() == ct_rankings_db_regions_vs_motifs_numpy)
 

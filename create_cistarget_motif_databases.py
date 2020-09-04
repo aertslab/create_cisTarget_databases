@@ -11,6 +11,7 @@ Copyright (C): 2019-2020 - Gert Hulselmans
 import argparse
 import io
 import os
+import random
 import re
 import subprocess
 import sys
@@ -358,6 +359,18 @@ def main():
         help='Background padding in bp that was added for each sequence in FASTA file. Default: 0.'
     )
 
+    parser.add_argument(
+        '-s',
+        '--seed',
+        dest='seed',
+        action='store',
+        type=int,
+        required=False,
+        help='Random seed used for breaking ties when creating rankings for a range of tied scores. '
+             'When setting this seed to a specific value and running this script with the same input, will result in '
+             'the same rankings databases as output.'
+    )
+
     args = parser.parse_args()
 
     if not os.path.exists(args.fasta_filename):
@@ -387,6 +400,9 @@ def main():
             file=sys.stderr
         )
         sys.exit(1)
+
+    # Set random seed to provided input value or a random integer.
+    seed = args.seed if args.seed else random.randint(0, 2**64)
 
     motif_id_to_filename_dict = get_motif_id_to_filename_dict(
         motifs_dir=args.motifs_dir,
@@ -541,13 +557,13 @@ def main():
                 db_prefix=args.db_prefix,
                 extension='feather'
             )
-        }".''',
+        }" with random seed set to {seed}.''',
         file=sys.stderr
     )
 
     start_time = time.monotonic()
     ct_rankings_db_motifs_vs_regions_or_genes = \
-        ct_scores_db_motifs_vs_regions_or_genes.convert_scores_db_to_rankings_db(rand_seed=123456)
+        ct_scores_db_motifs_vs_regions_or_genes.convert_scores_db_to_rankings_db(seed=seed)
     elapsed_time = time.monotonic() - start_time
 
     print(f'Creating rankings from scores database took {elapsed_time:.06f} seconds.\n', file=sys.stderr)
