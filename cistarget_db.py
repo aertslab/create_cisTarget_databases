@@ -14,20 +14,20 @@ class FeaturesType(Enum):
     GENES = 'genes'
 
     @classmethod
-    def from_str(cls, feature_type: str) -> 'FeaturesType':
+    def from_str(cls, features_type: str) -> 'FeaturesType':
         """
         Create FeaturesType Enum member from string.
 
-        :param feature_type: 'regions' or 'genes'.
+        :param features_type: 'regions' or 'genes'.
         :return: FeatureType Enum member.
         """
 
-        feature_type = feature_type.upper()
-        feature_type_instance = cls.__members__.get(feature_type)
-        if feature_type_instance:
-            return feature_type_instance
+        features_type = features_type.upper()
+        features_type_instance = cls.__members__.get(features_type)
+        if features_type_instance:
+            return features_type_instance
         else:
-            raise ValueError(f'Unsupported FeaturesType "{feature_type}".')
+            raise ValueError(f'Unsupported FeaturesType "{features_type}".')
 
 
 @unique
@@ -487,12 +487,12 @@ class CisTargetDatabase:
         if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
             feature_ids = FeatureIDs(
                 feature_ids=self.df.columns.to_list(),
-                features_type=FeaturesType.from_str(feature_type=self.db_type.column_kind)
+                features_type=FeaturesType.from_str(features_type=self.db_type.column_kind)
             )
         elif self.db_type.row_kind == 'regions' or self.db_type.row_kind == 'genes':
             feature_ids = FeatureIDs(
                 feature_ids=self.df.index.to_list(),
-                features_type=FeaturesType.from_str(feature_type=self.db_type.row_kind)
+                features_type=FeaturesType.from_str(features_type=self.db_type.row_kind)
             )
 
         return feature_ids

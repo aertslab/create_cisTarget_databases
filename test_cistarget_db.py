@@ -12,8 +12,8 @@ def test_FeaturesType_from_str():
     assert FeaturesType.from_str('genes') == FeaturesType.GENES
     assert FeaturesType.from_str('GENES') == FeaturesType.GENES
 
-    with pytest.raises(ValueError, match=r'Unsupported FeaturesType "NON_EXISTING_FEATURE_TYPE".'):
-        FeaturesType.from_str('NON_EXISTING_FEATURE_TYPE')
+    with pytest.raises(ValueError, match=r'Unsupported FeaturesType "NON_EXISTING_FEATURES_TYPE".'):
+        FeaturesType.from_str('NON_EXISTING_FEATURES_TYPE')
 
 
 def test_MotifsOrTracksType_from_str():
@@ -105,13 +105,13 @@ def test_DatabaseTypes():
     """
     for scores_or_rankings in ('scores', 'rankings'):
         for motif_or_tracks_type in MotifsOrTracksType.__members__:
-            for feature_type in FeaturesType.__members__:
-                database_type_name = f'{scores_or_rankings.upper()}_DB_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}_VS_{FeaturesType[feature_type].value.upper()}'
+            for features_type in FeaturesType.__members__:
+                database_type_name = f'{scores_or_rankings.upper()}_DB_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}_VS_{FeaturesType[features_type].value.upper()}'
                 assert database_type_name in DatabaseTypes.__members__
                 assert DatabaseTypes[database_type_name].value == (
                     scores_or_rankings,
                     MotifsOrTracksType[motif_or_tracks_type].value,
-                    FeaturesType[feature_type].value
+                    FeaturesType[features_type].value
                 )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(database_type_name)
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(
@@ -120,15 +120,15 @@ def test_DatabaseTypes():
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_strings(
                     scores_or_rankings,
                     MotifsOrTracksType[motif_or_tracks_type].value,
-                    FeaturesType[feature_type].value
+                    FeaturesType[features_type].value
                 )
                 del database_type_name
 
-                database_type_name = f'{scores_or_rankings.upper()}_DB_{FeaturesType[feature_type].value.upper()}_VS_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}'
+                database_type_name = f'{scores_or_rankings.upper()}_DB_{FeaturesType[features_type].value.upper()}_VS_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}'
                 assert database_type_name in DatabaseTypes.__members__
                 assert DatabaseTypes[database_type_name].value == (
                     scores_or_rankings,
-                    FeaturesType[feature_type].value,
+                    FeaturesType[features_type].value,
                     MotifsOrTracksType[motif_or_tracks_type].value
                 )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(database_type_name)
@@ -137,7 +137,7 @@ def test_DatabaseTypes():
                 )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_strings(
                     scores_or_rankings,
-                    FeaturesType[feature_type].value,
+                    FeaturesType[features_type].value,
                     MotifsOrTracksType[motif_or_tracks_type].value
                 )
                 del database_type_name
