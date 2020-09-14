@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pyarrow.feather as pf
 
+import orderstatistics
+
 from enum import Enum, unique
 from typing import List, Optional, Set, Tuple, Type, Union
 
@@ -278,6 +280,13 @@ class DatabaseTypes(Enum):
         return self._is_some_kind_of_db_by_checking_column_and_row_kind('tracks')
 
     @property
+    def allowed_as_cross_species_rankings_db_input(self) -> bool:
+        """
+        Check if cisTarget database is allowed as CistargetDatabase.create_cross_species_rankings_db() input database.
+        """
+        return self.is_rankings_db and self._column_kind == 'motifs'
+
+    @property
     def scores_or_rankings(self) -> str:
         """Return 'scores' or 'rankings' for DatabaseTypes member."""
         return self._scores_or_rankings
@@ -417,6 +426,97 @@ class CisTargetDatabase:
             )
 
         return CisTargetDatabase(db_type, df)
+
+    @staticmethod
+    def create_cross_species_rankings_db(species_rankings_db_filenames = Union[List[str], Tuple[str]]):
+        for species_rankings_db_filename in species_rankings_db_filenames:
+            # Get database type for each provided cisTarget database feather file and check if it is a supported type
+            # for creating cross species rankings databases.
+            species_rankings_db_type, db_prefix, extension = \
+                DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
+                    db_filename=species_rankings_db_filename
+                )
+
+            assert \
+                species_rankings_db_type.allowed_as_cross_species_rankings_db_input, \
+                f'"{species_rankings_db_filename}" ({species_rankings_db_type}) is not allowed as input database type.'
+
+        # Create Feather dataset object with all provided rankings databases (from different species).
+        multiple_species_rankings_feather_dataset = pf.FeatherDataset(
+            path_or_paths=species_rankings_db_filenames,
+            validate_schema=True
+        )
+
+        # Read Feather dataset object in a pyarrow table. Each column in the Feather dataset consists of X amount of
+        # chunks (where X is the number of Feather databases).
+        multiple_species_rankings_table = multiple_species_rankings_feather_dataset.read_table(columns=None)
+
+        # Check if a "regions" or "genes" column name (row index column) is found in the Feather database.
+        if species_rankings_db_type.row_kind in multiple_species_rankings_table.column_names:
+            features_type = FeaturesType.from_str(species_rankings_db_type.row_kind)
+        else:
+            raise ValueError(
+                'Feather rankings databases for creating cross species rankings need to have a column named "regions" '
+                'or "genes".'
+            )
+
+        # Get Feature IDs from the regions/genes column from the first Feather database, by taking the data from the
+        # first chunk of the pyarrow table.
+        feature_ids_tuple = tuple(multiple_species_rankings_table.column(features_type.value).chunk(0).to_pylist())
+        feature_ids = FeatureIDs(
+            feature_ids=feature_ids_tuple,
+            features_type=features_type
+        )
+
+        # Check if Feather databases were created with the CisTargetDatabase class (FeatureIDs are made unique and are
+        # sorted).
+        assert \
+            len(feature_ids.ids) == len(feature_ids_tuple), \
+            f'Feature IDs ({features_type.value} IDs) are not unique in "{species_rankings_db_filenames[0]}".'
+
+        # Check if each database contains exactly the same regions/genes and in the same order.
+        for chunk_idx in range(1, multiple_species_rankings_table.column(features_type.value).num_chunks):
+            assert \
+                feature_ids_tuple == tuple(
+                    multiple_species_rankings_table.column(features_type.value).chunk(chunk_idx).to_pylist()
+                ), \
+                f'Feather rankings database "{species_rankings_db_filenames[chunk_idx]}" contains different Feature ' \
+                f'IDs or in a different order than in "{species_rankings_db_filenames[0]}".'
+
+        # Get all motif IDs by getting all column names except the "regions" or "genes" column name.
+        motif_or_track_ids = MotifOrTrackIDs(
+            motif_or_track_ids=tuple(
+                motif_id
+                for motif_id in multiple_species_rankings_table.column_names
+                if motif_id != features_type.value
+            ),
+            motifs_or_tracks_type=species_rankings_db_type.column_kind
+        )
+
+        # Create zeroed rankings database for storing cross species rankings.
+        cross_species_rankings_ct = CisTargetDatabase.create_db(
+            db_type=species_rankings_db_type,
+            feature_ids=feature_ids,
+            motif_or_track_ids=motif_or_track_ids,
+        )
+
+        for motif_id in motif_or_track_ids.ids:
+            # Get all rankings for a motif (each chunk contains the rankings from one species which were stored in a
+            # separate cisTarget rankings database) and transpose them so each row contains the ranking for each species
+            # for one region/gene. After transposition the motif_id_rankings_per_species array is in 'C' order again, so
+            # is more cache friendly for usage in orderstatistics.create_cross_species_ranking_for_motif().
+            motif_id_rankings_per_species = np.array(
+                multiple_species_rankings_table.column(motif_id).chunks, order='F'
+            ).transpose()
+
+            # Create cross species ranking for current motif by combining the individual ranking in each species per
+            # region/gene with order statistics.
+            cross_species_rankings_ct.df.loc[:, motif_id] = orderstatistics.create_cross_species_ranking_for_motif(
+                motif_id_rankings_per_species=motif_id_rankings_per_species
+            )
+
+        # Return CisTarget cross species rankings database.
+        return cross_species_rankings_ct
 
     @staticmethod
     def read_db(db_filename: str, db_type: Optional[Union['DatabaseTypes', str]] = None) -> 'CisTargetDatabase':

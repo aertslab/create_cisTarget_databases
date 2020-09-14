@@ -656,3 +656,36 @@ def test_cistargetdatabase_convert_scores_db_to_rankings_db(ct_scores_db_motifs_
     # Check if it creates this ranking when seed is set to 123456 (to resolve ties).
     assert np.all(ct_rankings_db_regions_vs_motifs.df.to_numpy() == ct_rankings_db_regions_vs_motifs_numpy)
 
+
+@pytest.fixture()
+def ct_rankings_db_motifs_vs_regions(ct_scores_db_motifs_vs_regions):
+    # Convert cisTarget SCORES_DB_MOTIFS_VS_REGIONS database to cisTarget RANKINGS_DB_MOTIFS_VS_REGIONS database.
+    ct_rankings_db_motifs_vs_regions = ct_scores_db_motifs_vs_regions.convert_scores_db_to_rankings_db(seed=123456)
+
+    return ct_rankings_db_motifs_vs_regions
+
+
+def test_cistargetdatabase_create_cross_species_rankings_db(ct_rankings_db_motifs_vs_regions):
+    # Write cisTarget RANKINGS_DB_MOTIFS_VS_REGIONS database.
+    ct_rankings_db_motifs_vs_regions_db_filename = ct_rankings_db_motifs_vs_regions.write_db(
+        db_prefix='test/ct_rankings_db_genes_vs_tracks'
+    )
+
+    # Create cross species CisTarget rankings database from individual rankings databases (in this case the same ones).
+    ct_cross_species_rankings_db_motifs_vs_regions = CisTargetDatabase.create_cross_species_rankings_db(
+        (ct_rankings_db_motifs_vs_regions_db_filename,
+         ct_rankings_db_motifs_vs_regions_db_filename,
+         ct_rankings_db_motifs_vs_regions_db_filename,
+         ct_rankings_db_motifs_vs_regions_db_filename,
+         ct_rankings_db_motifs_vs_regions_db_filename,
+         ct_rankings_db_motifs_vs_regions_db_filename,
+         ct_rankings_db_motifs_vs_regions_db_filename)
+    )
+
+    # Check if the cross species CisTarget rankings database made from the same 7 species rankings CisTarget databases
+    # give the same database.
+    assert ct_cross_species_rankings_db_motifs_vs_regions.db_type == ct_rankings_db_motifs_vs_regions.db_type
+    assert np.all(ct_cross_species_rankings_db_motifs_vs_regions.df.to_numpy()
+                  == ct_rankings_db_motifs_vs_regions.df.to_numpy())
+    assert ct_cross_species_rankings_db_motifs_vs_regions.feature_ids == ct_rankings_db_motifs_vs_regions.feature_ids
+    assert ct_cross_species_rankings_db_motifs_vs_regions.motif_or_track_ids == ct_rankings_db_motifs_vs_regions.motif_or_track_ids
