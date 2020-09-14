@@ -146,10 +146,7 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename: str,
                     # Check if all region IDs only appear once.
                     if region_id in region_ids:
                         print(
-                            'Error: region ID "{0:s}" is not unique in FASTA file "{1:s}".'.format(
-                                region_id,
-                                fasta_filename
-                            ),
+                            f'Error: region ID "{region_id:s}" is not unique in FASTA file "{fasta_filename:s}".',
                             file=sys.stderr
                         )
 
@@ -375,28 +372,28 @@ def main():
 
     if not os.path.exists(args.fasta_filename):
         print(
-            'Error: FASTA filename "{0:s}" does not exist.'.format(args.fasta_filename),
+            f'Error: FASTA filename "{args.fasta_filename}" does not exist.',
             file=sys.stderr
         )
         sys.exit(1)
 
     if not os.path.exists(args.motifs_dir):
         print(
-            'Error: Motif directory "{0:s}" does not exist.'.format(args.motifs_dir),
+            f'Error: Motif directory "{args.motifs_dir}" does not exist.',
             file=sys.stderr
         )
         sys.exit(1)
 
     if args.motif_md5_to_motif_id_filename and not os.path.exists(args.motif_md5_to_motif_id_filename):
         print(
-            'Error: Motif MD5 to motif ID mappings filename "{0:s}" does not exist.'.format(args.motif_md5_to_motif_id_filename),
+            f'Error: Motif MD5 to motif ID mappings filename "{args.motif_md5_to_motif_id_filename}" does not exist.',
             file=sys.stderr
         )
         sys.exit(1)
 
-    if not os.path.exists(args.fasta_filename):
+    if not os.path.exists(args.motifs_list_filename):
         print(
-            'Error: Motifs list filename "{0:s}" does not exist.'.format(args.motifs_list_filename),
+            f'Error: Motifs list filename "{args.motifs_list_filename}" does not exist.',
             file=sys.stderr
         )
         sys.exit(1)
@@ -464,11 +461,8 @@ def main():
         write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs += 1
 
         print(
-            'Adding Cluster-Buster CRM scores ({0:d} of {1:d}) for motif "{2:s}".'.format(
-                write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs,
-                nbr_motifs,
-                motif_id
-            ),
+            f'Adding Cluster-Buster CRM scores ({write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs:d} of '
+            f'{nbr_motifs:d}) for motif "{motif_id:s}".',
             file=sys.stderr
         )
 
@@ -499,16 +493,14 @@ def main():
 
     if 'nbr_of_scored_motifs' not in write_crm_scores_for_motif_to_ct_scores_db.__dict__:
         print(
-            'Error: None of {0:d} motifs was scored successfully'.format(nbr_motifs),
+            f'Error: None of {nbr_motifs:d} motifs were scored successfully.',
             file=sys.stderr
         )
         sys.exit(1)
     elif write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs != nbr_motifs:
         print(
-            'Error: Only {0:d} out of {1:d} motifs were scored successfully'.format(
-                write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs,
-                nbr_motifs
-            ),
+            f'Error: Only {write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs:d} out of {nbr_motifs:d} '
+            f'motifs were scored successfully.',
             file=sys.stderr
         )
         sys.exit(1)
