@@ -82,7 +82,7 @@ class FeatureIDs:
     def __repr__(self) -> str:
         return f'FeatureIDs(\n  feature_ids={self.ids},\n  features_type={self.type}\n)'
 
-    def __eq__(self, other: object):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, FeatureIDs):
             return NotImplemented
 
@@ -118,7 +118,7 @@ class MotifOrTrackIDs:
     def __repr__(self) -> str:
         return f'MotifOrTrackIDs(\n  motif_or_track_ids={self.ids},\n  motifs_or_tracks_type={self.type}\n)'
 
-    def __eq__(self, other: object):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, MotifOrTrackIDs):
             return NotImplemented
 
