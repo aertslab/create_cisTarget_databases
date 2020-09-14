@@ -65,6 +65,19 @@ def test_FeatureIDs_with_features_type_str():
     assert len(features_ids_instance) == 3
 
 
+def test_FeatureIDs_subset_superset():
+    """Check if feature IDs of a FeatureIDs object are a subset or a superset of another FeatureIDs object."""
+    features_ids_instance1 = FeatureIDs(
+        feature_ids=['reg1', 'reg2', 'reg6'], features_type=FeaturesType.REGIONS
+    )
+    features_ids_instance2 = FeatureIDs(
+        feature_ids=['reg1', 'reg2', 'reg4', 'reg6'], features_type=FeaturesType.REGIONS
+    )
+
+    assert features_ids_instance1.issubset(features_ids_instance2)
+    assert features_ids_instance2.issuperset(features_ids_instance1)
+
+
 def test_MotifsOrTracksIDs_with_motifs():
     """Check if a MotifOrTrackIDs object can be constructed from a list of motif IDs."""
     motif_or_track_ids_instance = MotifOrTrackIDs(

@@ -91,6 +91,34 @@ class FeatureIDs:
     def __len__(self) -> int:
         return len(self.ids)
 
+    def issubset(self, other: 'FeatureIDs') -> bool:
+        """
+        Check if all feature IDs in the current FeatureIDs object are at least present in the other FeatureIDs object.
+
+        :param other: FeatureIDs object
+        :return: True or False
+        """
+        if not isinstance(other, FeatureIDs):
+            return NotImplemented
+
+        assert self.type == other.type, 'FeatureIDs objects are of a different type.'
+
+        return set(self.ids).issubset(other.ids)
+
+    def issuperset(self, other: 'FeatureIDs') -> bool:
+        """
+        Check if all feature IDs in the other FeatureIDs object are at least present in the current FeatureIDs object.
+
+        :param other: FeatureIDs object
+        :return: True or False
+        """
+        if not isinstance(other, FeatureIDs):
+            return NotImplemented
+
+        assert self.type == other.type, 'FeatureIDs objects are of a different type.'
+
+        return set(self.ids).issuperset(set(other.ids))
+
 
 class MotifOrTrackIDs:
     """
