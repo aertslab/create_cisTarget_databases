@@ -267,80 +267,161 @@ def test_DatabaseTypes_properties_and_get_dtype():
     del rankings_db_region_vs_motifs
 
 
-def test_cistargetdatabase_basic():
-    # Test cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
+@pytest.fixture
+def db_numpy_array_scores_db_motifs_vs_regions():
+    db_numpy_array_scores_db_motifs_vs_regions = np.array(
+        [[1.2, 3.0, 0.3, 5.6],
+         [6.7, 3.0, 4.3, 5.6],
+         [3.5, 3.0, 0.0, 0.0],
+         [0.0, 3.0, 0.0, 5.6],
+         [2.4, 3.0, 7.8, 1.2],
+         [2.4, 3.0, 0.6, 0.0],
+         [2.4, 3.0, 7.7, 0.0]],
+        dtype=np.float32
+    )
 
-    # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
+    return db_numpy_array_scores_db_motifs_vs_regions
+
+
+@pytest.fixture
+def db_numpy_array_rankings_db_genes_vs_tracks():
+    # Create numpy array with values which will be written to the cisTarget database dataframe.
+    db_numpy_array_rankings_db_genes_vs_tracks = np.array(
+        [[0, 1, 2, 3, 4, 5, 6],
+         [2, 4, 3, 0, 1, 6, 5],
+         [0, 6, 2, 4, 1, 3, 5],
+         [2, 0, 4, 6, 5, 3, 1]],
+        dtype=np.int16
+    )
+
+    return db_numpy_array_rankings_db_genes_vs_tracks
+
+
+def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
+                                 db_numpy_array_rankings_db_genes_vs_tracks):
+    # Test cisTarget SCORES_DB_MOTIFS_VS_REGIONS databases.
+
     features_ids_instance = FeatureIDs(
-        feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5'], features_type=FeaturesType.REGIONS
+        feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5', 'reg6', 'reg7'], features_type=FeaturesType.REGIONS
     )
     motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
     )
 
-    ct_scores_db_motifs_vs_regions = CisTargetDatabase.create_db(
-        db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
-        feature_ids=features_ids_instance,
-        motif_or_track_ids=motif_or_track_ids_instance
+    def check_ct_scores_db_motifs_vs_regions(ct_scores_db_motifs_vs_regions, db_numpy_array):
+        # Check if creation of cisTarget SCORES_DB_MOTIFS_VS_REGIONS database succeeded (float32 datatype).
+        assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == db_numpy_array)
+        assert ct_scores_db_motifs_vs_regions.shape == (7, 4)
+        assert ct_scores_db_motifs_vs_regions.nbr_rows == 7
+        assert ct_scores_db_motifs_vs_regions.nbr_columns == 4
+        assert ct_scores_db_motifs_vs_regions.dtype == np.float32
+        # Check if feature IDs and motif and track IDs are properly set.
+        assert ct_scores_db_motifs_vs_regions.feature_ids == features_ids_instance
+        assert ct_scores_db_motifs_vs_regions.motif_or_track_ids == motif_or_track_ids_instance
+        # Columns contain motifs.
+        assert ct_scores_db_motifs_vs_regions.df.columns.to_list() == list(motif_or_track_ids_instance.ids)
+        # Rows contain regions.
+        assert ct_scores_db_motifs_vs_regions.df.index.to_list() == list(features_ids_instance.ids)
+
+    # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database in C order.
+    check_ct_scores_db_motifs_vs_regions(
+        ct_scores_db_motifs_vs_regions=CisTargetDatabase.create_db(
+            db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
+            feature_ids=features_ids_instance,
+            motif_or_track_ids=motif_or_track_ids_instance
+        ),
+        db_numpy_array=np.zeros((7, 4), dtype=np.float32)
     )
 
-    # Check if creation of zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database succeeded (float32 datatype).
-    assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == np.zeros((5, 4), dtype=np.float32))
-    assert ct_scores_db_motifs_vs_regions.shape == (5, 4)
-    assert ct_scores_db_motifs_vs_regions.nbr_rows == 5
-    assert ct_scores_db_motifs_vs_regions.nbr_columns == 4
-    assert ct_scores_db_motifs_vs_regions.dtype == np.float32
-    # Check if feature IDs and motif and track IDs are properly set.
-    assert ct_scores_db_motifs_vs_regions.feature_ids == features_ids_instance
-    assert ct_scores_db_motifs_vs_regions.motif_or_track_ids == motif_or_track_ids_instance
-    # Columns contain motifs.
-    assert ct_scores_db_motifs_vs_regions.df.columns.to_list() == list(motif_or_track_ids_instance.ids)
-    # Rows contain regions.
-    assert ct_scores_db_motifs_vs_regions.df.index.to_list() == list(features_ids_instance.ids)
+    # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database in Fortran order.
+    check_ct_scores_db_motifs_vs_regions(
+        ct_scores_db_motifs_vs_regions=CisTargetDatabase.create_db(
+            db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
+            feature_ids=features_ids_instance,
+            motif_or_track_ids=motif_or_track_ids_instance,
+            order='F'
+        ),
+        db_numpy_array=np.zeros((7, 4), dtype=np.float32)
+    )
+
+    # Create cisTarget SCORES_DB_MOTIFS_VS_REGIONS database from numpy array.
+    check_ct_scores_db_motifs_vs_regions(
+        ct_scores_db_motifs_vs_regions=CisTargetDatabase.create_db(
+            db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
+            feature_ids=features_ids_instance,
+            motif_or_track_ids=motif_or_track_ids_instance,
+            db_numpy_array=db_numpy_array_scores_db_motifs_vs_regions
+        ),
+        db_numpy_array=db_numpy_array_scores_db_motifs_vs_regions
+    )
 
     # Delete some objects so we don't accidentally reuse them in the next section.
     del features_ids_instance
     del motif_or_track_ids_instance
-    del ct_scores_db_motifs_vs_regions
 
-    # Test cisTarget SCORES_DB_GENES_VS_TRACKS database.
+    # Test cisTarget RANKINGS_DB_GENES_VS_TRACKS databases.
 
-    # Create zeroed cisTarget SCORES_DB_GENES_VS_TRACKS database.
     features_ids_instance = FeatureIDs(
-        feature_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5'], features_type=FeaturesType.GENES
+        feature_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5', 'gene6', 'gene7'], features_type=FeaturesType.GENES
     )
     motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['track1', 'track2', 'track3', 'track4'], motifs_or_tracks_type=MotifsOrTracksType.TRACKS
     )
 
-    ct_scores_db_genes_vs_tracks = CisTargetDatabase.create_db(
-        db_type=DatabaseTypes.SCORES_DB_GENES_VS_TRACKS,
-        feature_ids=features_ids_instance,
-        motif_or_track_ids=motif_or_track_ids_instance
+    def check_ct_scores_db_genes_vs_tracks(ct_rankings_db_genes_vs_tracks, db_numpy_array):
+        # Check if creation of zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database succeeded (int16 datatype).
+        assert np.all(ct_rankings_db_genes_vs_tracks.df.to_numpy() == db_numpy_array)
+        assert ct_rankings_db_genes_vs_tracks.shape == (4, 7)
+        assert ct_rankings_db_genes_vs_tracks.nbr_rows == 4
+        assert ct_rankings_db_genes_vs_tracks.nbr_columns == 7
+        assert ct_rankings_db_genes_vs_tracks.dtype == np.int16
+        # Check if feature IDs and motif and track IDs are properly set.
+        assert ct_rankings_db_genes_vs_tracks.feature_ids == features_ids_instance
+        assert ct_rankings_db_genes_vs_tracks.motif_or_track_ids == motif_or_track_ids_instance
+        # Columns contain genes.
+        assert ct_rankings_db_genes_vs_tracks.df.columns.to_list() == list(features_ids_instance.ids)
+        # Rows contain tracks.
+        assert ct_rankings_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.ids)
+
+    # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database in C order.
+    check_ct_scores_db_genes_vs_tracks(
+        ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
+            db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
+            feature_ids=features_ids_instance,
+            motif_or_track_ids=motif_or_track_ids_instance
+        ),
+        db_numpy_array=np.zeros((4, 7), dtype=np.int16)
     )
 
-    # Check if creation of zeroed isTarget SCORES_DB_GENES_VS_TRACKS database succeeded (float32 datatype).
-    assert np.all(ct_scores_db_genes_vs_tracks.df.to_numpy() == np.zeros((4, 5), dtype=np.float32))
-    assert ct_scores_db_genes_vs_tracks.shape == (4, 5)
-    assert ct_scores_db_genes_vs_tracks.nbr_rows == 4
-    assert ct_scores_db_genes_vs_tracks.nbr_columns == 5
-    assert ct_scores_db_genes_vs_tracks.dtype == np.float32
-    # Check if feature IDs and motif and track IDs are properly set.
-    assert ct_scores_db_genes_vs_tracks.feature_ids == features_ids_instance
-    assert ct_scores_db_genes_vs_tracks.motif_or_track_ids == motif_or_track_ids_instance
-    # Columns contain genes.
-    assert ct_scores_db_genes_vs_tracks.df.columns.to_list() == list(features_ids_instance.ids)
-    # Rows contain tracks.
-    assert ct_scores_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.ids)
+    # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database in C order.
+    check_ct_scores_db_genes_vs_tracks(
+        ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
+            db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
+            feature_ids=features_ids_instance,
+            motif_or_track_ids=motif_or_track_ids_instance,
+            order='F'
+        ),
+        db_numpy_array=np.zeros((4, 7), dtype=np.int16)
+    )
+
+    # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database in C order.
+    check_ct_scores_db_genes_vs_tracks(
+        ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
+            db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
+            feature_ids=features_ids_instance,
+            motif_or_track_ids=motif_or_track_ids_instance,
+            db_numpy_array=db_numpy_array_rankings_db_genes_vs_tracks
+        ),
+        db_numpy_array=db_numpy_array_rankings_db_genes_vs_tracks
+    )
 
     # Delete some objects so we don't accidentally reuse them in the next section.
     del features_ids_instance
     del motif_or_track_ids_instance
-    del ct_scores_db_genes_vs_tracks
 
 
 @pytest.fixture
-def ct_scores_db_motifs_vs_regions():
+def ct_scores_db_motifs_vs_regions(db_numpy_array_scores_db_motifs_vs_regions):
     # Create cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
 
     # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
@@ -354,26 +435,15 @@ def ct_scores_db_motifs_vs_regions():
     ct_scores_db_motifs_vs_regions = CisTargetDatabase.create_db(
         db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
         feature_ids=features_ids_instance,
-        motif_or_track_ids=motif_or_track_ids_instance
-    )
-
-    # Create numpy array with values which will be written to the cisTarget database dataframe.
-    ct_scores_db_motifs_vs_regions.df.iloc[:, :] = np.array(
-        [[1.2, 3.0, 0.3, 5.6],
-         [6.7, 3.0, 4.3, 5.6],
-         [3.5, 3.0, 0.0, 0.0],
-         [0.0, 3.0, 0.0, 5.6],
-         [2.4, 3.0, 7.8, 1.2],
-         [2.4, 3.0, 0.6, 0.0],
-         [2.4, 3.0, 7.7, 0.0]],
-        dtype=np.float32
+        motif_or_track_ids=motif_or_track_ids_instance,
+        db_numpy_array=db_numpy_array_scores_db_motifs_vs_regions
     )
 
     return ct_scores_db_motifs_vs_regions
 
 
 @pytest.fixture
-def ct_rankings_db_genes_vs_tracks():
+def ct_rankings_db_genes_vs_tracks(db_numpy_array_rankings_db_genes_vs_tracks):
     # Create cisTarget RANKINGS_DB_GENES_VS_TRACKS database.
 
     # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database.
@@ -387,16 +457,8 @@ def ct_rankings_db_genes_vs_tracks():
     ct_rankings_db_genes_vs_tracks = CisTargetDatabase.create_db(
         db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
         feature_ids=features_ids_instance,
-        motif_or_track_ids=motif_or_track_ids_instance
-    )
-
-    # Create numpy array with values which will be written to the cisTarget database dataframe.
-    ct_rankings_db_genes_vs_tracks.df.iloc[:, :] = np.array(
-        [[0, 1, 2, 3, 4, 5, 6],
-         [2, 4, 3, 0, 1, 6, 5],
-         [0, 6, 2, 4, 1, 3, 5],
-         [2, 0, 4, 6, 5, 3, 1]],
-        dtype=np.int16
+        motif_or_track_ids=motif_or_track_ids_instance,
+        db_numpy_array=db_numpy_array_rankings_db_genes_vs_tracks
     )
 
     return ct_rankings_db_genes_vs_tracks

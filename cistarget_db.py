@@ -382,14 +382,19 @@ class CisTargetDatabase:
     @staticmethod
     def create_db(db_type: Union['DatabaseTypes', str],
                   feature_ids: FeatureIDs,
-                  motif_or_track_ids: MotifOrTrackIDs) -> 'CisTargetDatabase':
+                  motif_or_track_ids: MotifOrTrackIDs,
+                  db_numpy_array: Optional[np.ndarray] = None,
+                  order: Optional[str] = None) -> 'CisTargetDatabase':
         """
-        Create zeroed cisTarget scores or rankings database of one of the DatabaseTypes types
-        for FeatureIDs vs MotifOrTrackIDs or vice versa.
+        Create cisTarget scores or rankings database of one of the DatabaseTypes types for FeatureIDs vs MotifOrTrackIDs
+        or vice versa.
 
         :param db_type: Type of database.
         :param feature_ids: FeatureIDs object or list, set or tuple of feature IDs.
         :param motif_or_track_ids: MotifOrTrackIDs object or list, set or tuple of motif or track IDs.
+        :param db_numpy_array: 2D numpy array with the correct dtype and shape. If None, a zeroed database is created.
+        :param order: Layout numpy array in 'C' (C-like index order) or 'F' (Fortran-like index order) order when
+                      creating a new zeroed cisTarget database.
         :return: CisTargetDatabase object.
         """
 
@@ -411,7 +416,10 @@ class CisTargetDatabase:
                 raise ValueError('feature_ids must be of "FeatureIDs" type.')
         else:
             if feature_ids.type != db_type.features_type:
-                raise ValueError(f'"feature_ids" type ({feature_ids.type}) is not of the same as the one defined for "db_type" ({db_type.features_type}).')
+                raise ValueError(
+                    f'"feature_ids" type ({feature_ids.type}) is not of the same as the one defined for "db_type" '
+                    f'({db_type.features_type}).'
+                )
 
         if not isinstance(motif_or_track_ids, MotifOrTrackIDs):
             if isinstance(motif_or_track_ids, List) or isinstance(motif_or_track_ids, Set) or isinstance(motif_or_track_ids, Tuple):
@@ -424,7 +432,22 @@ class CisTargetDatabase:
                 raise ValueError('motif_or_track_ids must be of "MotifOrTrackIDs" type.')
         else:
             if motif_or_track_ids.type != db_type.motifs_or_tracks_type:
-                raise ValueError(f'"motif_or_track_ids" type ({motif_or_track_ids.type}) is not of the same as the one defined for "db_type" ({db_type.motifs_or_tracks_type}).')
+                raise ValueError(
+                    f'"motif_or_track_ids" type ({motif_or_track_ids.type}) is not of the same as the one defined for '
+                    f'"db_type" ({db_type.motifs_or_tracks_type}).'
+                )
+
+        if isinstance(db_numpy_array, np.ndarray):
+            if len(db_numpy_array.shape) != 2:
+                raise ValueError(
+                    f'Numpy array needs to have exactly 2 dimensions ({len(db_numpy_array)} dimensions found).'
+                )
+
+            if db_type.get_dtype(nbr_rows=db_numpy_array.shape[0]) != db_numpy_array.dtype:
+                raise ValueError(
+                    f'dtype of numpy array ({db_numpy_array.dtype}) should be '
+                    f'{db_type.get_dtype(nbr_rows=db_numpy_array.shape[0])}.'
+                )
 
         # Create feature IDs index and motif or track IDs index.
         feature_ids_idx = pd.Index(
@@ -437,21 +460,61 @@ class CisTargetDatabase:
         )
 
         if db_type.column_kind == 'regions' or db_type.column_kind == 'genes':
-            # Create zeroed dataframe for all region IDs or gene IDs vs all motif or track IDs.
-            df = pd.DataFrame(
-                data=np.zeros((len(motif_or_track_ids), len(feature_ids)),
-                              dtype=db_type.get_dtype(nbr_rows=len(feature_ids))),
-                index=motif_or_track_ids_idx,
-                columns=feature_ids_idx
-            )
+            if isinstance(db_numpy_array, np.ndarray):
+                if len(motif_or_track_ids) != db_numpy_array.shape[0]:
+                    raise ValueError(
+                        f'Numpy array needs to have same number of rows as {db_type.row_kind}: '
+                        f'{db_numpy_array.shape[0]} vs {len(motif_or_track_ids)}'
+                    )
+                if len(feature_ids) != db_numpy_array.shape[1]:
+                    raise ValueError(
+                        f'Numpy array needs to have same number of columns as {db_type.column_kind}: '
+                        f'{db_numpy_array.shape[1]} vs {len(feature_ids)}'
+                    )
+
+                # Create dataframe from numpy array for all region IDs or gene IDs vs all motif or track IDs.
+                df = pd.DataFrame(
+                    data=db_numpy_array,
+                    index=motif_or_track_ids_idx,
+                    columns=feature_ids_idx
+                )
+            else:
+                # Create zeroed dataframe for all region IDs or gene IDs vs all motif or track IDs.
+                df = pd.DataFrame(
+                    data=np.zeros((len(motif_or_track_ids), len(feature_ids)),
+                                  dtype=db_type.get_dtype(nbr_rows=len(feature_ids)),
+                                  order=order),
+                    index=motif_or_track_ids_idx,
+                    columns=feature_ids_idx
+                )
         elif db_type.column_kind == 'motifs' or db_type.column_kind == 'tracks':
-            # Create zeroed dataframe for all motif or track IDs vs all region IDs or gene IDs.
-            df = pd.DataFrame(
-                data=np.zeros((len(feature_ids), len(motif_or_track_ids)),
-                              dtype=db_type.get_dtype(nbr_rows=len(motif_or_track_ids))),
-                index=feature_ids_idx,
-                columns=motif_or_track_ids_idx
-            )
+            if isinstance(db_numpy_array, np.ndarray):
+                if len(feature_ids) != db_numpy_array.shape[0]:
+                    raise ValueError(
+                        f'Numpy array needs to have same number of rows as {db_type.row_kind}: '
+                        f'{db_numpy_array.shape[0]} vs {len(feature_ids)}'
+                    )
+                if len(motif_or_track_ids) != db_numpy_array.shape[1]:
+                    raise ValueError(
+                        f'Numpy array needs to have same number of columns as {db_type.column_kind}: '
+                        f'{db_numpy_array.shape[1]} vs {len(motif_or_track_ids)}'
+                    )
+
+                # Create dataframe from numpy array for all motif or track IDs vs all region IDs or gene IDs.
+                df = pd.DataFrame(
+                    data=db_numpy_array,
+                    index=feature_ids_idx,
+                    columns=motif_or_track_ids_idx
+                )
+            else:
+                # Create zeroed dataframe for all motif or track IDs vs all region IDs or gene IDs.
+                df = pd.DataFrame(
+                    data=np.zeros((len(feature_ids), len(motif_or_track_ids)),
+                                  dtype=db_type.get_dtype(nbr_rows=len(motif_or_track_ids)),
+                                  order=order),
+                    index=feature_ids_idx,
+                    columns=motif_or_track_ids_idx
+                )
 
         return CisTargetDatabase(db_type, df)
 
