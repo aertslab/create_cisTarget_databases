@@ -566,29 +566,90 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
 
 
 def test_cistargetdatabase_transpose(ct_scores_db_motifs_vs_regions, ct_rankings_db_genes_vs_tracks):
+    # Test creating cisTarget SCORES_DB_REGIONS_VS_MOTIFS databases by transposing the cisTarget
+    # SCORES_DB_MOTIFS_VS_REGIONS database with different options.
+
+    # Create transposed numpy array from ct_scores_db_motifs_vs_regions.
+    db_numpy_array_scores_db_motifs_vs_regions_transposed = ct_scores_db_motifs_vs_regions.df.to_numpy().transpose()
+
     # Create a cisTarget SCORES_DB_REGIONS_VS_MOTIFS database by transposing the cisTarget SCORES_DB_MOTIFS_VS_REGIONS
     # database.
     ct_scores_db_regions_vs_motifs = ct_scores_db_motifs_vs_regions.transpose()
 
     assert np.all(
-        ct_scores_db_regions_vs_motifs.df.to_numpy() == ct_scores_db_motifs_vs_regions.df.to_numpy().transpose()
+        ct_scores_db_regions_vs_motifs.df.to_numpy() == db_numpy_array_scores_db_motifs_vs_regions_transposed
     )
     assert ct_scores_db_regions_vs_motifs.db_type == DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS
 
-    del ct_scores_db_motifs_vs_regions
     del ct_scores_db_regions_vs_motifs
+
+    # Create a cisTarget SCORES_DB_REGIONS_VS_MOTIFS database in C order by transposing the cisTarget
+    # SCORES_DB_MOTIFS_VS_REGIONS database.
+    ct_scores_db_regions_vs_motifs_order_C = ct_scores_db_motifs_vs_regions.transpose(order='C')
+
+    # assert np.all(
+    #     ct_scores_db_regions_vs_motifs_order_C.df.to_numpy() == db_numpy_array_scores_db_motifs_vs_regions_transposed
+    # )
+    # assert ct_scores_db_regions_vs_motifs_order_C.db_type == DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS
+    # assert ct_scores_db_regions_vs_motifs_order_C.df.to_numpy().flags.c_contiguous is True
+
+    del ct_scores_db_regions_vs_motifs_order_C
+
+    # Create a cisTarget SCORES_DB_REGIONS_VS_MOTIFS database in Fortran order by transposing the cisTarget
+    # SCORES_DB_MOTIFS_VS_REGIONS database.
+    ct_scores_db_regions_vs_motifs_order_F = ct_scores_db_motifs_vs_regions.transpose(order='F')
+
+    assert np.all(
+        ct_scores_db_regions_vs_motifs_order_F.df.to_numpy() == db_numpy_array_scores_db_motifs_vs_regions_transposed
+    )
+    assert ct_scores_db_regions_vs_motifs_order_F.db_type == DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS
+    assert ct_scores_db_regions_vs_motifs_order_F.df.to_numpy().flags.f_contiguous is True
+
+    del ct_scores_db_regions_vs_motifs_order_F
+    del ct_scores_db_motifs_vs_regions
+    del db_numpy_array_scores_db_motifs_vs_regions_transposed
+
+    # Test creating cisTarget RANKINGS_DB_TRACKS_VS_GENES databases by transposing the cisTarget
+    # RANKINGS_DB_GENES_VS_TRACK database with different options.
+
+    # Create transposed numpy array from ct_rankings_db_genes_vs_tracks.
+    db_numpy_array_rankings_db_genes_vs_tracks_transposed = ct_rankings_db_genes_vs_tracks.df.to_numpy().transpose()
 
     # Create a cisTarget RANKINGS_DB_TRACKS_VS_GENES database by transposing the cisTarget RANKINGS_DB_GENES_VS_TRACKS
     # database.
     ct_rankings_db_tracks_vs_genes = ct_rankings_db_genes_vs_tracks.transpose()
 
     assert np.all(
-        ct_rankings_db_tracks_vs_genes.df.to_numpy() == ct_rankings_db_genes_vs_tracks.df.to_numpy().transpose()
+        ct_rankings_db_tracks_vs_genes.df.to_numpy() == db_numpy_array_rankings_db_genes_vs_tracks_transposed
     )
     assert ct_rankings_db_tracks_vs_genes.db_type == DatabaseTypes.RANKINGS_DB_TRACKS_VS_GENES
 
-    del ct_rankings_db_genes_vs_tracks
     del ct_rankings_db_tracks_vs_genes
+
+    # Create a cisTarget RANKINGS_DB_TRACKS_VS_GENES database in C order by transposing the cisTarget
+    # RANKINGS_DB_GENES_VS_TRACKS database.
+    ct_rankings_db_tracks_vs_genes_order_C = ct_rankings_db_genes_vs_tracks.transpose(order='C')
+
+    assert np.all(
+        ct_rankings_db_tracks_vs_genes_order_C.df.to_numpy() == db_numpy_array_rankings_db_genes_vs_tracks_transposed
+    )
+    assert ct_rankings_db_tracks_vs_genes_order_C.db_type == DatabaseTypes.RANKINGS_DB_TRACKS_VS_GENES
+    assert ct_rankings_db_tracks_vs_genes_order_C.df.to_numpy().flags.c_contiguous is True
+
+    del ct_rankings_db_tracks_vs_genes_order_C
+
+    # Create a cisTarget RANKINGS_DB_TRACKS_VS_GENES database in C order by transposing the cisTarget
+    # RANKINGS_DB_GENES_VS_TRACKS database.
+    ct_rankings_db_tracks_vs_genes_order_F = ct_rankings_db_genes_vs_tracks.transpose(order='F')
+
+    assert np.all(
+        ct_rankings_db_tracks_vs_genes_order_F.df.to_numpy() == db_numpy_array_rankings_db_genes_vs_tracks_transposed
+    )
+    assert ct_rankings_db_tracks_vs_genes_order_F.db_type == DatabaseTypes.RANKINGS_DB_TRACKS_VS_GENES
+    assert ct_rankings_db_tracks_vs_genes_order_F.df.to_numpy().flags.f_contiguous is True
+
+    del ct_rankings_db_tracks_vs_genes_order_F
+    del ct_rankings_db_genes_vs_tracks
 
 
 def test_cistargetdatabase_update_scores_for_motif_or_track(ct_scores_db_motifs_vs_regions):

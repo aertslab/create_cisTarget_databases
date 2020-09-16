@@ -798,26 +798,59 @@ class CisTargetDatabase:
             extension=extension
         )
 
-    def transpose(self, copy: bool = False):
+    def transpose(self, order: Optional[str] = None):
         """
         Transpose cisTarget database (switch rows and columns).
 
         For example transpose a cisTarget database of DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS
         to DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS.
 
-        :param copy: Copy data or not.
+        :param order: Create transposed cisTarget database in 'C' (C order) or 'F' (Fortran order) order.
         :return: Transposed CisTargetDatabase object.
         """
 
-        # Transpose dataframe (switch rows and columns) and change database type.
-        return CisTargetDatabase(
-            db_type=DatabaseTypes.from_strings(
-                scores_or_rankings=self.db_type.scores_or_rankings,
-                column_kind=self.db_type.row_kind,
-                row_kind=self.db_type.column_kind
-            ),
-            df=self.df.transpose(copy=copy)
-        )
+        if order:
+            # Get numpy array behind dataframe.
+            db_numpy_array = self.df.to_numpy()
+
+            if (order == 'C' and db_numpy_array.flags.f_contiguous) \
+                    or (order == 'F' and db_numpy_array.flags.c_contiguous):
+                # Transpose dataframe (switch rows and columns) and change database type without creating a new numpy
+                # array as it will be in the correct order (C or Fortran) after transposition.
+                return CisTargetDatabase(
+                    db_type=DatabaseTypes.from_strings(
+                        scores_or_rankings=self.db_type.scores_or_rankings,
+                        column_kind=self.db_type.row_kind,
+                        row_kind=self.db_type.column_kind
+                    ),
+                    df=self.df.transpose(copy=False)
+                )
+            else:
+                # Create a new cisTarget database (switch rows and columns and change database type) with a newly
+                # created numpy array in the correct order (C or Fortran) based on the old numpy array (after
+                # transposition) backing the dataframe.
+                return CisTargetDatabase.create_db(
+                    db_type=DatabaseTypes.from_strings(
+                        scores_or_rankings=self.db_type.scores_or_rankings,
+                        column_kind=self.db_type.row_kind,
+                        row_kind=self.db_type.column_kind
+                    ),
+                    feature_ids=self.feature_ids,
+                    motif_or_track_ids=self.motif_or_track_ids,
+                    db_numpy_array=db_numpy_array.transpose().flatten(order=order).reshape(
+                        (self.shape[1], self.shape[0])
+                    )
+                )
+        else:
+            # Transpose dataframe (switch rows and columns) and change database type.
+            return CisTargetDatabase(
+                db_type=DatabaseTypes.from_strings(
+                    scores_or_rankings=self.db_type.scores_or_rankings,
+                    column_kind=self.db_type.row_kind,
+                    row_kind=self.db_type.column_kind
+                ),
+                df=self.df.transpose(copy=False)
+            )
 
     def update_scores_for_motif_or_track(self, motif_or_track_id: str, df_scores_for_motif_or_track: Union[pd.Series, pd.DataFrame]):
         """
