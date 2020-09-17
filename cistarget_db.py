@@ -871,43 +871,67 @@ class CisTargetDatabase:
             assert motif_or_track_id in self.df.index, \
                 f'"{motif_or_track_id}" not found in row of CisTargetDatabase dataframe.'
 
+            # Get position of motif ID or track ID in index.
+            motif_or_track_id_idx_iloc = self.df.index.get_loc(motif_or_track_id)
+
+            # Get numpy array with column positions for all motif IDs or track IDs in df_scores_for_motif_or_track.
+            feature_ids_idx_iloc = self.df.columns.get_indexer(df_scores_for_motif_or_track.index)
+
+            assert np.all(feature_ids_idx_iloc != -1.0), f'Not all {self.db_type.column_kind} IDs could be found in ' \
+                                                         f'the cisTarget score database.'
+
             # Column names contain regions or genes.
+            #
+            # Assigning values to self.df.to_numpy()[motif_or_track_id_idx_iloc, feature_ids_idx_iloc]
+            # is faster than to self.df.loc[motif_or_track_id, df_scores_for_motif_or_track.index]
             if len(df_scores_for_motif_or_track.shape) == 1:
-                self.df.loc[
-                    motif_or_track_id,
-                    df_scores_for_motif_or_track.index,
+                self.df.to_numpy()[
+                    motif_or_track_id_idx_iloc,
+                    feature_ids_idx_iloc
                 ] = df_scores_for_motif_or_track
             elif df_scores_for_motif_or_track.shape[1] == 1:
-                self.df.loc[
-                    motif_or_track_id,
-                    df_scores_for_motif_or_track.index,
+                self.df.to_numpy()[
+                    motif_or_track_id_idx_iloc,
+                    feature_ids_idx_iloc
                 ] = df_scores_for_motif_or_track.iloc[:, 0]
             else:
                 score_name = 'crm_score' if self.db_type.is_motifs_db else 'track_score'
-                self.df.loc[
-                    motif_or_track_id,
-                    df_scores_for_motif_or_track.index,
+                self.df.to_numpy()[
+                    motif_or_track_id_idx_iloc,
+                    feature_ids_idx_iloc
                 ] = df_scores_for_motif_or_track[score_name]
         elif self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
             assert motif_or_track_id in self.df.columns, \
                 f'"{motif_or_track_id}" not found in column of CisTargetDatabase dataframe.'
 
+            # Get position of motif ID or track ID in columns.
+            motif_or_track_id_idx_iloc = self.df.columns.get_loc(motif_or_track_id)
+
+            # Get numpy array with index positions for all motif IDs or track IDs in df_scores_for_motif_or_track.
+            feature_ids_idx_iloc = self.df.index.get_indexer(df_scores_for_motif_or_track.index)
+
+            assert np.all(feature_ids_idx_iloc != -1.0), f'Not all {self.db_type.row_kind} IDs could be found in ' \
+                                                         f'the cisTarget score database.'
+
             # Row names contain regions or genes.
+            #
+            # Assigning values to self.df.to_numpy()[feature_ids_idx_iloc, motif_or_track_id_idx_iloc]
+            # is faster than to self.df.loc[df_scores_for_motif_or_track.index, motif_or_track_id]
             if len(df_scores_for_motif_or_track.shape) == 1:
-                self.df.loc[
-                    df_scores_for_motif_or_track.index,
-                    motif_or_track_id
+                self.df.to_numpy()[
+                    feature_ids_idx_iloc,
+                    motif_or_track_id_idx_iloc
                 ] = df_scores_for_motif_or_track
             elif df_scores_for_motif_or_track.shape[1] == 1:
-                self.df.loc[
-                    df_scores_for_motif_or_track.index,
-                    motif_or_track_id
+                self.df.to_numpy()[
+                    feature_ids_idx_iloc,
+                    motif_or_track_id_idx_iloc
                 ] = df_scores_for_motif_or_track.iloc[:, 0]
             else:
                 score_name = 'crm_score' if self.db_type.is_motifs_db else 'track_score'
-                self.df.loc[
-                    df_scores_for_motif_or_track.index,
-                    motif_or_track_id
+                self.df.to_numpy()[
+                    feature_ids_idx_iloc,
+                    motif_or_track_id_idx_iloc
                 ] = df_scores_for_motif_or_track[score_name]
 
     def convert_scores_db_to_rankings_db(self, seed: Optional[int] = None) -> 'CisTargetDatabase':
