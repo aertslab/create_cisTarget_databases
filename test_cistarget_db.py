@@ -277,7 +277,8 @@ def db_numpy_array_scores_db_motifs_vs_regions():
          [2.4, 3.0, 7.8, 1.2],
          [2.4, 3.0, 0.6, 0.0],
          [2.4, 3.0, 7.7, 0.0]],
-        dtype=np.float32
+        dtype=np.float32,
+        order='C'
     )
 
     return db_numpy_array_scores_db_motifs_vs_regions
@@ -291,7 +292,8 @@ def db_numpy_array_rankings_db_genes_vs_tracks():
          [2, 4, 3, 0, 1, 6, 5],
          [0, 6, 2, 4, 1, 3, 5],
          [2, 0, 4, 6, 5, 3, 1]],
-        dtype=np.int16
+        dtype=np.int16,
+        order='F'
     )
 
     return db_numpy_array_rankings_db_genes_vs_tracks
@@ -308,13 +310,17 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
         motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
     )
 
-    def check_ct_scores_db_motifs_vs_regions(ct_scores_db_motifs_vs_regions, db_numpy_array):
+    def check_ct_scores_db_motifs_vs_regions(ct_scores_db_motifs_vs_regions, db_numpy_array, order):
         # Check if creation of cisTarget SCORES_DB_MOTIFS_VS_REGIONS database succeeded (float32 datatype).
         assert np.all(ct_scores_db_motifs_vs_regions.df.to_numpy() == db_numpy_array)
         assert ct_scores_db_motifs_vs_regions.shape == (7, 4)
         assert ct_scores_db_motifs_vs_regions.nbr_rows == 7
         assert ct_scores_db_motifs_vs_regions.nbr_columns == 4
         assert ct_scores_db_motifs_vs_regions.dtype == np.float32
+        if order == 'C':
+            assert ct_scores_db_motifs_vs_regions.df.to_numpy().flags.c_contiguous is True
+        elif order == 'F':
+            assert ct_scores_db_motifs_vs_regions.df.to_numpy().flags.f_contiguous is True
         # Check if feature IDs and motif and track IDs are properly set.
         assert ct_scores_db_motifs_vs_regions.feature_ids == features_ids_instance
         assert ct_scores_db_motifs_vs_regions.motif_or_track_ids == motif_or_track_ids_instance
@@ -330,7 +336,8 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
             feature_ids=features_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance
         ),
-        db_numpy_array=np.zeros((7, 4), dtype=np.float32)
+        db_numpy_array=np.zeros((7, 4), dtype=np.float32),
+        order='C'
     )
 
     # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database in Fortran order.
@@ -341,10 +348,12 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
             motif_or_track_ids=motif_or_track_ids_instance,
             order='F'
         ),
-        db_numpy_array=np.zeros((7, 4), dtype=np.float32)
+        db_numpy_array=np.zeros((7, 4), dtype=np.float32),
+        order='F'
     )
 
-    # Create cisTarget SCORES_DB_MOTIFS_VS_REGIONS database from numpy array.
+    # Create cisTarget SCORES_DB_MOTIFS_VS_REGIONS database from numpy array
+    # (db_numpy_array_scores_db_motifs_vs_regions is in C order).
     check_ct_scores_db_motifs_vs_regions(
         ct_scores_db_motifs_vs_regions=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
@@ -352,7 +361,8 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
             motif_or_track_ids=motif_or_track_ids_instance,
             db_numpy_array=db_numpy_array_scores_db_motifs_vs_regions
         ),
-        db_numpy_array=db_numpy_array_scores_db_motifs_vs_regions
+        db_numpy_array=db_numpy_array_scores_db_motifs_vs_regions,
+        order='C'
     )
 
     # Delete some objects so we don't accidentally reuse them in the next section.
@@ -368,13 +378,17 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
         motif_or_track_ids=['track1', 'track2', 'track3', 'track4'], motifs_or_tracks_type=MotifsOrTracksType.TRACKS
     )
 
-    def check_ct_scores_db_genes_vs_tracks(ct_rankings_db_genes_vs_tracks, db_numpy_array):
+    def check_ct_rankings_db_genes_vs_tracks(ct_rankings_db_genes_vs_tracks, db_numpy_array, order):
         # Check if creation of zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database succeeded (int16 datatype).
         assert np.all(ct_rankings_db_genes_vs_tracks.df.to_numpy() == db_numpy_array)
         assert ct_rankings_db_genes_vs_tracks.shape == (4, 7)
         assert ct_rankings_db_genes_vs_tracks.nbr_rows == 4
         assert ct_rankings_db_genes_vs_tracks.nbr_columns == 7
         assert ct_rankings_db_genes_vs_tracks.dtype == np.int16
+        if order == 'C':
+            assert ct_rankings_db_genes_vs_tracks.df.to_numpy().flags.c_contiguous is True
+        elif order == 'F':
+            assert ct_rankings_db_genes_vs_tracks.df.to_numpy().flags.f_contiguous is True
         # Check if feature IDs and motif and track IDs are properly set.
         assert ct_rankings_db_genes_vs_tracks.feature_ids == features_ids_instance
         assert ct_rankings_db_genes_vs_tracks.motif_or_track_ids == motif_or_track_ids_instance
@@ -384,35 +398,39 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
         assert ct_rankings_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.ids)
 
     # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database in C order.
-    check_ct_scores_db_genes_vs_tracks(
+    check_ct_rankings_db_genes_vs_tracks(
         ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
             feature_ids=features_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance
         ),
-        db_numpy_array=np.zeros((4, 7), dtype=np.int16)
+        db_numpy_array=np.zeros((4, 7), dtype=np.int16),
+        order='C'
     )
 
-    # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database in C order.
-    check_ct_scores_db_genes_vs_tracks(
+    # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database in Fortran order.
+    check_ct_rankings_db_genes_vs_tracks(
         ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
             feature_ids=features_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance,
             order='F'
         ),
-        db_numpy_array=np.zeros((4, 7), dtype=np.int16)
+        db_numpy_array=np.zeros((4, 7), dtype=np.int16),
+        order='F'
     )
 
-    # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database in C order.
-    check_ct_scores_db_genes_vs_tracks(
+    # Create cisTarget RANKINGS_DB_GENES_VS_TRACKS database from numpy array
+    # (db_numpy_array_rankings_db_genes_vs_tracks is in Fortran order).
+    check_ct_rankings_db_genes_vs_tracks(
         ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
             feature_ids=features_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance,
             db_numpy_array=db_numpy_array_rankings_db_genes_vs_tracks
         ),
-        db_numpy_array=db_numpy_array_rankings_db_genes_vs_tracks
+        db_numpy_array=db_numpy_array_rankings_db_genes_vs_tracks,
+        order='F'
     )
 
     # Delete some objects so we don't accidentally reuse them in the next section.
@@ -487,13 +505,15 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
     )
 
     # Check if the cisTarget database object read from the Feather file is the same than the one that was written
-    # to the Feather file.
+    # to the Feather file. The numpy array underlying the cisTarget database object will be in Fortran order when
+    # reading it from a Feather file.
     assert ct_scores_db_motifs_vs_regions_read_from_feather.db_type == ct_scores_db_motifs_vs_regions.db_type
     assert ct_scores_db_motifs_vs_regions_read_from_feather.dtype == ct_scores_db_motifs_vs_regions.dtype
     assert ct_scores_db_motifs_vs_regions_read_from_feather.shape == ct_scores_db_motifs_vs_regions.shape
     assert ct_scores_db_motifs_vs_regions_read_from_feather.feature_ids == ct_scores_db_motifs_vs_regions.feature_ids
     assert ct_scores_db_motifs_vs_regions_read_from_feather.motif_or_track_ids == ct_scores_db_motifs_vs_regions.motif_or_track_ids
     assert np.all(ct_scores_db_motifs_vs_regions_read_from_feather.df == ct_scores_db_motifs_vs_regions.df)
+    assert ct_scores_db_motifs_vs_regions_read_from_feather.df.to_numpy().flags.f_contiguous is True
 
     # Delete some objects so we don't accidentally reuse them in the next section.
     del ct_scores_db_motifs_vs_regions
@@ -523,13 +543,15 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
     )
 
     # Check if the cisTarget database object read from the Feather file is the same than the one that was written
-    # to the Feather file.
+    # to the Feather file. The numpy array underlying the cisTarget database object will be in Fortran order when
+    # reading it from a Feather file.
     assert ct_rankings_db_genes_vs_tracks_read_from_feather.db_type == ct_rankings_db_genes_vs_tracks.db_type
     assert ct_rankings_db_genes_vs_tracks_read_from_feather.dtype == ct_rankings_db_genes_vs_tracks.dtype
     assert ct_rankings_db_genes_vs_tracks_read_from_feather.shape == ct_rankings_db_genes_vs_tracks.shape
     assert ct_rankings_db_genes_vs_tracks_read_from_feather.feature_ids == ct_rankings_db_genes_vs_tracks.feature_ids
     assert ct_rankings_db_genes_vs_tracks_read_from_feather.motif_or_track_ids == ct_rankings_db_genes_vs_tracks.motif_or_track_ids
     assert np.all(ct_rankings_db_genes_vs_tracks_read_from_feather.df == ct_rankings_db_genes_vs_tracks.df)
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather.df.to_numpy().flags.f_contiguous is True
 
     # Delete some objects so we don't accidentally reuse them in the next section.
     del ct_rankings_db_genes_vs_tracks_db_filename
@@ -551,13 +573,15 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
     )
 
     # Check if the cisTarget database object read from the Feather file is the same than the one that was written
-    # to the Feather file.
+    # to the Feather file. The numpy array underlying the cisTarget database object will be in Fortran order when
+    # reading it from a Feather file.
     assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.db_type == ct_rankings_db_genes_vs_tracks.db_type
     assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.dtype == ct_rankings_db_genes_vs_tracks.dtype
     assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.shape == ct_rankings_db_genes_vs_tracks.shape
     assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.feature_ids == ct_rankings_db_genes_vs_tracks.feature_ids
     assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.motif_or_track_ids == ct_rankings_db_genes_vs_tracks.motif_or_track_ids
     assert np.all(ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.df == ct_rankings_db_genes_vs_tracks.df)
+    assert ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name.df.to_numpy().flags.f_contiguous is True
 
     # Delete some objects so we don't accidentally reuse them in the next section.
     del ct_rankings_db_genes_vs_tracks
