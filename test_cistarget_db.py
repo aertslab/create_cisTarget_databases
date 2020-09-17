@@ -611,11 +611,11 @@ def test_cistargetdatabase_transpose(ct_scores_db_motifs_vs_regions, ct_rankings
     # SCORES_DB_MOTIFS_VS_REGIONS database.
     ct_scores_db_regions_vs_motifs_order_C = ct_scores_db_motifs_vs_regions.transpose(order='C')
 
-    # assert np.all(
-    #     ct_scores_db_regions_vs_motifs_order_C.df.to_numpy() == db_numpy_array_scores_db_motifs_vs_regions_transposed
-    # )
-    # assert ct_scores_db_regions_vs_motifs_order_C.db_type == DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS
-    # assert ct_scores_db_regions_vs_motifs_order_C.df.to_numpy().flags.c_contiguous is True
+    assert np.all(
+        ct_scores_db_regions_vs_motifs_order_C.df.to_numpy() == db_numpy_array_scores_db_motifs_vs_regions_transposed
+    )
+    assert ct_scores_db_regions_vs_motifs_order_C.db_type == DatabaseTypes.SCORES_DB_REGIONS_VS_MOTIFS
+    assert ct_scores_db_regions_vs_motifs_order_C.df.to_numpy().flags.c_contiguous is True
 
     del ct_scores_db_regions_vs_motifs_order_C
 

@@ -837,8 +837,9 @@ class CisTargetDatabase:
                     ),
                     feature_ids=self.feature_ids,
                     motif_or_track_ids=self.motif_or_track_ids,
-                    db_numpy_array=db_numpy_array.transpose().flatten(order=order).reshape(
-                        (self.shape[1], self.shape[0])
+                    db_numpy_array=db_numpy_array.transpose().ravel(order=order).reshape(
+                        (self.shape[1], self.shape[0]),
+                        order=order
                     )
                 )
         else:
