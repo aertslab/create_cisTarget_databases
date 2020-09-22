@@ -749,7 +749,7 @@ class CisTargetDatabase:
 
         return self.df.shape[1]
 
-    def write_db(self, db_prefix: Optional[str] = None, db_filename: Optional[str] = None) -> str:
+    def write_db(self, db_prefix: Optional[str] = None, db_filename: Optional[str] = None, version: int = 2) -> str:
         """
         Write cisTarget database to Feather file.
         If db_prefix is used, the database type will be encoded in the Feather database filename.
@@ -757,6 +757,7 @@ class CisTargetDatabase:
 
         :param db_prefix: Database prefix path.
         :param db_filename: Full database filename.
+        :param version: Feather file version. Version 2 is the current. Version 1 is the more limited legacy format.
         :return: db_filename: cisTarget database filename (constructed from db_prefix).
         """
 
@@ -767,12 +768,18 @@ class CisTargetDatabase:
 
         assert isinstance(db_filename, str)
 
+        assert isinstance(version, int) and version in (1, 2), 'Feather file version should be 1 or 2.'
+
         # Temporarily add the index column with the name of the row kind to the dataframe,
         # so row names of the dataframe are written to the Feather file.
         self.df[self.db_type.row_kind] = self.df.index.to_series()
 
-        # Write cisTarget database in Feather v2 format with lz4 compression.
-        pf.write_feather(df=self.df, dest=db_filename, compression='lz4', version=2)
+        if version == 2:
+            # Write cisTarget database in Feather v2 format with lz4 compression.
+            pf.write_feather(df=self.df, dest=db_filename, compression='lz4', version=2)
+        elif version == 1:
+            # Write cisTarget database in Feather v1 (legacy) format.
+            pf.write_feather(df=self.df, dest=db_filename, version=1)
 
         # Delete index column with row names from the dataframe.
         del self.df[self.db_type.row_kind]
