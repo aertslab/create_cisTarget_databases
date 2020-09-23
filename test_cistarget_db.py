@@ -516,7 +516,7 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
 
         # Read cisTarget database from Feather file.
         ct_scores_db_motifs_vs_regions_read_from_feather = CisTargetDatabase.read_db(
-            db_filename=ct_scores_db_motifs_vs_regions_db_filename
+            db_filename_or_dbs_filenames=ct_scores_db_motifs_vs_regions_db_filename
         )
 
         # Check if the cisTarget database object read from the Feather file is the same than the one that was written
@@ -550,7 +550,7 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
 
         # Read cisTarget database from Feather file.
         ct_rankings_db_genes_vs_tracks_read_from_feather = CisTargetDatabase.read_db(
-            db_filename=ct_rankings_db_genes_vs_tracks_db_filename
+            db_filename_or_dbs_filenames=ct_rankings_db_genes_vs_tracks_db_filename
         )
 
         # Check if the cisTarget database object read from the Feather file is the same than the one that was written
@@ -576,7 +576,7 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
 
         # Read cisTarget database from Feather file with a custom name (database type can not be automatically retrieved).
         ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name = CisTargetDatabase.read_db(
-            db_filename=ct_rankings_db_genes_vs_tracks_db_filename_with_custom_name_returned,
+            db_filename_or_dbs_filenames=ct_rankings_db_genes_vs_tracks_db_filename_with_custom_name_returned,
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS
         )
 

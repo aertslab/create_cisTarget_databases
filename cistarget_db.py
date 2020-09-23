@@ -610,16 +610,27 @@ class CisTargetDatabase:
         return cross_species_rankings_ct
 
     @staticmethod
-    def read_db(db_filename: str, db_type: Optional[Union['DatabaseTypes', str]] = None) -> 'CisTargetDatabase':
+    def read_db(db_filename_or_dbs_filenames: Union[str, List, Tuple],
+                db_type: Optional[Union['DatabaseTypes', str]] = None) -> 'CisTargetDatabase':
         """
-        Read cisTarget database from Feather file to CisTargetDatabase object.
+        Read cisTarget database from Feather file(s) to CisTargetDatabase object.
 
-        :param db_filename: Feather database filename.
+        :param db_filename_or_dbs_filenames: Feather database filename or database filenames.
         :param db_type: Type of database (can be automatically determined from the filename if written with write_db).
         :return: CisTargetDatabase object.
         """
 
-        assert db_filename is not None
+        assert db_filename_or_dbs_filenames is not None
+
+        if isinstance(db_filename_or_dbs_filenames, str):
+            db_filename = db_filename_or_dbs_filenames
+            # Convert to a tuple with one element.
+            db_filename_or_dbs_filenames = (db_filename_or_dbs_filenames,)
+        elif isinstance(db_filename_or_dbs_filenames, List) or isinstance(db_filename_or_dbs_filenames, Tuple):
+            # Look at the first (partial) cisTarget database for most checks when multiple databases are given.
+            db_filename = db_filename_or_dbs_filenames[0]
+        else:
+            ValueError('Unsupported type for "db_filename_or_dbs_filenames".')
 
         # Try to extract the database type from database filename if database type was not specified.
         if not db_type:
@@ -630,7 +641,7 @@ class CisTargetDatabase:
                     )
             except ValueError:
                 raise ValueError(
-                    'cisTarget database type could not be automatically determined from the db_filename. '
+                    'cisTarget database type could not be automatically determined from db_filename_or_dbs_filenames. '
                     'Specify db_type instead.'
                 )
         else:
@@ -644,8 +655,10 @@ class CisTargetDatabase:
                 else:
                     raise ValueError('db_type must be of "DatabaseTypes" type.')
 
-        # Read Feather file in dataframe.
-        df = pf.read_feather(source=db_filename, columns=None)
+        # Read Feather file(s) in dataframe.
+        df = pf.FeatherDataset(
+            path_or_paths=db_filename_or_dbs_filenames, validate_schema=True
+        ).read_pandas(columns=None)
 
         # Set indexes and index names for rows.
         if db_type.row_kind in df:
