@@ -693,11 +693,17 @@ class CisTargetDatabase:
                 feature_ids=self.df.columns.to_list(),
                 features_type=FeaturesType.from_str(features_type=self.db_type.column_kind)
             )
+
+            if feature_ids.ids != tuple(self.df.columns.to_list()):
+                raise ValueError('cisTarget database does not contain feature IDs in sorted order.')
         elif self.db_type.row_kind == 'regions' or self.db_type.row_kind == 'genes':
             feature_ids = FeatureIDs(
                 feature_ids=self.df.index.to_list(),
                 features_type=FeaturesType.from_str(features_type=self.db_type.row_kind)
             )
+
+            if feature_ids.ids != tuple(self.df.index.to_list()):
+                raise ValueError('cisTarget database does not contain feature IDs in sorted order.')
 
         return feature_ids
 
@@ -714,11 +720,17 @@ class CisTargetDatabase:
                 motif_or_track_ids=self.df.columns.to_list(),
                 motifs_or_tracks_type=MotifsOrTracksType.from_str(motifs_or_tracks_type=self.db_type.column_kind)
             )
+
+            if motif_or_track_ids.ids != tuple(self.df.columns.to_list()):
+                raise ValueError('cisTarget database does not contain motif or track IDs in sorted order.')
         elif self.db_type.row_kind == 'motifs' or self.db_type.row_kind == 'tracks':
             motif_or_track_ids = MotifOrTrackIDs(
                 motif_or_track_ids=self.df.index.to_list(),
                 motifs_or_tracks_type=MotifsOrTracksType.from_str(motifs_or_tracks_type=self.db_type.row_kind)
             )
+
+            if motif_or_track_ids.ids != tuple(self.df.index.to_list()):
+                raise ValueError('cisTarget database does not contain motif or track IDs in sorted order.')
 
         return motif_or_track_ids
 
