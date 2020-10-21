@@ -13,6 +13,7 @@ import io
 import os
 import random
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -398,6 +399,13 @@ def main():
         )
         sys.exit(1)
 
+    # Get absolute path to Cluster-Buster binary and see if it can be executed.
+    cluster_buster_path = shutil.which(args.cluster_buster_path)
+
+    if not cluster_buster_path:
+        print(f'Error: Cluster-Buster binary ("{args.clust_buster_path}") could not be found or is not executable.')
+        sys.exit(1)
+
     # Set random seed to provided input value or a random integer.
     seed = args.seed if args.seed else random.randint(0, 2**64)
 
@@ -474,7 +482,7 @@ def main():
             pool.apply_async(
                 func=run_cluster_buster_for_motif,
                 args=[
-                    args.cluster_buster_path,
+                    cluster_buster_path,
                     args.fasta_filename,
                     motif_filename,
                     motif_id,
