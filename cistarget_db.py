@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pyarrow.feather as pf
 
 import orderstatistics
@@ -800,8 +801,19 @@ class CisTargetDatabase:
         self.df[self.db_type.row_kind] = self.df.index.to_series()
 
         if version == 2:
+            # Create Arrow table from dataframe, but remove pandas metadata from schema,
+            # so dataframes with a lot of columns can be written to a feather v2 file.
+            table = pa.Table.from_pandas(
+                df=self.df,
+                schema=None,
+                preserve_index=False,
+                nthreads=4,
+                columns=None,
+                safe=True
+            ).replace_schema_metadata()
+
             # Write cisTarget database in Feather v2 format with lz4 compression.
-            pf.write_feather(df=self.df, dest=db_filename, compression='lz4', version=2)
+            pf.write_feather(df=table, dest=db_filename, compression='lz4', version=2)
         elif version == 1:
             # Write cisTarget database in Feather v1 (legacy) format.
             pf.write_feather(df=self.df, dest=db_filename, version=1)
