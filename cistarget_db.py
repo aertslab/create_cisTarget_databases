@@ -675,6 +675,12 @@ class CisTargetDatabase:
         # Set column name.
         df.columns.set_names([db_type.column_kind], inplace=True)
 
+        # Sort dataframe by both row and column indexes, if not in sorted order.
+        if list(df.index) != sorted(df.index):
+            df.sort_index(axis=0, inplace=True, ascending=True)
+        if list(df.columns) != sorted(df.columns):
+            df.sort_index(axis=1, inplace=True, ascending=True)
+
         return CisTargetDatabase(db_type, df)
 
     def __init__(self, db_type: DatabaseTypes, df: pd.DataFrame):
