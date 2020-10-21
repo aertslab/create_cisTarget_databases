@@ -520,7 +520,7 @@ class CisTargetDatabase:
         return CisTargetDatabase(db_type, df)
 
     @staticmethod
-    def create_cross_species_rankings_db(species_rankings_db_filenames = Union[List[str], Tuple[str]]):
+    def create_cross_species_rankings_db(species_rankings_db_filenames=Union[List[str], Tuple[str]]):
         for species_rankings_db_filename in species_rankings_db_filenames:
             # Get database type for each provided cisTarget database feather file and check if it is a supported type
             # for creating cross species rankings databases.
