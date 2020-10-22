@@ -268,7 +268,22 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='FASTA filename which contains the regions to score with Cluster-Buster for each motif.'
+        help='FASTA filename which contains the regions/genes to score with Cluster-Buster for each motif. When '
+             'creating a species CisTarget database from regions/genes lifted over from a different species, provide '
+             'the original FASTA file for that species to -F.'
+    )
+
+    parser.add_argument(
+        '-F',
+        '--fasta-original-species',
+        dest='original_species_fasta_filename',
+        action='store',
+        type=str,
+        required=False,
+        help='FASTA filename which contains all the regions/genes of the original species. The fasta file provided to '
+             '-f can contain less regions (not all regions could be lifted over) than the one provided to -F, but to '
+             'create a cross species CisTarget database later, all individual species CisTarget databases need to '
+             'contain the same amount of regions/genes.'
     )
 
     parser.add_argument(
@@ -378,6 +393,13 @@ def main():
         )
         sys.exit(1)
 
+    if args.original_species_fasta_filename and not os.path.exists(args.original_species_fasta_filename):
+        print(
+            f'Error: Original species FASTA filename "{args.original_species_fasta_filename}" does not exist.',
+            file=sys.stderr
+        )
+        sys.exit(1)
+
     if not os.path.exists(args.motifs_dir):
         print(
             f'Error: Motif directory "{args.motifs_dir}" does not exist.',
@@ -409,16 +431,45 @@ def main():
     # Set random seed to provided input value or a random integer.
     seed = args.seed if args.seed else random.randint(0, 2**64)
 
+    if args.original_species_fasta_filename:
+        # When creating CisTarget databases for a species with lifted over regions, check if the regions/genes in the
+        # current species FASTA file are available in the original species FASTA file. Due to liftover, regions might
+        # be lost in the current species, but the CisTarget database needs to contain all regions/genes from the
+        # original species to create the cross species CisTarget database later.
+
+        # Get all region IDs or gene IDs from current species FASTA sequence names as a FeaturesIDs object.
+        region_ids_or_gene_ids_current_species = get_region_ids_or_gene_ids_from_fasta(
+            fasta_filename=args.fasta_filename,
+            extract_gene_id_from_region_id_regex_replace=args.extract_gene_id_from_region_id_regex_replace
+        )
+
+        # Get all region IDs or gene IDs from the original FASTA sequence names as a FeaturesIDs object.
+        region_ids_or_gene_ids = get_region_ids_or_gene_ids_from_fasta(
+            fasta_filename=args.original_species_fasta_filename,
+            extract_gene_id_from_region_id_regex_replace=args.extract_gene_id_from_region_id_regex_replace
+        )
+
+        if not region_ids_or_gene_ids_current_species.issubset(region_ids_or_gene_ids):
+            print(
+                f'Error: Region IDs/gene IDs in "{args.fasta_filename}" are not all present in '
+                f'"{args.original_species_fasta_filename}".',
+                file=sys.stderr
+            )
+            sys.exit(1)
+    else:
+        # Get all region IDs or gene IDs from the FASTA sequence names as a FeaturesIDs object.
+        region_ids_or_gene_ids = get_region_ids_or_gene_ids_from_fasta(
+            fasta_filename=args.fasta_filename,
+            extract_gene_id_from_region_id_regex_replace=args.extract_gene_id_from_region_id_regex_replace
+        )
+
+    # Get absolute path name for FASTA filename so in case Cluster-Buster is ran over ssh, the FASTA file can be found.
+    fasta_filename = os.path.abspath(args.fasta_filename)
+
     motif_id_to_filename_dict = get_motif_id_to_filename_dict(
         motifs_dir=args.motifs_dir,
         motifs_list_filename=args.motifs_list_filename,
         motif_md5_to_motif_id_filename=args.motif_md5_to_motif_id_filename
-    )
-
-    # Get region IDs or gene IDs from FASTA sequence names as a FeaturesIDs object.
-    region_ids_or_gene_ids = get_region_ids_or_gene_ids_from_fasta(
-        args.fasta_filename,
-        args.extract_gene_id_from_region_id_regex_replace
     )
 
     # Create MotifOrTracksIDs object from plain motif IDs.
@@ -479,11 +530,13 @@ def main():
 
     with mp.Pool(processes=args.nbr_threads) as pool:
         for motif_id, motif_filename in motif_id_to_filename_dict.items():
+            # Score all regions/genes in the FASTA file for the current motif and write the result in the
+            # ct_scores_db_motifs_vs_regions_or_genes CisTargetDatabase object.
             pool.apply_async(
                 func=run_cluster_buster_for_motif,
                 args=[
                     cluster_buster_path,
-                    args.fasta_filename,
+                    fasta_filename,
                     motif_filename,
                     motif_id,
                     args.extract_gene_id_from_region_id_regex_replace,
