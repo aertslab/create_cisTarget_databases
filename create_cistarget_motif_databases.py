@@ -597,7 +597,7 @@ def main():
     write_db(ct_db=ct_scores_db_motifs_vs_regions_or_genes, db_prefix=args.db_prefix)
 
     # Create cisTarget scores database (regions or genes vs motifs) from (motifs vs regions or genes) version.
-    ct_scores_db_regions_or_genes_vs_motifs = ct_scores_db_motifs_vs_regions_or_genes.transpose(copy=False)
+    ct_scores_db_regions_or_genes_vs_motifs = ct_scores_db_motifs_vs_regions_or_genes.transpose()
 
     # Write cisTarget scores database (regions or genes vs motifs) to Feather file.
     write_db(ct_db=ct_scores_db_regions_or_genes_vs_motifs, db_prefix=args.db_prefix)
@@ -629,7 +629,7 @@ def main():
     write_db(ct_db=ct_rankings_db_motifs_vs_regions_or_genes, db_prefix=args.db_prefix)
 
     # Create cisTarget rankings database (regions or genes vs motifs) from (motifs vs regions or genes) version.
-    ct_rankings_db_regions_or_genes_vs_motifs = ct_rankings_db_motifs_vs_regions_or_genes.transpose(copy=False)
+    ct_rankings_db_regions_or_genes_vs_motifs = ct_rankings_db_motifs_vs_regions_or_genes.transpose()
 
     # Write cisTarget rankings database (regions or genes vs motifs) to Feather file.
     write_db(ct_db=ct_rankings_db_regions_or_genes_vs_motifs, db_prefix=args.db_prefix)
