@@ -490,9 +490,8 @@ def main():
         sys.exit(1)
 
     print(
-        f'Initialize dataframe ({nbr_region_ids_or_gene_ids} {region_ids_or_gene_ids.type.value} ' \
-        f'x {nbr_motifs} motifs) for storing CRM scores for each {region_ids_or_gene_ids.type.value} ' \
-        'per motif.',
+        f'Initialize dataframe ({nbr_region_ids_or_gene_ids} {region_ids_or_gene_ids.type.value} '
+        f'x {nbr_motifs} motifs) for storing CRM scores for each {region_ids_or_gene_ids.type.value} per motif.',
         file=sys.stderr
     )
 
@@ -513,16 +512,18 @@ def main():
 
         motif_id, df_crm_scores = df_motif_id_and_crm_scores
 
+        start_time = time.monotonic()
         ct_scores_db_motifs_vs_regions_or_genes.update_scores_for_motif_or_track(
             motif_or_track_id=motif_id,
             df_scores_for_motif_or_track=df_crm_scores['crm_score']
         )
+        elapsed_time = time.monotonic() - start_time
 
         write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs += 1
 
         print(
             f'Adding Cluster-Buster CRM scores ({write_crm_scores_for_motif_to_ct_scores_db.nbr_of_scored_motifs:d} of '
-            f'{nbr_motifs:d}) for motif "{motif_id:s}".',
+            f'{nbr_motifs:d}) for motif "{motif_id:s}" took {elapsed_time:0.6f} seconds.',
             file=sys.stderr
         )
 
@@ -580,8 +581,8 @@ def main():
         db_filename = ct_db.create_db_filename_from_db_prefix(db_prefix=db_prefix, extension='feather')
 
         print(
-            f'Write {ct_db.db_type.scores_or_rankings} of {ct_db.feature_ids.type.value} for each motif in ' \
-            f'{ct_db.db_type.column_kind} vs {ct_db.db_type.row_kind} style to ' \
+            f'Write {ct_db.db_type.scores_or_rankings} of {ct_db.feature_ids.type.value} for each motif in '
+            f'{ct_db.db_type.column_kind} vs {ct_db.db_type.row_kind} style to '
             f'"{db_filename}".',
             file=sys.stderr
         )
