@@ -503,7 +503,8 @@ def main():
             row_kind=region_ids_or_gene_ids.type.value
         ),
         feature_ids=region_ids_or_gene_ids,
-        motif_or_track_ids=motif_ids
+        motif_or_track_ids=motif_ids,
+        order='F'
     )
 
     def write_crm_scores_for_motif_to_ct_scores_db(df_motif_id_and_crm_scores: Tuple[str, pd.DataFrame]) -> None:
