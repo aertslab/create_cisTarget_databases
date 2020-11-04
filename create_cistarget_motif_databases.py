@@ -587,7 +587,8 @@ def main():
 
         start_time = time.monotonic()
         ct_db.write_db(
-            db_prefix=args.db_prefix
+            db_prefix=args.db_prefix,
+            version=1
         )
         elapsed_time = time.monotonic() - start_time
 
