@@ -467,7 +467,7 @@ def main():
     fasta_filename = os.path.abspath(args.fasta_filename)
 
     motif_id_to_filename_dict = get_motif_id_to_filename_dict(
-        motifs_dir=args.motifs_dir,
+        motifs_dir=os.path.abspath(args.motifs_dir),
         motifs_list_filename=args.motifs_list_filename,
         motif_md5_to_motif_id_filename=args.motif_md5_to_motif_id_filename
     )
