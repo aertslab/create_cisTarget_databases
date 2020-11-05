@@ -425,7 +425,7 @@ def main():
     cluster_buster_path = shutil.which(args.cluster_buster_path)
 
     if not cluster_buster_path:
-        print(f'Error: Cluster-Buster binary ("{args.clust_buster_path}") could not be found or is not executable.')
+        print(f'Error: Cluster-Buster binary ("{args.cluster_buster_path}") could not be found or is not executable.')
         sys.exit(1)
 
     # Set random seed to provided input value or a random integer.
