@@ -166,7 +166,7 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename: str,
 
 def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, motif_filename: str, motif_id: str,
                                  extract_gene_id_from_region_id_regex_replace: Optional[str] = None,
-                                 bg_padding: int = 0
+                                 bg_padding: int = 0, mask: bool = False
                                  ) -> Tuple[str, pd.DataFrame]:
     """
     Score each sequence in the FASTA file with Cluster-Buster and only keep the top CRM score per region ID/gene ID.
@@ -182,6 +182,7 @@ def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, 
                                 In case of gene IDs, the best CRM score from multiple regions is kept.
     :param bg_padding:          Use X bp at start and end of each sequence only for calculating the background
                                 nucleotide frequency, but not for scoring the motif itself.
+    :param mask:                Consider masked (lowercase) nucleotides as Ns.
     :return:                    (motif_id, df_crm_scores): motif ID and dataframe with top CRM score per region/gene ID.
     """
 
@@ -192,8 +193,14 @@ def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, 
                              '-r', '10000',
                              '-b', str(bg_padding),
                              '-t', '1',
-                             motif_filename,
-                             fasta_filename]
+
+    if mask:
+        clusterbuster_command.append('-l')
+
+    clusterbuster_command.extend([
+        motif_filename,
+        fasta_filename
+    ])
 
     try:
         pid = subprocess.Popen(args=clusterbuster_command,
@@ -373,6 +380,14 @@ def main():
     )
 
     parser.add_argument(
+        '-l',
+        '--mask',
+        dest='mask',
+        action='store_true',
+        help='Consider masked (lowercase) nucleotides as Ns.'
+    )
+
+    parser.add_argument(
         '-s',
         '--seed',
         dest='seed',
@@ -542,7 +557,8 @@ def main():
                     motif_filename,
                     motif_id,
                     args.extract_gene_id_from_region_id_regex_replace,
-                    args.bg_padding
+                    args.bg_padding,
+                    args.mask
                 ],
                 callback=write_crm_scores_for_motif_to_ct_scores_db,
                 error_callback=report_error
