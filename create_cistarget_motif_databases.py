@@ -19,7 +19,7 @@ import sys
 import time
 import multiprocessing as mp
 
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -166,7 +166,8 @@ def get_region_ids_or_gene_ids_from_fasta(fasta_filename: str,
 
 def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, motif_filename: str, motif_id: str,
                                  extract_gene_id_from_region_id_regex_replace: Optional[str] = None,
-                                 bg_padding: int = 0, mask: bool = False
+                                 bg_padding: int = 0, mask: bool = False,
+                                 ssh_command: Optional[Union[str, list]] = None
                                  ) -> Tuple[str, pd.DataFrame]:
     """
     Score each sequence in the FASTA file with Cluster-Buster and only keep the top CRM score per region ID/gene ID.
@@ -183,16 +184,30 @@ def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, 
     :param bg_padding:          Use X bp at start and end of each sequence only for calculating the background
                                 nucleotide frequency, but not for scoring the motif itself.
     :param mask:                Consider masked (lowercase) nucleotides as Ns.
+    :param ssh_command:         If defined, run Cluster-Buster over ssh by running the provided command to make the
+                                connection before running Cluster-Buster.
+                                Example : 'ssh -o ControlMaster=auto -o ControlPath=/tmp/ssh-control-path-%l-%h-%p-%r -o ControlPersist=600 <hostname>'
     :return:                    (motif_id, df_crm_scores): motif ID and dataframe with top CRM score per region/gene ID.
     """
 
-    # Score each region in FASTA file with Cluster-Buster for the provided motif and get top CRM score for each region.
-    clusterbuster_command = [cluster_buster_path,
-                             '-f', '4',
-                             '-c', '0.0',
-                             '-r', '10000',
-                             '-b', str(bg_padding),
-                             '-t', '1',
+    clusterbuster_command = []
+
+    if ssh_command:
+        # Add SSH command to the start of the Cluster-Buster command.
+        if isinstance(ssh_command, str):
+            clusterbuster_command.extend(ssh_command.split())
+        elif isinstance(ssh_command, list):
+            clusterbuster_command.extend(ssh_command)
+
+    # Construct Cluster-Buster command line.
+    clusterbuster_command.extend([
+        cluster_buster_path,
+        '-f', '4',
+        '-c', '0.0',
+        '-r', '10000',
+        '-b', str(bg_padding),
+        '-t', '1'
+    ])
 
     if mask:
         clusterbuster_command.append('-l')
@@ -202,6 +217,7 @@ def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, 
         fasta_filename
     ])
 
+    # Score each region in FASTA file with Cluster-Buster for the provided motif and get top CRM score for each region.
     try:
         pid = subprocess.Popen(args=clusterbuster_command,
                                bufsize=-1,
@@ -224,6 +240,7 @@ def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, 
     if pid.returncode != 0:
         raise RuntimeError("Error: Non-zero exit status for: '" + ' '.join(clusterbuster_command) + "'")
 
+    # Read Cluster-Buster standard out as a pandas dataframe.
     df_crm_scores = pd.read_csv(
         filepath_or_buffer=io.BytesIO(stdout_data),
         sep='\t',
@@ -399,6 +416,18 @@ def main():
              'the same rankings databases as output.'
     )
 
+    parser.add_argument(
+        '-r',
+        '--ssh',
+        dest='ssh_command',
+        action='store',
+        type=str,
+        required=False,
+        help='If defined, run Cluster-Buster over ssh by running the provided command to make the connection before '
+             'running Cluster-Buster itself. '
+             "Example: 'ssh -o ControlMaster=auto -o ControlPath=/tmp/ssh-control-path-%%l-%%h-%%p-%%r -o ControlPersist=600 <hostname>'"
+    )
+
     args = parser.parse_args()
 
     if not os.path.exists(args.fasta_filename):
@@ -558,7 +587,8 @@ def main():
                     motif_id,
                     args.extract_gene_id_from_region_id_regex_replace,
                     args.bg_padding,
-                    args.mask
+                    args.mask,
+                    args.ssh_command
                 ],
                 callback=write_crm_scores_for_motif_to_ct_scores_db,
                 error_callback=report_error
