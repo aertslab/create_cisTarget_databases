@@ -373,6 +373,22 @@ def main():
     )
 
     parser.add_argument(
+        '-p',
+        '--partial',
+        dest='partial',
+        nargs=2,
+        metavar=('CURRENT_PART', 'NBR_TOTAL_PARTS'),
+        action='store',
+        type=int,
+        required=False,
+        help='Divide the motif list in a number of total parts (of similar size) and score only the part defined by '
+             'current_part. This allows creating partial databases on machines which do not have enough RAM to score '
+             'all motifs in one iteration. This will only create a partial regions/genes vs motifs scoring database '
+             '({db_prefix}.part_000{current_part}_of_000{nbr_total_parts}.regions_vs_motifs.scores.feather or '
+             '{db_prefix}.part_000{current_part}_of_000{nbr_total_parts}.genes_vs_motifs.scores.feather).'
+    )
+
+    parser.add_argument(
         '-g',
         '--genes',
         dest='extract_gene_id_from_region_id_regex_replace',
@@ -465,6 +481,22 @@ def main():
         )
         sys.exit(1)
 
+    if args.partial:
+        current_part, nbr_total_parts = args.partial
+
+        if current_part < 1 or current_part > nbr_total_parts:
+            print(
+                f'Error: Current part ({current_part}) should be between 1 and the number of total parts '
+                f'({nbr_total_parts}).',
+                file=sys.stderr
+            )
+            sys.exit(1)
+
+        # Add info about which part of the database this wil be.
+        db_prefix = f'{args.db_prefix}.part_{current_part:04d}_of_{nbr_total_parts:04d}'
+    else:
+        db_prefix = args.db_prefix
+
     # Get absolute path to Cluster-Buster binary and see if it can be executed.
     cluster_buster_path = shutil.which(args.cluster_buster_path)
 
@@ -532,6 +564,32 @@ def main():
     if nbr_motifs == 0:
         print('Error: No motifs provided.', file=sys.stderr)
         sys.exit(1)
+
+    if args.partial:
+        def divide_in_chunks(list_to_chunk, n):
+            """
+            Yield n number of sequential chunks from list_to_chunk, where each chunk is similar in size (max diff = 1).
+            """
+
+            d, r = divmod(len(list_to_chunk), n)
+
+            for i in range(n):
+                si = (d + 1) * (i if i < r else r) + d * (0 if i < r else i - r)
+                yield list_to_chunk[si:si + (d + 1 if i < r else d)]
+
+        # Create a new MotifOrTracksIDs object with only the motif IDs for the requested part (defined by current_part).
+        motif_ids = MotifOrTrackIDs(
+            motif_or_track_ids=list(divide_in_chunks(list_to_chunk=motif_ids.ids, n=nbr_total_parts))[current_part - 1],
+            motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
+        )
+
+        motif_id_to_filename_dict = {
+            motif_id: filename
+            for motif_id, filename in motif_id_to_filename_dict.items()
+            if motif_id in motif_ids.ids
+        }
+
+        nbr_motifs = len(motif_ids)
 
     print(
         f'Initialize dataframe ({nbr_region_ids_or_gene_ids} {region_ids_or_gene_ids.type.value} '
@@ -635,53 +693,55 @@ def main():
 
         start_time = time.monotonic()
         ct_db.write_db(
-            db_prefix=args.db_prefix,
+            db_prefix=db_prefix,
             version=1
         )
         elapsed_time = time.monotonic() - start_time
 
         print(f'Database written in {elapsed_time:0.6f} seconds.\n', file=sys.stderr)
 
-    # Write cisTarget scores database (motifs vs regions or genes) to Feather file.
-    write_db(ct_db=ct_scores_db_motifs_vs_regions_or_genes, db_prefix=args.db_prefix)
+    if not args.partial:
+        # Write cisTarget scores database (motifs vs regions or genes) to Feather file.
+        write_db(ct_db=ct_scores_db_motifs_vs_regions_or_genes, db_prefix=db_prefix)
 
     # Create cisTarget scores database (regions or genes vs motifs) from (motifs vs regions or genes) version.
     ct_scores_db_regions_or_genes_vs_motifs = ct_scores_db_motifs_vs_regions_or_genes.transpose()
 
     # Write cisTarget scores database (regions or genes vs motifs) to Feather file.
-    write_db(ct_db=ct_scores_db_regions_or_genes_vs_motifs, db_prefix=args.db_prefix)
+    write_db(ct_db=ct_scores_db_regions_or_genes_vs_motifs, db_prefix=db_prefix)
 
-    # Create cisTarget rankings database (motifs vs regions or genes) from cisTarget scores database filename
-    # (motifs vs regions or genes).
-    print(
-        f'''Create rankings from "{
-            ct_scores_db_motifs_vs_regions_or_genes.create_db_filename_from_db_prefix(
-                db_prefix=args.db_prefix,
-                extension='feather'
-            )
-        }" with random seed set to {seed}.''',
-        file=sys.stderr
-    )
+    if not args.partial:
+        # Create cisTarget rankings database (motifs vs regions or genes) from cisTarget scores database filename
+        # (motifs vs regions or genes).
+        print(
+            f'''Create rankings from "{
+                ct_scores_db_motifs_vs_regions_or_genes.create_db_filename_from_db_prefix(
+                    db_prefix=db_prefix,
+                    extension='feather'
+                )
+            }" with random seed set to {seed}.''',
+            file=sys.stderr
+        )
 
-    start_time = time.monotonic()
-    ct_rankings_db_motifs_vs_regions_or_genes = \
-        ct_scores_db_motifs_vs_regions_or_genes.convert_scores_db_to_rankings_db(seed=seed)
-    elapsed_time = time.monotonic() - start_time
+        start_time = time.monotonic()
+        ct_rankings_db_motifs_vs_regions_or_genes = \
+            ct_scores_db_motifs_vs_regions_or_genes.convert_scores_db_to_rankings_db(seed=seed)
+        elapsed_time = time.monotonic() - start_time
 
-    print(f'Creating rankings from scores database took {elapsed_time:.06f} seconds.\n', file=sys.stderr)
+        print(f'Creating rankings from scores database took {elapsed_time:.06f} seconds.\n', file=sys.stderr)
 
-    # Reclaim memory occupied by cisTarget scores databases.
-    del ct_scores_db_motifs_vs_regions_or_genes
-    del ct_scores_db_regions_or_genes_vs_motifs
+        # Reclaim memory occupied by cisTarget scores databases.
+        del ct_scores_db_motifs_vs_regions_or_genes
+        del ct_scores_db_regions_or_genes_vs_motifs
 
-    # Write cisTarget rankings database (motifs vs regions or genes) to Feather file.
-    write_db(ct_db=ct_rankings_db_motifs_vs_regions_or_genes, db_prefix=args.db_prefix)
+        # Write cisTarget rankings database (motifs vs regions or genes) to Feather file.
+        write_db(ct_db=ct_rankings_db_motifs_vs_regions_or_genes, db_prefix=db_prefix)
 
-    # Create cisTarget rankings database (regions or genes vs motifs) from (motifs vs regions or genes) version.
-    ct_rankings_db_regions_or_genes_vs_motifs = ct_rankings_db_motifs_vs_regions_or_genes.transpose()
+        # Create cisTarget rankings database (regions or genes vs motifs) from (motifs vs regions or genes) version.
+        ct_rankings_db_regions_or_genes_vs_motifs = ct_rankings_db_motifs_vs_regions_or_genes.transpose()
 
-    # Write cisTarget rankings database (regions or genes vs motifs) to Feather file.
-    write_db(ct_db=ct_rankings_db_regions_or_genes_vs_motifs, db_prefix=args.db_prefix)
+        # Write cisTarget rankings database (regions or genes vs motifs) to Feather file.
+        write_db(ct_db=ct_rankings_db_regions_or_genes_vs_motifs, db_prefix=db_prefix)
 
 
 if __name__ == '__main__':
