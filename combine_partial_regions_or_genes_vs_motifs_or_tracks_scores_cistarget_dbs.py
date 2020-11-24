@@ -101,7 +101,7 @@ def combine_partial_cistarget_dbs(
             extension='feather'
         )
     print(
-        f'Write full {ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} vs '
+        f'Writing full {ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} vs '
         f'{ct_scores_db_features_vs_motifs_or_tracks.db_type.column_kind} scores db: '
         f'{ct_scores_db_motifs_or_tracks_vs_features_filename}.'
     )
@@ -113,7 +113,7 @@ def combine_partial_cistarget_dbs(
 
     elapsed_writing_motifs_or_tracks_vs_features_scores_db_time = time.monotonic() - start_writing_motifs_or_tracks_vs_features_scores_db_time
     print(
-        f'Write full {ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} vs '
+        f'Writing full {ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} vs '
         f'{ct_scores_db_features_vs_motifs_or_tracks.db_type.column_kind} scores db took: '
         f'{elapsed_writing_motifs_or_tracks_vs_features_scores_db_time} seconds.\n'
     )
