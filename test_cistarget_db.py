@@ -232,12 +232,12 @@ def test_DatabaseTypes_properties_and_get_dtype():
     assert scores_db_tracks_vs_genes.row_kind == 'genes'
 
     # Score databases always store the data as 32-bit floats.
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=20000) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=32766) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=32767) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=32768) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=32769) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_rows=1000000) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=20000) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32766) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32767) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32768) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32769) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=1000000) == np.float32
 
     del scores_db_tracks_vs_genes
 
@@ -257,12 +257,12 @@ def test_DatabaseTypes_properties_and_get_dtype():
     # Rankings databases store the zero-based rankings as optimally as possible in a:
     #   - 16-bit signed integer: max value = 2^15 - 1 = 32767 ==> can store 32768 rankings.
     #   - 32-bit signed integer: max value = 2^31 - 1 = 2147483647 ==> can store 2147483648
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=20000) == np.int16
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=32766) == np.int16
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=32767) == np.int16
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=32768) == np.int16
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=32769) == np.int32
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_rows=1000000) == np.int32
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=20000) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=32766) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=32767) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=32768) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=32769) == np.int32
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=1000000) == np.int32
 
     del rankings_db_region_vs_motifs
 

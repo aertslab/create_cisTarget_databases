@@ -350,11 +350,11 @@ class DatabaseTypes(Enum):
         """Return row kind for DatabaseTypes member."""
         return self._row_kind
 
-    def get_dtype(self, nbr_rows: int) -> Type[Union[np.core.single, np.core.short, np.core.intc]]:
+    def get_dtype(self, nbr_features: int) -> Type[Union[np.core.single, np.core.short, np.core.intc]]:
         """
         Get optimal dtype for storing values in cisTarget database.
 
-        :param nbr_rows: Number of rows in the database.
+        :param nbr_features: Number of features in the database.
         :return: dtype most suited for DatabaseTypes member.
         """
 
@@ -365,7 +365,7 @@ class DatabaseTypes(Enum):
             # Rankings databases store the zero-based rankings as optimally as possible in a:
             #   - 16-bit signed integer: max value = 2^15 - 1 = 32767 ==> can store 32768 rankings.
             #   - 32-bit signed integer: max value = 2^31 - 1 = 2147483647 ==> can store 2147483648
-            if nbr_rows <= 2 ** 15:
+            if nbr_features <= 2 ** 15:
                 # Range int16: -2^15 (= -32768) to 2^15 - 1 (= 32767).
                 return np.int16
             else:
@@ -438,16 +438,23 @@ class CisTargetDatabase:
                     f'"db_type" ({db_type.motifs_or_tracks_type}).'
                 )
 
+        # Get info in which dimension of the 2D numpy array the feature IDs and motif or track IDs are stored.
+        feature_ids_shape_idx, motifs_or_tracks_ids_shape_idx = (
+            (1, 0)
+            if db_type.column_kind == 'regions' or db_type.column_kind == 'genes'
+            else (0, 1)
+        )
+
         if isinstance(db_numpy_array, np.ndarray):
             if len(db_numpy_array.shape) != 2:
                 raise ValueError(
                     f'Numpy array needs to have exactly 2 dimensions ({len(db_numpy_array)} dimensions found).'
                 )
 
-            if db_type.get_dtype(nbr_rows=db_numpy_array.shape[0]) != db_numpy_array.dtype:
+            if db_type.get_dtype(nbr_features=db_numpy_array.shape[feature_ids_shape_idx]) != db_numpy_array.dtype:
                 raise ValueError(
                     f'dtype of numpy array ({db_numpy_array.dtype}) should be '
-                    f'{db_type.get_dtype(nbr_rows=db_numpy_array.shape[0])}.'
+                    f'{db_type.get_dtype(nbr_features=db_numpy_array.shape[feature_ids_shape_idx])}.'
                 )
 
         # Create feature IDs index and motif or track IDs index.
@@ -462,15 +469,15 @@ class CisTargetDatabase:
 
         if db_type.column_kind == 'regions' or db_type.column_kind == 'genes':
             if isinstance(db_numpy_array, np.ndarray):
-                if len(motif_or_track_ids) != db_numpy_array.shape[0]:
+                if len(motif_or_track_ids) != db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]:
                     raise ValueError(
                         f'Numpy array needs to have same number of rows as {db_type.row_kind}: '
-                        f'{db_numpy_array.shape[0]} vs {len(motif_or_track_ids)}'
+                        f'{db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]} vs {len(motif_or_track_ids)}'
                     )
-                if len(feature_ids) != db_numpy_array.shape[1]:
+                if len(feature_ids) != db_numpy_array.shape[feature_ids_shape_idx]:
                     raise ValueError(
                         f'Numpy array needs to have same number of columns as {db_type.column_kind}: '
-                        f'{db_numpy_array.shape[1]} vs {len(feature_ids)}'
+                        f'{db_numpy_array.shape[feature_ids_shape_idx]} vs {len(feature_ids)}'
                     )
 
                 # Create dataframe from numpy array for all region IDs or gene IDs vs all motif or track IDs.
@@ -483,22 +490,22 @@ class CisTargetDatabase:
                 # Create zeroed dataframe for all region IDs or gene IDs vs all motif or track IDs.
                 df = pd.DataFrame(
                     data=np.zeros((len(motif_or_track_ids), len(feature_ids)),
-                                  dtype=db_type.get_dtype(nbr_rows=len(feature_ids)),
+                                  dtype=db_type.get_dtype(nbr_features=len(feature_ids)),
                                   order=order),
                     index=motif_or_track_ids_idx,
                     columns=feature_ids_idx
                 )
         elif db_type.column_kind == 'motifs' or db_type.column_kind == 'tracks':
             if isinstance(db_numpy_array, np.ndarray):
-                if len(feature_ids) != db_numpy_array.shape[0]:
+                if len(feature_ids) != db_numpy_array.shape[feature_ids_shape_idx]:
                     raise ValueError(
                         f'Numpy array needs to have same number of rows as {db_type.row_kind}: '
-                        f'{db_numpy_array.shape[0]} vs {len(feature_ids)}'
+                        f'{db_numpy_array.shape[feature_ids_shape_idx]} vs {len(feature_ids)}'
                     )
-                if len(motif_or_track_ids) != db_numpy_array.shape[1]:
+                if len(motif_or_track_ids) != db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]:
                     raise ValueError(
                         f'Numpy array needs to have same number of columns as {db_type.column_kind}: '
-                        f'{db_numpy_array.shape[1]} vs {len(motif_or_track_ids)}'
+                        f'{db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]} vs {len(motif_or_track_ids)}'
                     )
 
                 # Create dataframe from numpy array for all motif or track IDs vs all region IDs or gene IDs.
@@ -511,7 +518,7 @@ class CisTargetDatabase:
                 # Create zeroed dataframe for all motif or track IDs vs all region IDs or gene IDs.
                 df = pd.DataFrame(
                     data=np.zeros((len(feature_ids), len(motif_or_track_ids)),
-                                  dtype=db_type.get_dtype(nbr_rows=len(motif_or_track_ids)),
+                                  dtype=db_type.get_dtype(nbr_features=len(feature_ids)),
                                   order=order),
                     index=feature_ids_idx,
                     columns=motif_or_track_ids_idx
