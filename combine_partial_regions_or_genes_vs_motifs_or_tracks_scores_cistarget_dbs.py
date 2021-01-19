@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Purpose :      Combine partial motif or track vs regions or genes cisTarget scores cisTarget scores databases to a
-               complete cisTarget scores database:
-                 1) Transpose partial motif or track vs regions or genes cisTarget scores databases
-                    to partial region or genes vs motif or tracks cisTarget databases.
-                 2) Combine those partial region or genes vs motif or tracks cisTarget scores databases
-                    to a complete region or genes vs motif or tracks cisTarget database.
-                 3) Transpose a complete region or genes vs motif or tracks cisTarget scores database
+Purpose :      Combine partial motif or track vs regions or genes (features) cisTarget scores databases to a complete
+               cisTarget scores database:
+                 1) Transpose partial motif or track vs regions or genes (features) cisTarget scores databases
+                    to partial regions or genes (features) vs motif or tracks cisTarget databases.
+                 2) Combine those partial regions or genes (features) vs motif or tracks cisTarget scores databases
+                    to a complete regions or genes (features) vs motif or tracks cisTarget database.
+                 3) Transpose a complete regions or genes (features) vs motif or tracks cisTarget scores database
                     to a complete motif or tracks vs region or genes cisTarget scores database.
 
-Copyright (C): 2020 - Gert Hulselmans
+Copyright (C): 2020-2021 - Gert Hulselmans
 """
 
 
