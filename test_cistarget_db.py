@@ -837,7 +837,7 @@ def ct_rankings_db_motifs_vs_regions(ct_scores_db_motifs_vs_regions):
 def test_cistargetdatabase_create_cross_species_rankings_db(ct_rankings_db_motifs_vs_regions):
     # Write cisTarget RANKINGS_DB_MOTIFS_VS_REGIONS database.
     ct_rankings_db_motifs_vs_regions_db_filename = ct_rankings_db_motifs_vs_regions.write_db(
-        db_prefix='test/ct_rankings_db_genes_vs_tracks'
+        db_prefix='test/ct_rankings_db_motifs_vs_regions'
     )
 
     # Create cisTarget cross-species rankings database from individual rankings databases (in this case the same ones).
