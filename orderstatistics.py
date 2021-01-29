@@ -5,7 +5,7 @@ import numpy as np
 @numba.jit(nopython=True)
 def _calculate_cross_species_rank_ratio_with_order_statistics(motif_id_rank_ratios_for_one_region_or_gene: np.ndarray) -> np.ndarray:
     """
-    Calculate cross species combined rank ratio for a region/gene from rank ratios of a certain region/gene scored for
+    Calculate cross-species combined rank ratio for a region/gene from rank ratios of a certain region/gene scored for
     a certain motif in multiple species with order statistics.
 
     Code based on applyOrderStatistics function:
@@ -20,7 +20,7 @@ def _calculate_cross_species_rank_ratio_with_order_statistics(motif_id_rank_rati
     :return: Cross species combined rank ratio.
     """
 
-    # Number of species for which to calculate a cross species combined rank ratio score.
+    # Number of species for which to calculate a cross-species combined rank ratio score.
     rank_ratios_size = motif_id_rank_ratios_for_one_region_or_gene.shape[0]
 
     if rank_ratios_size == 0:
@@ -46,7 +46,7 @@ def _calculate_cross_species_rank_ratio_with_order_statistics(motif_id_rank_rati
 @numba.jit(nopython=True)
 def create_cross_species_ranking_for_motif(motif_id_rankings_per_species: np.ndarray) -> np.ndarray:
     """
-    Create cross species ranking for the input motif from the rankings for that motif for each region/gene for each
+    Create cross-species ranking for the input motif from the rankings for that motif for each region/gene for each
     species.
     
     :param motif_id_rankings_per_species:
@@ -73,7 +73,7 @@ def create_cross_species_ranking_for_motif(motif_id_rankings_per_species: np.nda
     # This array is reused for each iteration of the loop.
     motif_id_rank_ratios_for_one_region_or_gene = np.zeros((nbr_species,), dtype=np.float64)
 
-    # Create array to store the cross species combined rank ratios for each region or gene for the input motif.
+    # Create array to store the cross-species combined rank ratios for each region or gene for the input motif.
     cross_species_rank_ratios_per_region_or_gene = np.zeros((nbr_regions_or_genes,), dtype=np.float64)
 
     # Calculate combined rank ratio with order statistics for each region or gene for the input motif.
@@ -82,13 +82,13 @@ def create_cross_species_ranking_for_motif(motif_id_rankings_per_species: np.nda
         # (as calculate_combined_rank_ratio_with_orderstatistics modifies the input array when sorting it inplace).
         motif_id_rank_ratios_for_one_region_or_gene[:] = motif_id_rank_ratios_per_species[i, :]
 
-        # Calculate cross species combined rank ratio with order statistics for the current region or gene for the
+        # Calculate cross-species combined rank ratio with order statistics for the current region or gene for the
         # input motif.
         cross_species_rank_ratios_per_region_or_gene[i] = _calculate_cross_species_rank_ratio_with_order_statistics(
             motif_id_rank_ratios_for_one_region_or_gene
         )
 
-    # Convert cross species combined rank ratios per region or gene to a cross species combined ranking per region or
+    # Convert cross-species combined rank ratios per region or gene to a cross-species combined ranking per region or
     # gene.
     cross_species_rankings_per_region_or_gene = cross_species_rank_ratios_per_region_or_gene.argsort().argsort().astype(
         ranking_dtype

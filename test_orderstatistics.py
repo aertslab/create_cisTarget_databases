@@ -59,7 +59,7 @@ def motif_id_rank_ratios_per_species(motif_id_rankings_per_species):
 
 def test_calculate_cross_species_rank_ratio_with_order_statistics(motif_id_rank_ratios_per_species):
     """
-    Check if _calculate_cross_species_rank_ratio_with_order_statistics returns the correct cross species combined rank
+    Check if _calculate_cross_species_rank_ratio_with_order_statistics returns the correct cross-species combined rank
     ratio value by comparing the output with the output of OrderStatistcs.jar
     (https://github.com/aertslab/orderstatistics).
     """
@@ -79,7 +79,7 @@ def test_calculate_cross_species_rank_ratio_with_order_statistics(motif_id_rank_
          0.766666666666666666])
     )
 
-    # Use cross species combined rank ratios produced by OrderStatistcs.jar:
+    # Use cross-species combined rank ratios produced by OrderStatistcs.jar:
     #   https://github.com/aertslab/orderstatistics
     #
     #   - Create rank ratios TSV file from motif_id_rank_ratios_per_species:
@@ -142,18 +142,18 @@ def test_calculate_cross_species_rank_ratio_with_order_statistics(motif_id_rank_
         # Get rank ratios for the current gene region/gene.
         motif_id_rank_ratios_for_one_region_or_gene[:] = motif_id_rank_ratios_per_species[region_or_gene_id_idx, :]
 
-        # Check if calculated cross species combined rank ratio matches with the OrderStatistics.jar version.
+        # Check if calculated cross-species combined rank ratio matches with the OrderStatistics.jar version.
         assert _calculate_cross_species_rank_ratio_with_order_statistics(
             motif_id_rank_ratios_for_one_region_or_gene) == cross_species_rank_ratios[region_or_gene_id_idx]
 
 
 def test_create_cross_species_ranking_for_motif(motif_id_rankings_per_species):
     """
-    Test creating of cross species ranking for the input motif from the rankings for that motif for each region/gene
+    Test creating of cross-species ranking for the input motif from the rankings for that motif for each region/gene
     for each species.
     """
 
-    # Use cross species combined rank ratios produced by OrderStatistcs.jar
+    # Use cross-species combined rank ratios produced by OrderStatistcs.jar
     # (https://github.com/aertslab/orderstatistics) and sort the values from low to high and assign a zero-based rank:
     #
     #  - First sort value form low to high, add zero-based rank (by appending the line number minus 1) and resort by

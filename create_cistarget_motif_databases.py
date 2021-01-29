@@ -4,7 +4,7 @@
 """
 Purpose :      Create cisTarget motif databases.
 
-Copyright (C): 2019-2020 - Gert Hulselmans
+Copyright (C): 2019-2021 - Gert Hulselmans
 """
 
 
@@ -293,7 +293,7 @@ def main():
         type=str,
         required=True,
         help='FASTA filename which contains the regions/genes to score with Cluster-Buster for each motif. When '
-             'creating a species CisTarget database from regions/genes lifted over from a different species, provide '
+             'creating a cisTarget species database from regions/genes lifted over from a different species, provide '
              'the original FASTA file for that species to -F.'
     )
 
@@ -306,7 +306,7 @@ def main():
         required=False,
         help='FASTA filename which contains all the regions/genes of the original species. The fasta file provided to '
              '-f can contain less regions (not all regions could be lifted over) than the one provided to -F, but to '
-             'create a cross species CisTarget database later, all individual species CisTarget databases need to '
+             'create a cisTarget cross-species database later, all individual cisTarget species databases need to '
              'contain the same amount of regions/genes.'
     )
 
@@ -516,10 +516,10 @@ def main():
     seed = args.seed if args.seed else random.randint(0, 2**64)
 
     if args.original_species_fasta_filename:
-        # When creating CisTarget databases for a species with lifted over regions, check if the regions/genes in the
+        # When creating cisTarget databases for a species with lifted over regions, check if the regions/genes in the
         # current species FASTA file are available in the original species FASTA file. Due to liftover, regions might
-        # be lost in the current species, but the CisTarget database needs to contain all regions/genes from the
-        # original species to create the cross species CisTarget database later.
+        # be lost in the current species, but the cisTarget database needs to contain all regions/genes from the
+        # original species to create the cisTarget cross-species database later.
 
         # Get all region IDs or gene IDs from current species FASTA sequence names as a FeaturesIDs object.
         region_ids_or_gene_ids_current_species = get_region_ids_or_gene_ids_from_fasta(
@@ -693,10 +693,8 @@ def main():
         db_filename = ct_db.create_db_filename_from_db_prefix(db_prefix=db_prefix, extension='feather')
 
         print(
-            f'Write {ct_db.db_type.scores_or_rankings} of {ct_db.feature_ids.type.value} for each motif in '
-            f'{ct_db.db_type.column_kind} vs {ct_db.db_type.row_kind} style to '
-            f'"{db_filename}".',
-            file=sys.stderr
+            f'Writing cisTarget {ct_db.db_type.row_kind} vs {ct_db.db_type.column_kind} '
+            f'{ct_db.db_type.scores_or_rankings} db: "{db_filename}"'
         )
 
         start_time = time.monotonic()
@@ -706,7 +704,10 @@ def main():
         )
         elapsed_time = time.monotonic() - start_time
 
-        print(f'Database written in {elapsed_time:0.6f} seconds.\n', file=sys.stderr)
+        print(
+            f'Writing cisTarget {ct_db.db_type.row_kind} vs {ct_db.db_type.column_kind} '
+            f'{ct_db.db_type.scores_or_rankings} db took: {elapsed_time:.06f} seconds\n'
+        )
 
     if not args.partial:
         # Write cisTarget scores database (motifs vs regions or genes) to Feather file.
@@ -736,7 +737,10 @@ def main():
             ct_scores_db_motifs_vs_regions_or_genes.convert_scores_db_to_rankings_db(seed=seed)
         elapsed_time = time.monotonic() - start_time
 
-        print(f'Creating rankings from scores database took {elapsed_time:.06f} seconds.\n', file=sys.stderr)
+        print(
+            f'Creating cisTarget rankings db from cisTarget scores db took: '
+            f'{elapsed_time:.06f} seconds\n'
+        )
 
         # Reclaim memory occupied by cisTarget scores databases.
         del ct_scores_db_motifs_vs_regions_or_genes

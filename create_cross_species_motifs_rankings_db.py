@@ -35,8 +35,10 @@ def create_cross_species_motifs_rankings_db(cross_species_db_prefix: str,
     )
 
     start_creating_ct_cross_species_rankings_db_motifs_vs_features_time = time.monotonic()
-    print('Create cisTarget cross-species motifs rankings db from:\n  - "'
-          + '"\n  - "'.join(ct_rankings_db_motifs_vs_features_species_filenames) + '"\n')
+    print(
+        'Create cisTarget cross-species motifs rankings db from:\n  - "'
+        + '"\n  - "'.join(ct_rankings_db_motifs_vs_features_species_filenames) + '"\n'
+    )
 
     ct_cross_species_rankings_db_motifs_vs_features = CisTargetDatabase.create_cross_species_rankings_db(
         species_rankings_db_filenames=ct_rankings_db_motifs_vs_features_species_filenames
@@ -45,9 +47,11 @@ def create_cross_species_motifs_rankings_db(cross_species_db_prefix: str,
     elapsed_creating_ct_cross_species_rankings_db_motifs_vs_features_time = (
             time.monotonic() - start_creating_ct_cross_species_rankings_db_motifs_vs_features_time
     )
-    print(f'Creating cisTarget cross-species {ct_cross_species_rankings_db_motifs_vs_features.db_type.column_kind} vs '
-          f'{ct_cross_species_rankings_db_motifs_vs_features.db_type.row_kind} rankings db took: '
-          f'{elapsed_creating_ct_cross_species_rankings_db_motifs_vs_features_time} seconds')
+    print(
+        f'Creating cisTarget cross-species {ct_cross_species_rankings_db_motifs_vs_features.db_type.column_kind} vs '
+        f'{ct_cross_species_rankings_db_motifs_vs_features.db_type.row_kind} rankings db took: '
+        f'{elapsed_creating_ct_cross_species_rankings_db_motifs_vs_features_time:.06f} seconds'
+    )
 
     start_writing_ct_cross_species_rankings_db_motifs_vs_features_time = time.monotonic()
     ct_cross_species_rankings_db_motifs_vs_features_filename = (
@@ -57,7 +61,7 @@ def create_cross_species_motifs_rankings_db(cross_species_db_prefix: str,
         )
     )
     print(
-        f'Write cisTarget cross-species {ct_cross_species_rankings_db_motifs_vs_features.db_type.column_kind} vs '
+        f'Writing cisTarget cross-species {ct_cross_species_rankings_db_motifs_vs_features.db_type.column_kind} vs '
         f'{ct_cross_species_rankings_db_motifs_vs_features.db_type.row_kind} rankings db: '
         f'"{ct_cross_species_rankings_db_motifs_vs_features_filename}"'
     )
@@ -73,7 +77,7 @@ def create_cross_species_motifs_rankings_db(cross_species_db_prefix: str,
     print(
         f'Writing cisTarget cross-species {ct_cross_species_rankings_db_motifs_vs_features.db_type.column_kind} '
         f'vs {ct_cross_species_rankings_db_motifs_vs_features.db_type.row_kind} rankings db '
-        f'took: {elapsed_writing_ct_cross_species_rankings_db_motifs_vs_features_time} seconds\n'
+        f'took: {elapsed_writing_ct_cross_species_rankings_db_motifs_vs_features_time:.06f} seconds\n'
     )
 
     start_writing_ct_cross_species_rankings_db_features_vs_motifs_time = time.monotonic()
@@ -87,7 +91,7 @@ def create_cross_species_motifs_rankings_db(cross_species_db_prefix: str,
             extension='feather'
         )
     print(
-        f'Write cisTarget cross-species {ct_cross_species_rankings_db_motifs_vs_features.db_type.row_kind} vs '
+        f'Writing cisTarget cross-species {ct_cross_species_rankings_db_motifs_vs_features.db_type.row_kind} vs '
         f'{ct_cross_species_rankings_db_motifs_vs_features.db_type.column_kind} rankings db: '
         f'"{ct_cross_species_rankings_db_features_vs_motifs_filename}"'
     )
@@ -103,7 +107,7 @@ def create_cross_species_motifs_rankings_db(cross_species_db_prefix: str,
     print(
         f'Writing cisTarget cross-species {ct_cross_species_rankings_db_motifs_vs_features.db_type.row_kind} vs '
         f'{ct_cross_species_rankings_db_motifs_vs_features.db_type.column_kind} rankings db '
-        f'took: {elapsed_writing_ct_cross_species_rankings_db_features_vs_motifs_time} seconds\n'
+        f'took: {elapsed_writing_ct_cross_species_rankings_db_features_vs_motifs_time:.06f} seconds\n'
     )
 
 
@@ -130,7 +134,7 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='Output directory to which the cross-species cisTarget motifs rankings database files will be written.'
+        help='Output directory to which the cisTarget cross-species motifs rankings database files will be written.'
     )
 
     args = parser.parse_args()

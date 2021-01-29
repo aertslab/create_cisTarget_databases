@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Purpose :      Convert motifs or track vs regions or genes (features) scores cisTarget database to
+Purpose :      Convert cisTarget motifs or track vs regions or genes (features) scores database to
                cisTarget rankings database.
 
 Copyright (C): 2020-2021 - Gert Hulselmans
@@ -19,7 +19,7 @@ from cistarget_db import DatabaseTypes, CisTargetDatabase
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Convert motifs or tracks vs regions or genes (features) scores cisTarget database to cisTarget '
+        description='Convert cisTarget motifs or tracks vs regions or genes (features) scores database to cisTarget '
                     'rankings database.'
     )
 
@@ -30,8 +30,8 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='Motifs or tracks vs regions or genes (features) scores cisTarget database filename. The rankings '
-             'cisTarget database feather file will be written to the same directory.'
+        help='cisTarget motifs or tracks vs regions or genes (features) scores database filename. The cisTarget '
+             'rankings database Feather file will be written to the same directory.'
     )
 
     parser.add_argument(
@@ -59,7 +59,7 @@ def main():
                        DatabaseTypes.SCORES_DB_TRACKS_VS_GENES}:
         print(
             f'Error: cisTarget database "{args.ct_scores_db_motifs_or_tracks_vs_regions_or_genes_filename}" is not a '
-            'motifs or tracks vs regions or genes (features) scores cisTarget database.',
+            'cisTarget motifs or tracks vs regions or genes (features) scores database.',
             file=sys.stderr
         )
         sys.exit(1)
@@ -75,8 +75,8 @@ def main():
         db_filename = ct_db.create_db_filename_from_db_prefix(db_prefix=db_prefix, extension='feather')
 
         print(
-            f'Write {ct_db.db_type.row_kind} vs {ct_db.db_type.column_kind} {ct_db.db_type.scores_or_rankings} db: '
-            f'{db_filename}.'
+            f'Writing cisTarget {ct_db.db_type.row_kind} vs {ct_db.db_type.column_kind} '
+            f'{ct_db.db_type.scores_or_rankings} db: "{db_filename}"'
         )
 
         start_time = time.monotonic()
@@ -87,8 +87,8 @@ def main():
         elapsed_time = time.monotonic() - start_time
 
         print(
-            f'Writing {ct_db.db_type.row_kind} vs {ct_db.db_type.column_kind} {ct_db.db_type.scores_or_rankings} db '
-            f'took: {elapsed_time} seconds.\n'
+            f'Writing cisTarget {ct_db.db_type.row_kind} vs {ct_db.db_type.column_kind} '
+            f'{ct_db.db_type.scores_or_rankings} db took: {elapsed_time:.06f} seconds\n'
         )
 
     # Create cisTarget rankings database (motifs or tracks vs regions or genes) from cisTarget scores database filename
@@ -96,8 +96,8 @@ def main():
     start_reading_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_db_time = time.monotonic()
     print(
 
-        f'\nReading {db_type.column_kind} vs {db_type.row_kind} cisTarget '
-        f'scores database "{args.ct_scores_db_motifs_or_tracks_vs_regions_or_genes_filename}".'
+        f'\nReading cisTarget {db_type.column_kind} vs {db_type.row_kind} '
+        f'scores db: "{args.ct_scores_db_motifs_or_tracks_vs_regions_or_genes_filename}"'
     )
 
     ct_scores_db_motifs_or_tracks_vs_regions_or_genes = CisTargetDatabase.read_db(
@@ -107,8 +107,8 @@ def main():
     elapsed_reading_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_db_time = \
         time.monotonic() - start_reading_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_db_time
     print(
-        f'Reading {db_type.column_kind} vs {db_type.row_kind} cisTarget scores databases took: '
-        f'{elapsed_reading_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_db_time} seconds.\n'
+        f'Reading cisTarget {db_type.column_kind} vs {db_type.row_kind} scores db took: '
+        f'{elapsed_reading_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_db_time:.06f} seconds\n'
     )
 
     # Set random seed to provided input value or a random integer.
@@ -119,8 +119,7 @@ def main():
     start_creating_rankings_ct_rankings_db_motifs_or_tracks_vs_regions_or_genes_db_time = time.monotonic()
     print(
         f'Create rankings from "{args.ct_scores_db_motifs_or_tracks_vs_regions_or_genes_filename}" with random seed '
-        f'set to {seed}.',
-        file=sys.stderr
+        f'set to {seed}.'
     )
 
     ct_rankings_db_motifs_or_tracks_vs_regions_or_genes = \
@@ -129,9 +128,8 @@ def main():
     elapsed_creating_rankings_ct_rankings_db_motifs_or_tracks_vs_regions_or_genes_db_time = \
         time.monotonic() - start_creating_rankings_ct_rankings_db_motifs_or_tracks_vs_regions_or_genes_db_time
     print(
-        f'Creating rankings from scores database took '
-        f'{elapsed_creating_rankings_ct_rankings_db_motifs_or_tracks_vs_regions_or_genes_db_time:.06f} seconds.\n',
-        file=sys.stderr
+        f'Creating cisTarget rankings db from cisTarget scores db took: '
+        f'{elapsed_creating_rankings_ct_rankings_db_motifs_or_tracks_vs_regions_or_genes_db_time:.06f} seconds\n'
     )
 
     # Reclaim memory occupied by motifs or tracks vs regions or genes cisTarget scores database.
@@ -143,9 +141,8 @@ def main():
     # Create cisTarget rankings database (regions or genes vs motifs or tracks) from (motifs or tracks vs regions or
     # genes) version.
     print(
-        f'Convert {db_type.column_kind} vs {db_type.row_kind} cisTarget rankings database to {db_type.row_kind} vs '
-        f'{db_type.column_kind} cisTarget rankings databases.',
-        file=sys.stderr
+        f'Convert {db_type.column_kind} vs {db_type.row_kind} cisTarget rankings db to {db_type.row_kind} vs '
+        f'{db_type.column_kind} cisTarget rankings db.'
     )
     ct_rankings_db_regions_or_genes_vs_motifs_or_tracks = ct_rankings_db_motifs_or_tracks_vs_regions_or_genes.transpose()
 

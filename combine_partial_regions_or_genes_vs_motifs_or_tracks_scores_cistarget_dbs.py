@@ -4,12 +4,12 @@
 """
 Purpose :      Combine partial motif or track vs regions or genes (features) cisTarget scores databases to a complete
                cisTarget scores database:
-                 1) Transpose partial motif or track vs regions or genes (features) cisTarget scores databases
-                    to partial regions or genes (features) vs motif or tracks cisTarget databases.
-                 2) Combine those partial regions or genes (features) vs motif or tracks cisTarget scores databases
-                    to a complete regions or genes (features) vs motif or tracks cisTarget database.
-                 3) Transpose a complete regions or genes (features) vs motif or tracks cisTarget scores database
-                    to a complete motif or tracks vs region or genes cisTarget scores database.
+                 1) Transpose partial cisTarget motif or track vs regions or genes (features) scores databases
+                    to partial cisTarget regions or genes (features) vs motif or tracks databases.
+                 2) Combine those partial cisTarget regions or genes (features) vs motif or tracks scores databases
+                    to a complete cisTarget regions or genes (features) vs motif or tracks database.
+                 3) Transpose a complete cisTarget regions or genes (features) vs motif or tracks scores database
+                    to a complete cisTarget motif or tracks vs region or genes scores database.
 
 Copyright (C): 2020-2021 - Gert Hulselmans
 """
@@ -36,12 +36,13 @@ def combine_partial_cistarget_dbs(
         partial_ct_scores_db_features_vs_motifs_or_tracks_vs_one_species_filenames: List[str],
         output_db_prefix: str):
     """
+    Combine partial cisTarget databases to a full cisTarget database.
 
     :param partial_ct_scores_db_features_vs_motifs_or_tracks_vs_one_species_filenames:
-        partial features vs motifs or tracks cisTarget scores databases filenames (for one species)
+        partial cisTarget features vs motifs or tracks scores databases filenames (for one species)
     :param output_db_prefix:
-        Output database prefixes used for writing complete features vs motifs or tracks cisTarget scores database and
-        complete motifs or tracks vs features cisTarget scores database.
+        Output database prefixes used for writing complete cisTarget features vs motifs or tracks scores database and
+        complete cisTarget motifs or tracks vs features scores database.
     :return:
     """
 
@@ -51,9 +52,9 @@ def combine_partial_cistarget_dbs(
         db_filename=partial_ct_scores_db_features_vs_motifs_or_tracks_vs_one_species_filenames[0]
     )[0]
     print(
-        f'\nReading {nbr_partial_dbs} partial {partial_db_type.column_kind} vs {partial_db_type.row_kind} cisTarget '
-        f'scores databases to one complete database: '
-        f'{partial_ct_scores_db_features_vs_motifs_or_tracks_vs_one_species_filenames}.'
+        f'\nReading cisTarget {nbr_partial_dbs} partial {partial_db_type.column_kind} vs {partial_db_type.row_kind} '
+        f'scores databases to one complete database:\n  - "'
+        + '"\n  - "'.join(partial_ct_scores_db_features_vs_motifs_or_tracks_vs_one_species_filenames) + '"\n'
     )
 
     ct_scores_db_features_vs_motifs_or_tracks = CisTargetDatabase.read_db(
@@ -62,8 +63,9 @@ def combine_partial_cistarget_dbs(
 
     elapsed_reading_partial_dbs_to_complete_db_time = time.monotonic() - start_reading_partial_dbs_to_complete_db_time
     print(
-        f'Reading {nbr_partial_dbs} partial {partial_db_type.column_kind} vs {partial_db_type.row_kind} cisTarget '
-        f'scores databases to one complete database took: {elapsed_reading_partial_dbs_to_complete_db_time} seconds.\n'
+        f'Reading cisTarget {nbr_partial_dbs} partial {partial_db_type.column_kind} vs {partial_db_type.row_kind} '
+        f'scores databases to one complete database took: '
+        f'{elapsed_reading_partial_dbs_to_complete_db_time:.06f} seconds\n'
     )
 
     start_writing_features_vs_motifs_or_tracks_scores_db_time = time.monotonic()
@@ -73,9 +75,9 @@ def combine_partial_cistarget_dbs(
             extension='feather'
         )
     print(
-        f'Writing full {ct_scores_db_features_vs_motifs_or_tracks.db_type.column_kind} vs '
+        f'Writing full cisTarget {ct_scores_db_features_vs_motifs_or_tracks.db_type.column_kind} vs '
         f'{ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} scores db: '
-        f'{ct_scores_db_features_vs_motifs_or_tracks_filename}.'
+        f'"{ct_scores_db_features_vs_motifs_or_tracks_filename}"'
     )
     
     ct_scores_db_features_vs_motifs_or_tracks.write_db(
@@ -83,11 +85,13 @@ def combine_partial_cistarget_dbs(
         version=1
     )
 
-    elapsed_writing_features_vs_motifs_or_tracks_scores_db_time = time.monotonic() - start_writing_features_vs_motifs_or_tracks_scores_db_time
+    elapsed_writing_features_vs_motifs_or_tracks_scores_db_time = (
+            time.monotonic() - start_writing_features_vs_motifs_or_tracks_scores_db_time
+    )
     print(
-        f'Writing full {ct_scores_db_features_vs_motifs_or_tracks.db_type.column_kind} vs '
+        f'Writing full cisTarget {ct_scores_db_features_vs_motifs_or_tracks.db_type.column_kind} vs '
         f'{ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} scores db took: '
-        f'{elapsed_writing_features_vs_motifs_or_tracks_scores_db_time} seconds.\n'
+        f'{elapsed_writing_features_vs_motifs_or_tracks_scores_db_time:.06f} seconds\n'
     )
 
     start_writing_motifs_or_tracks_vs_features_scores_db_time = time.monotonic()
@@ -101,9 +105,9 @@ def combine_partial_cistarget_dbs(
             extension='feather'
         )
     print(
-        f'Writing full {ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} vs '
+        f'Writing full cisTarget {ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} vs '
         f'{ct_scores_db_features_vs_motifs_or_tracks.db_type.column_kind} scores db: '
-        f'{ct_scores_db_motifs_or_tracks_vs_features_filename}.'
+        f'"{ct_scores_db_motifs_or_tracks_vs_features_filename}"'
     )
 
     ct_scores_db_features_vs_motifs_or_tracks.transpose(order='F').write_db(
@@ -111,19 +115,21 @@ def combine_partial_cistarget_dbs(
         version=1
     )
 
-    elapsed_writing_motifs_or_tracks_vs_features_scores_db_time = time.monotonic() - start_writing_motifs_or_tracks_vs_features_scores_db_time
+    elapsed_writing_motifs_or_tracks_vs_features_scores_db_time = (
+            time.monotonic() - start_writing_motifs_or_tracks_vs_features_scores_db_time
+    )
     print(
-        f'Writing full {ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} vs '
+        f'Writing full cisTarget {ct_scores_db_features_vs_motifs_or_tracks.db_type.row_kind} vs '
         f'{ct_scores_db_features_vs_motifs_or_tracks.db_type.column_kind} scores db took: '
-        f'{elapsed_writing_motifs_or_tracks_vs_features_scores_db_time} seconds.\n'
+        f'{elapsed_writing_motifs_or_tracks_vs_features_scores_db_time:.06f} seconds\n'
     )
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Combine partial regions or genes (features) vs motifs or tracks cisTarget scores databases to: '
-                    '1) a complete regions or genes (features) vs motifs or tracks cisTarget scores database and '
-                    '2) a complete motifs or tracks vs regions or genes (features) cisTarget scores database.'
+        description='Combine partial cisTarget regions or genes (features) vs motifs or tracks scores databases to: '
+                    '1) a complete cisTarget regions or genes (features) vs motifs or tracks scores database and '
+                    '2) a complete cisTarget motifs or tracks vs regions or genes (features) scores database.'
     )
 
     parser.add_argument(
@@ -133,8 +139,8 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='Input directory or database prefix with partial regions or genes (features) vs motif or track cisTarget '
-             'scores database feather files.'
+        help='Input directory or database prefix with partial cisTarget regions or genes (features) vs motif or track '
+             'scores database Feather files.'
     )
 
     parser.add_argument(
@@ -144,9 +150,9 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='Output directory to which the 1) complete regions or genes (features) vs motif or track cisTarget scores '
-             'database feather files and 2) complete motifs or tracks vs regions or genes (features) cisTarget scores '
-             'database feather files will be written.'
+        help='Output directory to which the 1) complete cisTarget regions or genes (features) vs motif or track scores '
+             'database Feather files and 2) complete cisTarget motifs or tracks vs regions or genes (features) scores '
+             'database Feather files will be written.'
     )
 
     args = parser.parse_args()
@@ -166,15 +172,16 @@ def main():
 
     if len(partial_ct_scores_db_features_vs_motifs_or_tracks_vs_filenames) == 0:
         print(
-            f'Error: No partial features vs motifs or tracks cisTarget scores databases found matching glob: '
-            f'"{partial_ct_scores_db_features_vs_motifs_or_tracks_glob_str}".',
+            f'Error: No partial cisTarget regions or genes (features) vs motifs or tracks scores databases found '
+            f'matching glob: "{partial_ct_scores_db_features_vs_motifs_or_tracks_glob_str}".',
             file=sys.stderr
         )
+        sys.exit(1)
 
     ct_dbs_hierarchical_dict = dict()
 
     for partial_ct_scores_db_features_vs_motifs_or_tracks_filename in partial_ct_scores_db_features_vs_motifs_or_tracks_vs_filenames:
-        # Parse partial features vs motifs or tracks cisTarget scores database filename, so partial databases made from
+        # Parse partial cisTarget features vs motifs or tracks scores database filename, so partial databases made from
         # the same regions/genes and/or species but different motifs/tracks that belong together can be grouped and
         # combined to one database in a later step.
         match = partial_ct_scores_db_features_vs_motifs_or_tracks_pattern.match(
@@ -184,13 +191,13 @@ def main():
         if match:
             db_prefix_minimal = match.group('db_prefix_minimal')
             db_type = match.group('db_type')
-            # Specify "no_species" if species was not specified in CisTarget database filename.
+            # Specify "no_species" if species was not specified in cisTarget database filename.
             species = match.group('species') if match.group('species') else 'no_species'
             current_part = int(match.group('current_part'))
             nbr_total_parts = int(match.group('nbr_total_parts'))
 
             # Group databases in a hierarchical structure:
-            #   - db_prefix
+            #   - db_prefix_minimal
             #   - db_type
             #   - species
             #   - current part number, total number of parts
@@ -206,9 +213,7 @@ def main():
     for db_prefix_minimal in ct_dbs_hierarchical_dict:
         for db_type in ct_dbs_hierarchical_dict[db_prefix_minimal]:
             for species in ct_dbs_hierarchical_dict[db_prefix_minimal][db_type]:
-                #print(db_prefix_minimal, db_type, species)
-
-                # Get all partial features vs motifs or tracks cisTarget scores database filenames for the current
+                # Get all partial cisTarget features vs motifs or tracks scores database filenames for the current
                 # species and sort them by current part and nbr of total parts number, so when reading them to
                 # a complete cisTarget scores database, the motifs/tracks are already in the correct order.
                 partial_ct_scores_db_features_vs_motifs_or_tracks_vs_one_species_filenames = [

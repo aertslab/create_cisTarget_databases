@@ -231,7 +231,7 @@ def test_DatabaseTypes_properties_and_get_dtype():
     assert scores_db_tracks_vs_genes.column_kind == 'tracks'
     assert scores_db_tracks_vs_genes.row_kind == 'genes'
 
-    # Score databases always store the data as 32-bit floats.
+    # cisTarget score databases always store the data as 32-bit floats.
     assert scores_db_tracks_vs_genes.get_dtype(nbr_features=20000) == np.float32
     assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32766) == np.float32
     assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32767) == np.float32
@@ -254,7 +254,7 @@ def test_DatabaseTypes_properties_and_get_dtype():
     assert rankings_db_region_vs_motifs.column_kind == 'regions'
     assert rankings_db_region_vs_motifs.row_kind == 'motifs'
 
-    # Rankings databases store the zero-based rankings as optimally as possible in a:
+    # cisTarget rankings databases store the zero-based rankings as optimally as possible in a:
     #   - 16-bit signed integer: max value = 2^15 - 1 = 32767 ==> can store 32768 rankings.
     #   - 32-bit signed integer: max value = 2^31 - 1 = 2147483647 ==> can store 2147483648
     assert rankings_db_region_vs_motifs.get_dtype(nbr_features=20000) == np.int16
@@ -840,7 +840,7 @@ def test_cistargetdatabase_create_cross_species_rankings_db(ct_rankings_db_motif
         db_prefix='test/ct_rankings_db_genes_vs_tracks'
     )
 
-    # Create cross species CisTarget rankings database from individual rankings databases (in this case the same ones).
+    # Create cisTarget cross-species rankings database from individual rankings databases (in this case the same ones).
     ct_cross_species_rankings_db_motifs_vs_regions = CisTargetDatabase.create_cross_species_rankings_db(
         (ct_rankings_db_motifs_vs_regions_db_filename,
          ct_rankings_db_motifs_vs_regions_db_filename,
@@ -851,7 +851,7 @@ def test_cistargetdatabase_create_cross_species_rankings_db(ct_rankings_db_motif
          ct_rankings_db_motifs_vs_regions_db_filename)
     )
 
-    # Check if the cross species CisTarget rankings database made from the same 7 species rankings CisTarget databases
+    # Check if the cisTarget cross-species rankings database made from the same 7 cisTarget species rankings databases
     # give the same database.
     assert ct_cross_species_rankings_db_motifs_vs_regions.db_type == ct_rankings_db_motifs_vs_regions.db_type
     assert np.all(ct_cross_species_rankings_db_motifs_vs_regions.df.to_numpy()

@@ -529,8 +529,8 @@ class CisTargetDatabase:
     @staticmethod
     def create_cross_species_rankings_db(species_rankings_db_filenames=Union[List[str], Tuple[str]]):
         for species_rankings_db_filename in species_rankings_db_filenames:
-            # Get database type for each provided cisTarget database feather file and check if it is a supported type
-            # for creating cross species rankings databases.
+            # Get database type for each provided cisTarget database Feather file and check if it is a supported type
+            # for creating cross-species rankings databases.
             species_rankings_db_type, db_prefix, extension = \
                 DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
                     db_filename=species_rankings_db_filename
@@ -540,7 +540,7 @@ class CisTargetDatabase:
                 species_rankings_db_type.allowed_as_cross_species_rankings_db_input, \
                 f'"{species_rankings_db_filename}" ({species_rankings_db_type}) is not allowed as input database type.'
 
-        # Create Feather dataset object with all provided rankings databases (from different species).
+        # Create Feather dataset object with all provided cisTarget rankings databases (from different species).
         multiple_species_rankings_feather_dataset = pf.FeatherDataset(
             path_or_paths=species_rankings_db_filenames,
             validate_schema=True
@@ -555,7 +555,7 @@ class CisTargetDatabase:
             features_type = FeaturesType.from_str(species_rankings_db_type.row_kind)
         else:
             raise ValueError(
-                'Feather rankings databases for creating cross species rankings need to have a column named "regions" '
+                'Feather rankings databases for creating cross-species rankings need to have a column named "regions" '
                 'or "genes".'
             )
 
@@ -592,7 +592,7 @@ class CisTargetDatabase:
             motifs_or_tracks_type=species_rankings_db_type.column_kind
         )
 
-        # Create zeroed rankings database for storing cross species rankings.
+        # Create zeroed rankings database for storing cross-species rankings.
         cross_species_rankings_ct = CisTargetDatabase.create_db(
             db_type=species_rankings_db_type,
             feature_ids=feature_ids,
@@ -608,13 +608,13 @@ class CisTargetDatabase:
                 multiple_species_rankings_table.column(motif_id).chunks, order='F'
             ).transpose()
 
-            # Create cross species ranking for current motif by combining the individual ranking in each species per
+            # Create cross-species ranking for current motif by combining the individual ranking in each species per
             # region/gene with order statistics.
             cross_species_rankings_ct.df.loc[:, motif_id] = orderstatistics.create_cross_species_ranking_for_motif(
                 motif_id_rankings_per_species=motif_id_rankings_per_species
             )
 
-        # Return CisTarget cross species rankings database.
+        # Return cisTarget cross-species rankings database.
         return cross_species_rankings_ct
 
     @staticmethod
@@ -994,18 +994,19 @@ class CisTargetDatabase:
 
     def convert_scores_db_to_rankings_db(self, seed: Optional[int] = None) -> 'CisTargetDatabase':
         """
-        Convert scores cisTarget database to rankings database.
+        Convert cisTarget scores database to cisTarget rankings database.
 
         :param seed:
-            Set seed for random number generator if generating the same rankings database from the same scores database
-            is required.
+            Set seed for random number generator if generating the same cisTarget rankings database from the same
+            cisTarget scores database is required.
             If set to None, unpredictable entropy will be pulled from the OS.
-        :return: rankings cisTarget database
+        :return: cisTarget rankings database
         """
 
-        assert self.db_type.is_scores_db, 'cisTarget database must be a scores database.'
+        assert self.db_type.is_scores_db, 'cisTarget database must be a cisTarget scores database.'
 
-        # Initialize random number generator, so same rankings database can be generated if the same seed is set.
+        # Initialize random number generator, so same cisTarget rankings database can be generated if the same seed is
+        # set.
         rng = np.random.default_rng(seed=seed)
 
         def rank_scores_and_assign_random_ranking_in_range_for_ties(scores_with_ties_for_motif_or_track_numpy):
@@ -1054,7 +1055,7 @@ class CisTargetDatabase:
 
             return ranking_with_broken_ties_for_motif_or_track_numpy
 
-        # Create zeroed rankings database.
+        # Create zeroed cisTarget rankings database.
         rankings_db = CisTargetDatabase.create_db(
             db_type=DatabaseTypes.from_strings(
                 scores_or_rankings='rankings',
@@ -1065,7 +1066,7 @@ class CisTargetDatabase:
             motif_or_track_ids=self.motif_or_track_ids
         )
 
-        # Get dtype of rankings cisTarget database as this is used to return a numpy array of the correct type in
+        # Get dtype of cisTarget rankings database as this is used to return a numpy array of the correct type in
         # rank_scores_and_assign_random_ranking_in_range_for_ties function.
         rankings_db_dtype = rankings_db.dtype
 
