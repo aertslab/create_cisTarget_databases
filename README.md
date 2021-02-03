@@ -66,16 +66,16 @@ create_cistarget_databases_dir=""
 
 | script | description |
 | ---: | --- |
-| [`create_cistarget_motif_databases.py`](#1-create_cistarget_motif_databasespy)                                                                                             | Create cisTarget motif databases. |
-| [`combine_partial_regions_or_genes_vs_ motifs_or_tracks_scores_cistarget_dbs.py`](#2-combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy)          | Combine partial cisTarget regions or genes (features) vs motifs or tracks scores databases to: **1)** a complete cisTarget regions or genes (features) vs motifs or tracks scores database and **2)** a complete cisTarget motifs or tracks vs regions or genes (features) scores database. |
-| [`convert_motifs_or_tracks_vs_ regions_or_genes_scores_to_ rankings_cistarget_dbs.py`](#3-convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy) | Convert cisTarget motifs or tracks vs regions or genes (features) scores database to cisTarget rankings database. |
-| [`create_cross_species_motifs_rankings_db.py`](#4-create_cross_species_motifs_rankings_dbpy)                                                                               | Create cisTarget cross-species motifs rankings databases. |
+| [`create_cistarget_motif_databases.py`](#create_cistarget_motif_databasespy)                                                                                             | Create cisTarget motif databases. |
+| [`combine_partial_regions_or_genes_vs_ motifs_or_tracks_scores_cistarget_dbs.py`](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy)          | Combine partial cisTarget regions or genes (features) vs motifs or tracks scores databases to: **1)** a complete cisTarget regions or genes (features) vs motifs or tracks scores database and **2)** a complete cisTarget motifs or tracks vs regions or genes (features) scores database. |
+| [`convert_motifs_or_tracks_vs_ regions_or_genes_scores_to_ rankings_cistarget_dbs.py`](#convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy) | Convert cisTarget motifs or tracks vs regions or genes (features) scores database to cisTarget rankings database. |
+| [`create_cross_species_motifs_rankings_db.py`](#create_cross_species_motifs_rankings_dbpy)                                                                               | Create cisTarget cross-species motifs rankings databases. |
 
 
 ### Usage
 
 
-#### 1. create_cistarget_motif_databases.py
+#### create_cistarget_motif_databases.py
 
 ```bash
 ❯ ${create_cistarget_databases_dir}/create_cistarget_motif_databases.py --help
@@ -145,7 +145,7 @@ optional arguments:
 ```
 
 
-#### 2. combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py
+#### combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py
 
 ```bash
 ❯ ${create_cistarget_databases_dir}/combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py --help
@@ -169,7 +169,7 @@ optional arguments:
 ```
 
 
-#### 3. convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py
+#### convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py
 
 ```bash
 ❯ ${create_cistarget_databases_dir}/convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py --help
@@ -192,7 +192,7 @@ optional arguments:
 ```
 
 
-#### 4. create_cross_species_motifs_rankings_db.py
+#### create_cross_species_motifs_rankings_db.py
 
 ```bash
 ❯ ${create_cistarget_databases_dir}/create_cross_species_motifs_rankings_db.py -h
