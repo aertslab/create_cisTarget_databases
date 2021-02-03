@@ -62,6 +62,40 @@ create_cistarget_databases_dir=""
 ```
 
 
+## Memory requirements
+
+Creating cisTarget databases can be a very memory intensive job as it needs to create/store a 2D matrix with dimensions
+(number of motifs/tracks vs number of regions/genes) or vice versa. Besides this, it needs (relatively little) memory
+to store motif/tracks and regions/genes names.
+
+Memory size of **cisTarget scores database** when loaded in memory:
+  - `4 bytes x number of regions/genes x number of motifs/tracks`
+  -  memory needed to store region/genes names and motifs/tracks names
+
+Memory size of **cisTarget rankings database** when loaded in memory:
+  - 32768 regions/genes or less:
+      - `2 bytes x number of regions/genes x number of motifs/tracks`
+      - memory needed to store region/genes names and motifs/tracks names
+  - more than 32768 regions/genes:
+      - `4 bytes x number of regions/genes x number of motifs/tracks`
+      -  memory needed to store region/genes names and motifs/tracks names
+
+*Examples:*
+
+| cisTarget database type | byte size (1 element) | #genes/regions | #motifs/tracks | RAM requirement for 2D matrix |
+| ---: | :---: | :---: | :---: | :---: |
+| *cisTarget scores database*   | 4 bytes | 20000 genes     | 10000 motifs | `4 bytes x 20000 x 10000 = 0.745 GB` |
+| *cisTarget rankings database* | 2 bytes | 20000 genes     | 10000 motifs | `2 bytes x 20000 x 10000 = 0.373 GB` |
+| *cisTarget scores database*   | 4 bytes | 1000000 regions | 10000 motifs | `4 bytes x 1000000 x 10000 = 37.253 GB` |
+| *cisTarget rankings database* | 4 bytes | 1000000 regions | 10000 motifs | `4 bytes x 1000000 x 10000 = 37.253 GB` |
+| *cisTarget scores database*   | 4 bytes | 1000000 regions | 1000 tracks  | `4 bytes x 1000000 x 1000 = 3.725 GB` |
+| *cisTarget rankings database* | 4 bytes | 1000000 regions | 1000 tracks  | `4 bytes x 1000000 x 1000 = 3.725 GB` |
+
+
+When running the scripts in this repo, you might need around 3 times the amount of RAM of the actual database.
+
+
+
 ## Scripts overview
 
 | script | description |
