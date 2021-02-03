@@ -246,9 +246,187 @@ optional arguments:
 
 
 
+# Creating cisTarget databases: details
 
+To create cisTarget databases:
+  - FASTA file with regulatory regions:
+      - gene-based
+      - region-based
+  - motifs or TF ChIP-seq tracks:
+      - motifs: in Cluster-Buster format
+      - tracks: bigWig files of TF ChIP-seq data
+
+
+## Creating cisTarget motif databases
+
+cisTarget motif databases can be created in 2 ways:
+  - [Score all motifs at once and create rankings](#score-all-motifs-at-once-and-create-rankings)
+  - [Score motifs in different parts and generate rankings in a separate step](#score-motifs-in-different-parts-and-generate-rankings-in-a-separate-step)
+
+
+### Score all motifs at once and create rankings
+
+Create cisTarget motif databases:
+  - [`create_cistarget_motif_databases.py`](#create_cistarget_motif_databasespy)
+      - for each motif score all regulatory regions and create a cisTarget motifs vs regions/genes scores db:
+          - `*.motifs_vs_regions.scores.feather`
+          - `*.motifs_vs_genes.scores.feather`
+      - transpose cisTarget motifs vs regions/genes scores db to cisTarget regions/genes vs motifs scores db:
+          - `*.regions_vs_motifs.scores.feather`
+          - `*.genes_vs_motifs.scores.feather`
+      - creating a ranking for each regulatory region per motif based on the CRM score of the motif for that region and
+        create a cisTarget motifs vs regions/genes rankings db:
+          - `*.motifs_vs_regions.rankings.feather`
+          - `*.motifs_vs_genes.rankings.feather`
+      - transpose cisTarget motifs vs regions/genes rankings db to cisTarget regions/genes vs motifs rankings db:
+          - `*.regions_vs_motifs.rankings.feather`
+          - `*.genes_vs_motifs.rankings.feather`
+
+
+```bash
+fasta_filename=
+motifs_dir=
+motifs_list_filename=
+db_prefix=
+
+nbr_threads=22
+
+
+"${create_cistarget_databases_dir}/create_cistarget_motif_databases.py" \
+    -f "${fasta_filename}" \
+    -M "${motifs_dir}" \
+    -m "${motifs_list_filename}" \
+    -o "${db_prefix}" \
+    -t "${nbr_threads}"
+```
+
+
+
+### Score motifs in different parts and generate rankings in a separate step
+
+Create cisTarget motif databases:
+  1) [`create_cistarget_motif_databases.py`](#create_cistarget_motif_databasespy):
+      - score the whole list of motifs in several parts by running `create_cistarget_motif_databases.py` with the
+        `-p ${current_part} ${nbr_total_parts}`  option with `${current_part}` set from `1` to `${nbr_total_parts}`.
+        Each run will create motif scores (for the current subset of motifs) for all regulatory regions and create a partial
+        cisTarget regions/genes vs motifs scores db:
+          - `*.part_${current_part}_of_${nbr_total_parts}.regions_vs_motifs.scores.feather`
+          - `*.part_${current_part}_of_${nbr_total_parts}.genes_vs_motifs.scores.feather`
+  2) [`combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py`](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy):
+      - Combine partial cisTarget regions/genes vs motifs scores db to:
+          - a complete cisTarget regions/genes vs motifs scores database:
+              - `*.motifs_vs_regions.scores.feather`
+              - `*.motifs_vs_genes.scores.feather`
+          - a complete cisTarget motifs vs regions/genes scores database:
+              - `*.regions_vs_motifs.scores.feather`
+              - `*.genes_vs_motifs.scores.feather`
+          - partial cisTarget scores databases can be deleted afterwards.
+  3) [`convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py`](#convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy)
+      - creating a ranking for each regulatory region per motif based on the CRM score of the motif for that region and
+        create a cisTarget motifs vs regions/genes rankings db:
+          - `*.motifs_vs_regions.rankings.feather`
+          - `*.motifs_vs_genes.rankings.feather`
+      - transpose cisTarget motifs vs regions/genes rankings db to cisTarget regions/genes vs motifs rankings db:
+          - `*.regions_vs_motifs.rankings.feather`
+          - `*.genes_vs_motifs.rankings.feather`
+
+
+#### Step 1
+
+Using `-p` or `--partial` of [`create_cistarget_motif_databases.py` (help)](#create_cistarget_motif_databasespy) will divide
+the motif list in a number of total parts (`${nbr_total_parts}`) (of similar size) and score only the part defined by
+`${current_part}`.
+
+This allows creating partial databases on machines which do not have enough RAM to score all motifs in one iteration
+and/or running the motif scoring on multiple nodes (where each node runs the motif scoring with a different value for
+`${current_part}`) in parallel. This is quite useful if the number of region/genes is quite high.
+
+This will only create a partial cisTarget regions/genes vs motifs scores database files:
+   - `${output_db_prefix}.part_0*${current_part}_of_0*${nbr_total_parts}.regions_vs_motifs.scores.feather`
+   - `${output_db_prefix}.part_0*${current_part}_of_0*${nbr_total_parts}.genes_vs_motifs.scores.feather`
+
+
+```bash
+fasta_filename=
+motifs_dir=
+motifs_list_filename=
+db_prefix=
+
+nbr_threads=22
+nbr_parts=10
+
+# Create a partial directory, so partial cisTarget database files can be deleted easily afterwards.
+mkdir partial
+
+# Each invocation of the for loop (with different ${current_part}) can also be submitted to a different node to speedup
+# the motif scoring.
+
+for current_part in $(seq 1 ${nbr_total_parts}) ; do
+    "${create_cistarget_databases_dir}/create_cistarget_motif_databases.py" \
+         -f "${fasta_filename}" \
+         -M "${motifs_dir}" \
+         -m "${motifs_list_filename}" \
+         -p "${current_part}" "${nbr_total_parts}" \
+         -o "partial/${db_prefix}" \
+         -t "${nbr_threads}"
 done
 ```
 
 
+#### Step 2
+
+> *See [Memory requirements](#memory-requirements) to
+have a rough guess about the amount of memory needed in case you have problems running this step.*
+
+
+When all partial cisTarget regions/genes vs motifs scores database files are created:
+  - `${db_prefix}.part_0*of_0*${nbr_total_parts}.regions_vs_motifs.scores.feather`
+  - `${db_prefix}.part_0*_of_0*${nbr_total_parts}.genes_vs_motifs.scores.feather`
+
+they can be combined with
+[`combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py` (help)](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy)
+to:
+  - a complete cisTarget regions/genes vs motifs scores database:
+      - `*.motifs_vs_regions.scores.feather`
+      - `*.motifs_vs_genes.scores.feather`
+  - a complete cisTarget motifs vs regions/genes scores database:
+      - `*.regions_vs_motifs.scores.feather`
+      - `*.genes_vs_motifs.scores.feather`
+
+Partial cisTarget scores databases can be deleted afterwards.
+
+
+```bash
+"${create_cistarget_databases_dir}/combine_partial_regions_or_genes_vs_motifs_or_tracks_cistarget_dbs.py \
+    -i partial/ \
+    -o .
+
+# Partial cisTarget databases can be removed.
+#rm partial
+```
+
+
+#### Step 3
+
+> *See [Memory requirements](#memory-requirements) to
+have a rough guess about the amount of memory needed in case you have problems running this step.*
+
+
+Create rankings from a complete cisTarget regions/genes vs motifs scores database with
+[`convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py` (help)](#convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy):
+  - creating a ranking for each regulatory region per motif based on the CRM score of the motif for that region and
+    create a cisTarget motifs vs regions/genes rankings db:
+      - `*.motifs_vs_regions.rankings.feather`
+      - `*.motifs_vs_genes.rankings.feather`
+  - transpose cisTarget motifs vs regions/genes rankings db to cisTarget regions/genes vs motifs rankings db:
+      - `*.regions_vs_motifs.rankings.feather`
+      - `*.genes_vs_motifs.rankings.feather`
+
+
+```bash
+# cisTarget database prefix (same as used in the first step).
+db_prefix=
+
+"${create_cistarget_databases_dir}/convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py \
+    -i "${db_prefix}"
 ```
