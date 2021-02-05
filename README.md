@@ -31,6 +31,8 @@ conda create -n create_cistarget_databases \
 
 ### Install Cluster-Buster
 
+Install [Cluster-Buster](https://github.com/weng-lab/cluster-buster/) for scoring regulatory regions with motifs.
+
 ```bash
 # Clone Cluster-Buster repo.
 git clone https://github.com/weng-lab/cluster-buster/
@@ -45,6 +47,31 @@ conda activate create_cistarget_databases
 
 # Copy CLuster-Buster binary in conda environment.
 cp -a cbust "${CONDA_PREFIX}/bin/cbust"
+```
+
+
+### Install UCSC tools
+
+Install some UCSC tools:
+  - `liftOver`: Move regulatory regions from one assembly to another. Needed when generating regulatory regions in
+    other species when creating cross-species regulatory regions.
+  - `bigWigAverageOverBed`: Compute average/max score of bigWig files for each regulatory region. Used for scoring TF
+    ChIP-seq bigWig files.
+
+```bash
+# Activate conda environment.
+conda activate create_cistarget_databases
+
+cd "${CONDA_PREFIX}/bin"
+
+# Download liftOver.
+wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/liftOver
+
+# Download bigWigAverageOverBed.
+wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bigWigAverageOverBed
+
+# Make downloaded binaries executable.
+chmod a+x liftOver bigWigAverageOverBed
 ```
 
 
