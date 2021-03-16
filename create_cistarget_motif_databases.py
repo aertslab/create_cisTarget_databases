@@ -481,7 +481,7 @@ def main():
         )
         sys.exit(1)
 
-    if not os.path.exists(os.path.dirname(args.db_prefix)):
+    if os.path.dirname(args.db_prefix) and not os.path.exists(os.path.dirname(args.db_prefix)):
         print(
             f'Error: Parent directory "{os.path.dirname(args.db_prefix)}" for Feather database prefix output filename '
             'does not exist.',
