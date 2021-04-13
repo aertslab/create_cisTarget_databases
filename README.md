@@ -400,6 +400,31 @@ done
 ```
 
 
+When creating cross-species databases, motif scoring should be done with regulatory regions after liftover
+(`fasta_filename`), while the original regulatory regions fasta file (`original_species_fasta_filename`) should also be
+provided. The latter is only used to make sure that all regions/genes of the original regulatory regions are in the
+generated cisTarget database as some regions might get lost after liftover. cisTarget motif score databases need to be
+generated for each species of interest.
+
+```bash
+fasta_filename=
+original_species_fasta_filename=
+motifs_dir=
+motifs_list_filename=
+db_prefix=
+
+nbr_threads=22
+
+
+"${create_cistarget_databases_dir}/create_cistarget_motif_databases.py" \
+    -f "${fasta_filename}" \
+    -F "${original_species_fasta_filename}" \
+    -M "${motifs_dir}" \
+    -m "${motifs_list_filename}" \
+    -o "${db_prefix}" \
+    -t "${nbr_threads}"
+```
+
 #### Step 2
 
 > *See [Memory requirements](#memory-requirements) to
@@ -459,3 +484,29 @@ db_filename=
 "${create_cistarget_databases_dir}/convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py \
     -i "${db_filename}"
 ```
+
+
+
+## Create cisTarget cross-species motifs rankings database
+
+To create cisTarget cross-species motifs rankings database:
+  - liftover regulatory regions of main species to each species of interest.
+  - [`Create cisTarget motif databases`](#creating-cistarget-motif-databases) for each lifted over regulatory regions
+    FASTA file.convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py
+  - Create cisTarget cross-species motifs rankings from individual (per species) cisTarget motifs rankings databases
+    with [`create_cross_species_motifs_rankings_db.py`](#create_cross_species_motifs_rankings_dbpy)
+
+```bash
+# cisTarget database prefix which matches the common part of all cisTarget rankings databases (or just the directory
+# that contains them).
+db_prefix=
+
+# Output directory.
+output_dir=
+
+
+"${create_cistarget_databases_dir}/create_cross_species_motifs_rankings_db.py \
+    -i "${db_prefix}" \
+    -o "${output_dir}"
+```
+
