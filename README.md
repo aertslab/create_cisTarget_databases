@@ -12,7 +12,7 @@ git clone https://github.com/aertslab/create_cisTarget_databases
 
 cd create_cisTarget_databases
 
-# Display to which value ${create_cistarget_databases_dir} variable should be set. 
+# Display to which value ${create_cistarget_databases_dir} variable should be set.
 echo "create_cistarget_databases_dir='""${PWD}""'"
 ```
 
@@ -451,9 +451,11 @@ Create rankings from a complete cisTarget regions/genes vs motifs scores databas
 
 
 ```bash
-# cisTarget database prefix (same as used in the first step).
-db_prefix=
+# cisTarget database filename:
+#   - *.motifs_vs_regions.rankings.feather
+#   - *.motifs_vs_genes.rankings.feather
+db_filename=
 
 "${create_cistarget_databases_dir}/convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py \
-    -i "${db_prefix}"
+    -i "${db_filename}"
 ```
