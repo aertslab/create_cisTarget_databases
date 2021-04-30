@@ -992,7 +992,9 @@ class CisTargetDatabase:
                     motif_or_track_id_idx_iloc
                 ] = df_scores_for_motif_or_track[score_name]
 
-    def convert_scores_db_to_rankings_db(self, seed: Optional[int] = None) -> 'CisTargetDatabase':
+    def convert_scores_db_to_rankings_db(self,
+                                         seed: Optional[int] = None,
+                                         deterministic_per_motif_or_track: bool = False) -> 'CisTargetDatabase':
         """
         Convert cisTarget scores database to cisTarget rankings database.
 
@@ -1000,16 +1002,26 @@ class CisTargetDatabase:
             Set seed for random number generator if generating the same cisTarget rankings database from the same
             cisTarget scores database is required.
             If set to None, unpredictable entropy will be pulled from the OS.
+        :param deterministic_per_motif_or_track:
+            Generate deterministic rankings per motif or track, between different cisTarget databases where the other
+            database contains the motif or track at a different position. Requires that a seed is set.
         :return: cisTarget rankings database
         """
 
         assert self.db_type.is_scores_db, 'cisTarget database must be a cisTarget scores database.'
 
+        assert deterministic_per_motif_or_track is False or (deterministic_per_motif_or_track is True
+                                                             and isinstance(seed, int)), \
+            'A seed needs to be set to be able to use deterministic per motif or track rankings between cisTarget ' \
+            'databases.'
+
         # Initialize random number generator, so same cisTarget rankings database can be generated if the same seed is
         # set.
         rng = np.random.default_rng(seed=seed)
 
-        def rank_scores_and_assign_random_ranking_in_range_for_ties(scores_with_ties_for_motif_or_track_numpy):
+        def rank_scores_and_assign_random_ranking_in_range_for_ties(
+                scores_with_ties_for_motif_or_track_numpy: np.ndarray
+        ) -> np.ndarray:
             # Create random permutation so tied scores will have a different ranking each time.
             random_permutations_to_break_ties_numpy = rng.permutation(
                 scores_with_ties_for_motif_or_track_numpy.shape[0]
@@ -1073,11 +1085,23 @@ class CisTargetDatabase:
         # Rank all scores per motif/track and assign a random ranking in range for regions/genes with the same score.
         if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
             for row_idx in range(self.nbr_rows):
+                if deterministic_per_motif_or_track:
+                    # Initialize random number generator, so same ranking is generated for a specific motif or track,
+                    # if the scores are the same, but the other cisTarget database contains the motif or track at a
+                    # different position in the cisTarget database.
+                    rng = np.random.default_rng(seed=seed + hash(self.motif_or_track_ids))
+
                 rankings_db.df.iloc[row_idx, :] = rank_scores_and_assign_random_ranking_in_range_for_ties(
                     self.df.iloc[row_idx, :].to_numpy()
                 )
         elif self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
             for column_idx in range(self.nbr_columns):
+                if deterministic_per_motif_or_track:
+                    # Initialize random number generator, so same ranking is generated for a specific motif or track,
+                    # if the scores are the same, but the other cisTarget database contains the motif or track at a
+                    # different position in the cisTarget database.
+                    rng = np.random.default_rng(seed=seed + hash(self.motif_or_track_ids))
+
                 rankings_db.df.iloc[:, column_idx] = rank_scores_and_assign_random_ranking_in_range_for_ties(
                     self.df.iloc[:, column_idx].to_numpy()
                 )
