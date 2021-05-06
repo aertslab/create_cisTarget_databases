@@ -526,6 +526,17 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
             ct_db_read_from_feather=ct_scores_db_motifs_vs_regions_read_from_feather
         )
 
+        # Get database type, Feature IDs and motif IDs or track IDs directly from the cisTarget database Feather file
+        # and check if all of them are the same as the one from the original cisTarget database object.
+        assert (
+                   ct_scores_db_motifs_vs_regions.db_type,
+                   ct_scores_db_motifs_vs_regions.feature_ids,
+                   ct_scores_db_motifs_vs_regions.motif_or_track_ids
+               ) == CisTargetDatabase.get_all_feature_ids_and_motif_or_track_ids_from_db(
+            db_filename_or_dbs_filenames=ct_scores_db_motifs_vs_regions_db_filename,
+            db_type=None
+        )
+
         # Delete some objects so we don't accidentally reuse them in the next section.
         del ct_scores_db_motifs_vs_regions_db_filename
         del ct_scores_db_motifs_vs_regions_db_filename_returned
@@ -560,6 +571,17 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
             ct_db_read_from_feather=ct_rankings_db_genes_vs_tracks_read_from_feather
         )
 
+        # Get database type, Feature IDs and motif IDs or track IDs directly from the cisTarget database Feather file
+        # and check if all of them are the same as the one from the original cisTarget database object.
+        assert (
+                   ct_rankings_db_genes_vs_tracks.db_type,
+                   ct_rankings_db_genes_vs_tracks.feature_ids,
+                   ct_rankings_db_genes_vs_tracks.motif_or_track_ids
+               ) == CisTargetDatabase.get_all_feature_ids_and_motif_or_track_ids_from_db(
+            db_filename_or_dbs_filenames=ct_rankings_db_genes_vs_tracks_db_filename,
+            db_type=None
+        )
+
         # Delete some objects so we don't accidentally reuse them in the next section.
         del ct_rankings_db_genes_vs_tracks_db_filename
         del ct_rankings_db_genes_vs_tracks_read_from_feather
@@ -585,6 +607,17 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
         compare_db_original_and_db_read_from_feather(
             ct_db_original=ct_rankings_db_genes_vs_tracks,
             ct_db_read_from_feather=ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name
+        )
+
+        # Get database type, Feature IDs and motif IDs or track IDs directly from the cisTarget database Feather file
+        # and check if all of them are the same as the one from the original cisTarget database object.
+        assert (
+                   ct_rankings_db_genes_vs_tracks.db_type,
+                   ct_rankings_db_genes_vs_tracks.feature_ids,
+                   ct_rankings_db_genes_vs_tracks.motif_or_track_ids
+               ) == CisTargetDatabase.get_all_feature_ids_and_motif_or_track_ids_from_db(
+            db_filename_or_dbs_filenames=f'test/ct_rankings_db_genes_vs_tracks_with_custom_name.feather_version{feather_version}.db',
+            db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS
         )
 
         # Delete some objects so we don't accidentally reuse them in the next section.

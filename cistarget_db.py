@@ -8,6 +8,8 @@ import orderstatistics
 from enum import Enum, unique
 from typing import List, Optional, Set, Tuple, Type, Union
 
+from feather_v1_or_v2 import get_all_column_names_from_feather
+
 
 @unique
 class FeaturesType(Enum):
@@ -689,6 +691,141 @@ class CisTargetDatabase:
             df.sort_index(axis=1, inplace=True, ascending=True)
 
         return CisTargetDatabase(db_type, df)
+
+    @staticmethod
+    def get_all_feature_ids_and_motif_or_track_ids_from_db(
+            db_filename_or_dbs_filenames: Union[str, List, Tuple],
+            db_type: Optional[Union['DatabaseTypes', str]] = None
+    ) -> ('DatabaseTypes', 'FeatureIDs', 'MotifOrTrackIDs'):
+        """
+        Get all feature IDs and motif IDs or track IDs from cisTarget database Feather file(s).
+
+        :param db_filename_or_dbs_filenames: Feather database filename or database filenames.
+        :param db_type: Type of database (can be automatically determined from the filename if written with write_db).
+        :return: (DatabaseTypes object, FeatureIDs object, MotifOrTrackIDs object)
+        """
+
+        assert db_filename_or_dbs_filenames is not None
+
+        if isinstance(db_filename_or_dbs_filenames, str):
+            db_filename = db_filename_or_dbs_filenames
+            # Convert to a tuple with one element.
+            db_filename_or_dbs_filenames = (db_filename_or_dbs_filenames,)
+        elif isinstance(db_filename_or_dbs_filenames, List) or isinstance(db_filename_or_dbs_filenames, Tuple):
+            # Look at the first (partial) cisTarget database for most checks when multiple databases are given.
+            db_filename = db_filename_or_dbs_filenames[0]
+        else:
+            ValueError('Unsupported type for "db_filename_or_dbs_filenames".')
+
+        # Try to extract the database type from database filename if database type was not specified.
+        if not db_type:
+            try:
+                db_type, db_prefix, extension = \
+                    DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
+                        db_filename=db_filename
+                    )
+            except ValueError:
+                raise ValueError(
+                    'cisTarget database type could not be automatically determined from db_filename_or_dbs_filenames. '
+                    'Specify db_type instead.'
+                )
+        else:
+            if not isinstance(db_type, DatabaseTypes):
+                if isinstance(db_type, str):
+                    # If the database type was given as a string, try to convert it to a member of DatabaseTypes Enum.
+                    try:
+                        db_type = DatabaseTypes.from_str(database_type=db_type)
+                    except ValueError as e:
+                        raise e
+                else:
+                    raise ValueError('db_type must be of "DatabaseTypes" type.')
+
+        column_names = get_all_column_names_from_feather(feather_file=db_filename_or_dbs_filenames[0])
+
+        if db_type.column_kind == 'regions' or db_type.column_kind == 'genes':
+            # Get the name of the motif IDs or track IDs column.
+            motif_or_track_ids_column_name = [
+                column_name
+                for column_name in column_names
+                if column_name in (db_type.row_kind, 'index')
+            ]
+
+            if len(motif_or_track_ids_column_name) != 1:
+                raise ValueError(f'No MotifOrTrackIDs column name ("{db_type.row_kind}" or "index") found in '
+                                 f'"{db_filename_or_dbs_filenames[0]}".')
+
+            # Convert list with one element to plain string.
+            motif_or_track_ids_column_name = motif_or_track_ids_column_name[0]
+
+            feature_ids = [
+                column_name
+                for column_name in column_names
+                if column_name != motif_or_track_ids_column_name
+            ]
+
+            # Get MotifOrTrackIDs from Feather file(s).
+            motif_or_track_ids = list(
+                pf.FeatherDataset(
+                    path_or_paths=db_filename_or_dbs_filenames, validate_schema=True
+                ).read_pandas(
+                    columns=[motif_or_track_ids_column_name]
+                )[motif_or_track_ids_column_name]
+            )
+
+            # Create a FeatureIDs object.
+            feature_ids = FeatureIDs(
+                feature_ids=feature_ids,
+                features_type=db_type.features_type
+            )
+
+            # Create a MotifOrTrackIDs object.
+            motif_or_track_ids = MotifOrTrackIDs(
+                motif_or_track_ids=motif_or_track_ids,
+                motifs_or_tracks_type=db_type.motifs_or_tracks_type
+            )
+        elif db_type.column_kind == 'motifs' or db_type.column_kind == 'tracks':
+            # Get the name of the Feature IDs column.
+            feature_ids_column_name = [
+                column_name
+                for column_name in column_names
+                if column_name in (db_type.row_kind, 'index', 'features')
+            ]
+
+            if len(feature_ids_column_name) != 1:
+                raise ValueError(f'No FeatureIDs column name ("{db_type.row_kind}", "index" or "features") found in '
+                                 f'"{db_filename_or_dbs_filenames[0]}".')
+
+            # Convert list with one element to plain string.
+            feature_ids_column_name = feature_ids_column_name[0]
+
+            motif_or_track_ids = [
+                column_name
+                for column_name in column_names
+                if column_name != feature_ids_column_name
+            ]
+
+            # Get Feature IDs from Feather file(s).
+            feature_ids = list(
+                pf.FeatherDataset(
+                    path_or_paths=db_filename_or_dbs_filenames, validate_schema=True
+                ).read_pandas(
+                    columns=[feature_ids_column_name]
+                )[feature_ids_column_name]
+            )
+
+            # Create a FeatureIDs object.
+            feature_ids = FeatureIDs(
+                feature_ids=feature_ids,
+                features_type=db_type.features_type
+            )
+
+            # Create a MotifOrTrackIDs object.
+            motif_or_track_ids = MotifOrTrackIDs(
+                motif_or_track_ids=motif_or_track_ids,
+                motifs_or_tracks_type=db_type.motifs_or_tracks_type
+            )
+
+        return db_type, feature_ids, motif_or_track_ids
 
     def __init__(self, db_type: DatabaseTypes, df: pd.DataFrame):
         self.db_type: DatabaseTypes = db_type
