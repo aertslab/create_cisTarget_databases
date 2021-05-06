@@ -26,7 +26,8 @@ conda create -n create_cistarget_databases \
     numpy=1.19.5 \
     pandas=1.2.1 \
     pyarrow=3.0.0 \
-    numba=0.52.0
+    numba=0.52.0 \
+    python-flatbuffers
 ```
 
 ### Install Cluster-Buster
