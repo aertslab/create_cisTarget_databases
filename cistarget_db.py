@@ -673,12 +673,12 @@ class CisTargetDatabase:
         # Set indexes and index names for rows.
         if db_type.row_kind in df:
             df.set_index(db_type.row_kind, inplace=True)
-        elif 'index' in df:
-            df.set_index('index', inplace=True)
+        elif 'features' in df:
+            df.set_index('features', inplace=True)
             df.index.set_names([db_type.row_kind], inplace=True)
         else:
             raise ValueError(
-                f'cisTarget database file "{db_filename}" does not contain a "{db_type.row_kind}" or "index" column.'
+                f'cisTarget database file "{db_filename}" does not contain a "{db_type.row_kind}" or "features" column.'
             )
 
         # Set column name.
@@ -747,11 +747,11 @@ class CisTargetDatabase:
             motif_or_track_ids_column_name = [
                 column_name
                 for column_name in column_names
-                if column_name in (db_type.row_kind, 'index')
+                if column_name in (db_type.row_kind, )
             ]
 
             if len(motif_or_track_ids_column_name) != 1:
-                raise ValueError(f'No MotifOrTrackIDs column name ("{db_type.row_kind}" or "index") found in '
+                raise ValueError(f'No MotifOrTrackIDs column name ("{db_type.row_kind}") found in '
                                  f'"{db_filename_or_dbs_filenames[0]}".')
 
             # Convert list with one element to plain string.
@@ -788,11 +788,11 @@ class CisTargetDatabase:
             feature_ids_column_name = [
                 column_name
                 for column_name in column_names
-                if column_name in (db_type.row_kind, 'index', 'features')
+                if column_name in (db_type.row_kind, 'features')
             ]
 
             if len(feature_ids_column_name) != 1:
-                raise ValueError(f'No FeatureIDs column name ("{db_type.row_kind}", "index" or "features") found in '
+                raise ValueError(f'No FeatureIDs column name ("{db_type.row_kind}" or "features") found in '
                                  f'"{db_filename_or_dbs_filenames[0]}".')
 
             # Convert list with one element to plain string.
