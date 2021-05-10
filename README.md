@@ -22,12 +22,12 @@ echo "create_cistarget_databases_dir='""${PWD}""'"
 ```bash
 # Create conda environment.
 conda create -n create_cistarget_databases \
-    python=3.8 \
-    numpy=1.19.5 \
-    pandas=1.2.1 \
-    pyarrow=3.0.0 \
-    numba=0.52.0 \
-    python-flatbuffers
+    'python=3.8' \
+    'numpy=1.19.5' \
+    'pandas>=1.2.0' \
+    'pyarrow>=4.0.0' \
+    'numba>=0.52.0' \
+    'python-flatbuffers'
 ```
 
 ### Install Cluster-Buster
