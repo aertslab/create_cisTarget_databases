@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Purpose :      Convert cisTarget motifs or track vs regions or genes (features) scores database to
-               cisTarget rankings database.
+Purpose :      Convert cisTarget motifs or track vs regions or genes scores database to cisTarget rankings database.
 
 Copyright (C): 2020-2021 - Gert Hulselmans
 """
@@ -19,8 +18,8 @@ from cistarget_db import DatabaseTypes, CisTargetDatabase
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Convert cisTarget motifs or tracks vs regions or genes (features) scores database to cisTarget '
-                    'rankings database.'
+        description='Convert cisTarget motifs or tracks vs regions or genes scores database to cisTarget rankings'
+                    'database.'
     )
 
     parser.add_argument(
@@ -30,8 +29,8 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='cisTarget motifs or tracks vs regions or genes (features) scores database filename. The cisTarget '
-             'rankings database Feather file will be written to the same directory.'
+        help='cisTarget motifs or tracks vs regions or genes scores database filename. The cisTarget rankings database'
+             'Feather file will be written to the same directory.'
     )
 
     parser.add_argument(
@@ -59,7 +58,7 @@ def main():
                        DatabaseTypes.SCORES_DB_TRACKS_VS_GENES}:
         print(
             f'Error: cisTarget database "{args.ct_scores_db_motifs_or_tracks_vs_regions_or_genes_filename}" is not a '
-            'cisTarget motifs or tracks vs regions or genes (features) scores database.',
+            'cisTarget motifs or tracks vs regions or genes scores database.',
             file=sys.stderr
         )
         sys.exit(1)
@@ -144,7 +143,8 @@ def main():
         f'Convert {db_type.column_kind} vs {db_type.row_kind} cisTarget rankings db to {db_type.row_kind} vs '
         f'{db_type.column_kind} cisTarget rankings db.'
     )
-    ct_rankings_db_regions_or_genes_vs_motifs_or_tracks = ct_rankings_db_motifs_or_tracks_vs_regions_or_genes.transpose()
+    ct_rankings_db_regions_or_genes_vs_motifs_or_tracks = \
+        ct_rankings_db_motifs_or_tracks_vs_regions_or_genes.transpose()
 
     # Write cisTarget rankings database (regions or genes vs motifs or tracks) to Feather file.
     write_db(ct_db=ct_rankings_db_regions_or_genes_vs_motifs_or_tracks, db_prefix=db_prefix)

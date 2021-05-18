@@ -2,18 +2,19 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cistarget_db import FeaturesType, MotifsOrTracksType, FeatureIDs, MotifOrTrackIDs, DatabaseTypes, CisTargetDatabase
+from cistarget_db import RegionsOrGenesType, MotifsOrTracksType, RegionOrGeneIDs, MotifOrTrackIDs, DatabaseTypes, \
+    CisTargetDatabase
 
 
-def test_FeaturesType_from_str():
-    """Check if a member of FeaturesType Enum can be made from a string."""
-    assert FeaturesType.from_str('regions') == FeaturesType.REGIONS
-    assert FeaturesType.from_str('REGIONS') == FeaturesType.REGIONS
-    assert FeaturesType.from_str('genes') == FeaturesType.GENES
-    assert FeaturesType.from_str('GENES') == FeaturesType.GENES
+def test_RegionsOrGenesType_from_str():
+    """Check if a member of RegionsOrGenesType Enum can be made from a string."""
+    assert RegionsOrGenesType.from_str('regions') == RegionsOrGenesType.REGIONS
+    assert RegionsOrGenesType.from_str('REGIONS') == RegionsOrGenesType.REGIONS
+    assert RegionsOrGenesType.from_str('genes') == RegionsOrGenesType.GENES
+    assert RegionsOrGenesType.from_str('GENES') == RegionsOrGenesType.GENES
 
-    with pytest.raises(ValueError, match=r'Unsupported FeaturesType "NON_EXISTING_FEATURES_TYPE".'):
-        FeaturesType.from_str('NON_EXISTING_FEATURES_TYPE')
+    with pytest.raises(ValueError, match=r'Unsupported RegionsOrGenesType "NON_EXISTING_REGIONS_OR_TRACKS_TYPE".'):
+        RegionsOrGenesType.from_str('NON_EXISTING_REGIONS_OR_TRACKS_TYPE')
 
 
 def test_MotifsOrTracksType_from_str():
@@ -27,55 +28,59 @@ def test_MotifsOrTracksType_from_str():
         MotifsOrTracksType.from_str('NON_EXISTING_MOTIFS_OR_TRACKS_TYPE')
 
 
-def test_FeatureIDs_with_regions():
-    """Check if a FeatureIDs object can be constructed from a list of region IDs."""
-    features_ids_instance = FeatureIDs(
-        feature_ids=['reg2', 'reg1', 'reg6', 'reg2'], features_type=FeaturesType.REGIONS
+def test_RegionOrGeneIDs_with_regions():
+    """Check if a RegionOrGeneIDs object can be constructed from a list of region IDs."""
+    region_or_gene_ids_instance = RegionOrGeneIDs(
+        region_or_gene_ids=['reg2', 'reg1', 'reg6', 'reg2'], regions_or_genes_type=RegionsOrGenesType.REGIONS
     )
-    assert features_ids_instance.type == FeaturesType.REGIONS
-    assert features_ids_instance.ids == ('reg1', 'reg2', 'reg6')
+    assert region_or_gene_ids_instance.type == RegionsOrGenesType.REGIONS
+    assert region_or_gene_ids_instance.ids == ('reg1', 'reg2', 'reg6')
 
-    assert eval(features_ids_instance.__repr__()) == features_ids_instance
-    assert len(features_ids_instance) == 3
+    assert eval(region_or_gene_ids_instance.__repr__()) == region_or_gene_ids_instance
+    assert len(region_or_gene_ids_instance) == 3
 
 
-def test_FeatureIDs_with_genes():
-    """Check if a FeatureIDs object can be constructed from a set of gene IDs."""
-    features_ids_instance = FeatureIDs(
-        feature_ids={'gene2', 'gene1', 'gene6', 'gene2'}, features_type=FeaturesType.GENES
+def test_RegionOrGeneIDs_with_genes():
+    """Check if a RegionOrGeneIDs object can be constructed from a set of gene IDs."""
+    region_or_gene_ids_instance = RegionOrGeneIDs(
+        region_or_gene_ids={'gene2', 'gene1', 'gene6', 'gene2'}, regions_or_genes_type=RegionsOrGenesType.GENES
     )
-    assert features_ids_instance.type == FeaturesType.GENES
-    assert features_ids_instance.ids == ('gene1', 'gene2', 'gene6')
+    assert region_or_gene_ids_instance.type == RegionsOrGenesType.GENES
+    assert region_or_gene_ids_instance.ids == ('gene1', 'gene2', 'gene6')
 
-    assert eval(features_ids_instance.__repr__()) == features_ids_instance
-    assert len(features_ids_instance) == 3
+    assert eval(region_or_gene_ids_instance.__repr__()) == region_or_gene_ids_instance
+    assert len(region_or_gene_ids_instance) == 3
 
 
-def test_FeatureIDs_with_features_type_str():
+def test_RegionOrGeneIDs_with_regions_or_genes_type_str():
     """
-    Check if a FeatureIDs object can be constructed from a tuple of gene IDs where features_type is given as a string.
+    Check if a RegionOrGeneIDs object can be constructed from a tuple of gene IDs where regions_or_genes_type is given
+    as a string.
     """
-    features_ids_instance = FeatureIDs(
-        feature_ids=('gene2', 'gene1', 'gene6', 'gene2'), features_type='gEnES'
+    region_or_gene_ids_instance = RegionOrGeneIDs(
+        region_or_gene_ids=('gene2', 'gene1', 'gene6', 'gene2'), regions_or_genes_type='gEnES'
     )
-    assert features_ids_instance.type == FeaturesType.GENES
-    assert features_ids_instance.ids == ('gene1', 'gene2', 'gene6')
+    assert region_or_gene_ids_instance.type == RegionsOrGenesType.GENES
+    assert region_or_gene_ids_instance.ids == ('gene1', 'gene2', 'gene6')
 
-    assert eval(features_ids_instance.__repr__()) == features_ids_instance
-    assert len(features_ids_instance) == 3
+    assert eval(region_or_gene_ids_instance.__repr__()) == region_or_gene_ids_instance
+    assert len(region_or_gene_ids_instance) == 3
 
 
-def test_FeatureIDs_subset_superset():
-    """Check if feature IDs of a FeatureIDs object are a subset or a superset of another FeatureIDs object."""
-    features_ids_instance1 = FeatureIDs(
-        feature_ids=['reg1', 'reg2', 'reg6'], features_type=FeaturesType.REGIONS
+def test_RegionOrGeneIDs_subset_superset():
+    """
+    Check if region or gene IDs of a RegionOrGeneIDs object are a subset or a superset of another RegionOrGeneIDs
+    object.
+    """
+    region_or_gene_ids_instance1 = RegionOrGeneIDs(
+        region_or_gene_ids=['reg1', 'reg2', 'reg6'], regions_or_genes_type=RegionsOrGenesType.REGIONS
     )
-    features_ids_instance2 = FeatureIDs(
-        feature_ids=['reg1', 'reg2', 'reg4', 'reg6'], features_type=FeaturesType.REGIONS
+    region_or_gene_ids_instance2 = RegionOrGeneIDs(
+        region_or_gene_ids=['reg1', 'reg2', 'reg4', 'reg6'], regions_or_genes_type=RegionsOrGenesType.REGIONS
     )
 
-    assert features_ids_instance1.issubset(features_ids_instance2)
-    assert features_ids_instance2.issuperset(features_ids_instance1)
+    assert region_or_gene_ids_instance1.issubset(region_or_gene_ids_instance2)
+    assert region_or_gene_ids_instance2.issuperset(region_or_gene_ids_instance1)
 
 
 def test_MotifsOrTracksIDs_with_motifs():
@@ -124,13 +129,13 @@ def test_DatabaseTypes():
     """
     for scores_or_rankings in ('scores', 'rankings'):
         for motif_or_tracks_type in MotifsOrTracksType.__members__:
-            for features_type in FeaturesType.__members__:
-                database_type_name = f'{scores_or_rankings.upper()}_DB_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}_VS_{FeaturesType[features_type].value.upper()}'
+            for regions_or_genes_type in RegionsOrGenesType.__members__:
+                database_type_name = f'{scores_or_rankings.upper()}_DB_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}_VS_{RegionsOrGenesType[regions_or_genes_type].value.upper()}'
                 assert database_type_name in DatabaseTypes.__members__
                 assert DatabaseTypes[database_type_name].value == (
                     scores_or_rankings,
                     MotifsOrTracksType[motif_or_tracks_type].value,
-                    FeaturesType[features_type].value
+                    RegionsOrGenesType[regions_or_genes_type].value
                 )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(database_type_name)
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(
@@ -139,15 +144,15 @@ def test_DatabaseTypes():
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_strings(
                     scores_or_rankings,
                     MotifsOrTracksType[motif_or_tracks_type].value,
-                    FeaturesType[features_type].value
+                    RegionsOrGenesType[regions_or_genes_type].value
                 )
                 del database_type_name
 
-                database_type_name = f'{scores_or_rankings.upper()}_DB_{FeaturesType[features_type].value.upper()}_VS_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}'
+                database_type_name = f'{scores_or_rankings.upper()}_DB_{RegionsOrGenesType[regions_or_genes_type].value.upper()}_VS_{MotifsOrTracksType[motif_or_tracks_type].value.upper()}'
                 assert database_type_name in DatabaseTypes.__members__
                 assert DatabaseTypes[database_type_name].value == (
                     scores_or_rankings,
-                    FeaturesType[features_type].value,
+                    RegionsOrGenesType[regions_or_genes_type].value,
                     MotifsOrTracksType[motif_or_tracks_type].value
                 )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_str(database_type_name)
@@ -156,7 +161,7 @@ def test_DatabaseTypes():
                 )
                 assert DatabaseTypes[database_type_name] == DatabaseTypes.from_strings(
                     scores_or_rankings,
-                    FeaturesType[features_type].value,
+                    RegionsOrGenesType[regions_or_genes_type].value,
                     MotifsOrTracksType[motif_or_tracks_type].value
                 )
                 del database_type_name
@@ -226,18 +231,18 @@ def test_DatabaseTypes_properties_and_get_dtype():
     assert scores_db_tracks_vs_genes.is_motifs_db is False
     assert scores_db_tracks_vs_genes.is_tracks_db is True
     assert scores_db_tracks_vs_genes.scores_or_rankings == 'scores'
-    assert scores_db_tracks_vs_genes.features_type == FeaturesType.GENES
+    assert scores_db_tracks_vs_genes.regions_or_genes_type == RegionsOrGenesType.GENES
     assert scores_db_tracks_vs_genes.motifs_or_tracks_type == MotifsOrTracksType.TRACKS
     assert scores_db_tracks_vs_genes.column_kind == 'tracks'
     assert scores_db_tracks_vs_genes.row_kind == 'genes'
 
     # cisTarget score databases always store the data as 32-bit floats.
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=20000) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32766) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32767) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32768) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=32769) == np.float32
-    assert scores_db_tracks_vs_genes.get_dtype(nbr_features=1000000) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_regions_or_genes=20000) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_regions_or_genes=32766) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_regions_or_genes=32767) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_regions_or_genes=32768) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_regions_or_genes=32769) == np.float32
+    assert scores_db_tracks_vs_genes.get_dtype(nbr_regions_or_genes=1000000) == np.float32
 
     del scores_db_tracks_vs_genes
 
@@ -249,7 +254,7 @@ def test_DatabaseTypes_properties_and_get_dtype():
     assert rankings_db_region_vs_motifs.is_motifs_db is True
     assert rankings_db_region_vs_motifs.is_tracks_db is False
     assert rankings_db_region_vs_motifs.scores_or_rankings == 'rankings'
-    assert rankings_db_region_vs_motifs.features_type == FeaturesType.REGIONS
+    assert rankings_db_region_vs_motifs.regions_or_genes_type == RegionsOrGenesType.REGIONS
     assert rankings_db_region_vs_motifs.motifs_or_tracks_type == MotifsOrTracksType.MOTIFS
     assert rankings_db_region_vs_motifs.column_kind == 'regions'
     assert rankings_db_region_vs_motifs.row_kind == 'motifs'
@@ -257,12 +262,12 @@ def test_DatabaseTypes_properties_and_get_dtype():
     # cisTarget rankings databases store the zero-based rankings as optimally as possible in a:
     #   - 16-bit signed integer: max value = 2^15 - 1 = 32767 ==> can store 32768 rankings.
     #   - 32-bit signed integer: max value = 2^31 - 1 = 2147483647 ==> can store 2147483648
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=20000) == np.int16
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=32766) == np.int16
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=32767) == np.int16
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=32768) == np.int16
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=32769) == np.int32
-    assert rankings_db_region_vs_motifs.get_dtype(nbr_features=1000000) == np.int32
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_regions_or_genes=20000) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_regions_or_genes=32766) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_regions_or_genes=32767) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_regions_or_genes=32768) == np.int16
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_regions_or_genes=32769) == np.int32
+    assert rankings_db_region_vs_motifs.get_dtype(nbr_regions_or_genes=1000000) == np.int32
 
     del rankings_db_region_vs_motifs
 
@@ -303,8 +308,9 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
                                  db_numpy_array_rankings_db_genes_vs_tracks):
     # Test cisTarget SCORES_DB_MOTIFS_VS_REGIONS databases.
 
-    features_ids_instance = FeatureIDs(
-        feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5', 'reg6', 'reg7'], features_type=FeaturesType.REGIONS
+    region_or_gene_ids_instance = RegionOrGeneIDs(
+        region_or_gene_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5', 'reg6', 'reg7'],
+        regions_or_genes_type=RegionsOrGenesType.REGIONS
     )
     motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
@@ -321,19 +327,19 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
             assert ct_scores_db_motifs_vs_regions.df.to_numpy().flags.c_contiguous is True
         elif order == 'F':
             assert ct_scores_db_motifs_vs_regions.df.to_numpy().flags.f_contiguous is True
-        # Check if feature IDs and motif and track IDs are properly set.
-        assert ct_scores_db_motifs_vs_regions.feature_ids == features_ids_instance
+        # Check if region or gene IDs and motif and track IDs are properly set.
+        assert ct_scores_db_motifs_vs_regions.region_or_gene_ids == region_or_gene_ids_instance
         assert ct_scores_db_motifs_vs_regions.motif_or_track_ids == motif_or_track_ids_instance
         # Columns contain motifs.
         assert ct_scores_db_motifs_vs_regions.df.columns.to_list() == list(motif_or_track_ids_instance.ids)
         # Rows contain regions.
-        assert ct_scores_db_motifs_vs_regions.df.index.to_list() == list(features_ids_instance.ids)
+        assert ct_scores_db_motifs_vs_regions.df.index.to_list() == list(region_or_gene_ids_instance.ids)
 
     # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database in C order.
     check_ct_scores_db_motifs_vs_regions(
         ct_scores_db_motifs_vs_regions=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
-            feature_ids=features_ids_instance,
+            region_or_gene_ids=region_or_gene_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance
         ),
         db_numpy_array=np.zeros((7, 4), dtype=np.float32),
@@ -344,7 +350,7 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
     check_ct_scores_db_motifs_vs_regions(
         ct_scores_db_motifs_vs_regions=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
-            feature_ids=features_ids_instance,
+            region_or_gene_ids=region_or_gene_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance,
             order='F'
         ),
@@ -357,7 +363,7 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
     check_ct_scores_db_motifs_vs_regions(
         ct_scores_db_motifs_vs_regions=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
-            feature_ids=features_ids_instance,
+            region_or_gene_ids=region_or_gene_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance,
             db_numpy_array=db_numpy_array_scores_db_motifs_vs_regions
         ),
@@ -366,13 +372,14 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
     )
 
     # Delete some objects so we don't accidentally reuse them in the next section.
-    del features_ids_instance
+    del region_or_gene_ids_instance
     del motif_or_track_ids_instance
 
     # Test cisTarget RANKINGS_DB_GENES_VS_TRACKS databases.
 
-    features_ids_instance = FeatureIDs(
-        feature_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5', 'gene6', 'gene7'], features_type=FeaturesType.GENES
+    region_or_gene_ids_instance = RegionOrGeneIDs(
+        region_or_gene_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5', 'gene6', 'gene7'],
+        regions_or_genes_type=RegionsOrGenesType.GENES
     )
     motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['track1', 'track2', 'track3', 'track4'], motifs_or_tracks_type=MotifsOrTracksType.TRACKS
@@ -389,11 +396,11 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
             assert ct_rankings_db_genes_vs_tracks.df.to_numpy().flags.c_contiguous is True
         elif order == 'F':
             assert ct_rankings_db_genes_vs_tracks.df.to_numpy().flags.f_contiguous is True
-        # Check if feature IDs and motif and track IDs are properly set.
-        assert ct_rankings_db_genes_vs_tracks.feature_ids == features_ids_instance
+        # Check if region or gene IDs and motif and track IDs are properly set.
+        assert ct_rankings_db_genes_vs_tracks.region_or_gene_ids == region_or_gene_ids_instance
         assert ct_rankings_db_genes_vs_tracks.motif_or_track_ids == motif_or_track_ids_instance
         # Columns contain genes.
-        assert ct_rankings_db_genes_vs_tracks.df.columns.to_list() == list(features_ids_instance.ids)
+        assert ct_rankings_db_genes_vs_tracks.df.columns.to_list() == list(region_or_gene_ids_instance.ids)
         # Rows contain tracks.
         assert ct_rankings_db_genes_vs_tracks.df.index.to_list() == list(motif_or_track_ids_instance.ids)
 
@@ -401,7 +408,7 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
     check_ct_rankings_db_genes_vs_tracks(
         ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
-            feature_ids=features_ids_instance,
+            region_or_gene_ids=region_or_gene_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance
         ),
         db_numpy_array=np.zeros((4, 7), dtype=np.int16),
@@ -412,7 +419,7 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
     check_ct_rankings_db_genes_vs_tracks(
         ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
-            feature_ids=features_ids_instance,
+            region_or_gene_ids=region_or_gene_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance,
             order='F'
         ),
@@ -425,7 +432,7 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
     check_ct_rankings_db_genes_vs_tracks(
         ct_rankings_db_genes_vs_tracks=CisTargetDatabase.create_db(
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
-            feature_ids=features_ids_instance,
+            region_or_gene_ids=region_or_gene_ids_instance,
             motif_or_track_ids=motif_or_track_ids_instance,
             db_numpy_array=db_numpy_array_rankings_db_genes_vs_tracks
         ),
@@ -434,7 +441,7 @@ def test_cistargetdatabase_basic(db_numpy_array_scores_db_motifs_vs_regions,
     )
 
     # Delete some objects so we don't accidentally reuse them in the next section.
-    del features_ids_instance
+    del region_or_gene_ids_instance
     del motif_or_track_ids_instance
 
 
@@ -443,8 +450,9 @@ def ct_scores_db_motifs_vs_regions(db_numpy_array_scores_db_motifs_vs_regions):
     # Create cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
 
     # Create zeroed cisTarget SCORES_DB_MOTIFS_VS_REGIONS database.
-    features_ids_instance = FeatureIDs(
-        feature_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5', 'reg6', 'reg7'], features_type=FeaturesType.REGIONS
+    region_or_gene_ids_instance = RegionOrGeneIDs(
+        region_or_gene_ids=['reg1', 'reg2', 'reg3', 'reg4', 'reg5', 'reg6', 'reg7'],
+        regions_or_genes_type=RegionsOrGenesType.REGIONS
     )
     motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['motif1', 'motif2', 'motif3', 'motif4'], motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
@@ -452,7 +460,7 @@ def ct_scores_db_motifs_vs_regions(db_numpy_array_scores_db_motifs_vs_regions):
 
     ct_scores_db_motifs_vs_regions = CisTargetDatabase.create_db(
         db_type=DatabaseTypes.SCORES_DB_MOTIFS_VS_REGIONS,
-        feature_ids=features_ids_instance,
+        region_or_gene_ids=region_or_gene_ids_instance,
         motif_or_track_ids=motif_or_track_ids_instance,
         db_numpy_array=db_numpy_array_scores_db_motifs_vs_regions
     )
@@ -465,8 +473,9 @@ def ct_rankings_db_genes_vs_tracks(db_numpy_array_rankings_db_genes_vs_tracks):
     # Create cisTarget RANKINGS_DB_GENES_VS_TRACKS database.
 
     # Create zeroed cisTarget RANKINGS_DB_GENES_VS_TRACKS database.
-    features_ids_instance = FeatureIDs(
-        feature_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5', 'gene6', 'gene7'], features_type=FeaturesType.GENES
+    region_or_gene_ids_instance = RegionOrGeneIDs(
+        region_or_gene_ids=['gene1', 'gene2', 'gene3', 'gene4', 'gene5', 'gene6', 'gene7'],
+        regions_or_genes_type=RegionsOrGenesType.GENES
     )
     motif_or_track_ids_instance = MotifOrTrackIDs(
         motif_or_track_ids=['track1', 'track2', 'track3', 'track4'], motifs_or_tracks_type=MotifsOrTracksType.TRACKS
@@ -474,7 +483,7 @@ def ct_rankings_db_genes_vs_tracks(db_numpy_array_rankings_db_genes_vs_tracks):
 
     ct_rankings_db_genes_vs_tracks = CisTargetDatabase.create_db(
         db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS,
-        feature_ids=features_ids_instance,
+        region_or_gene_ids=region_or_gene_ids_instance,
         motif_or_track_ids=motif_or_track_ids_instance,
         db_numpy_array=db_numpy_array_rankings_db_genes_vs_tracks
     )
@@ -490,7 +499,7 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
         assert ct_db_read_from_feather.db_type == ct_db_original.db_type
         assert ct_db_read_from_feather.dtype == ct_db_original.dtype
         assert ct_db_read_from_feather.shape == ct_db_original.shape
-        assert ct_db_read_from_feather.feature_ids == ct_db_original.feature_ids
+        assert ct_db_read_from_feather.region_or_gene_ids == ct_db_original.region_or_gene_ids
         assert ct_db_read_from_feather.motif_or_track_ids == ct_db_original.motif_or_track_ids
         assert np.all(ct_db_read_from_feather.df == ct_db_original.df)
         assert ct_db_read_from_feather.df.to_numpy().flags.f_contiguous is True
@@ -526,13 +535,13 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
             ct_db_read_from_feather=ct_scores_db_motifs_vs_regions_read_from_feather
         )
 
-        # Get database type, Feature IDs and motif IDs or track IDs directly from the cisTarget database Feather file
-        # and check if all of them are the same as the one from the original cisTarget database object.
+        # Get database type, region or gene IDs and motif or track IDs directly from the cisTarget database Feather
+        # file and check if all of them are the same as the one from the original cisTarget database object.
         assert (
                    ct_scores_db_motifs_vs_regions.db_type,
-                   ct_scores_db_motifs_vs_regions.feature_ids,
+                   ct_scores_db_motifs_vs_regions.region_or_gene_ids,
                    ct_scores_db_motifs_vs_regions.motif_or_track_ids
-               ) == CisTargetDatabase.get_all_feature_ids_and_motif_or_track_ids_from_db(
+               ) == CisTargetDatabase.get_all_region_or_gene_ids_and_motif_or_track_ids_from_db(
             db_filename_or_dbs_filenames=ct_scores_db_motifs_vs_regions_db_filename,
             db_type=None
         )
@@ -571,13 +580,13 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
             ct_db_read_from_feather=ct_rankings_db_genes_vs_tracks_read_from_feather
         )
 
-        # Get database type, Feature IDs and motif IDs or track IDs directly from the cisTarget database Feather file
-        # and check if all of them are the same as the one from the original cisTarget database object.
+        # Get database type, region and gene IDs and motif IDs or track IDs directly from the cisTarget database
+        # Feather file and check if all of them are the same as the one from the original cisTarget database object.
         assert (
                    ct_rankings_db_genes_vs_tracks.db_type,
-                   ct_rankings_db_genes_vs_tracks.feature_ids,
+                   ct_rankings_db_genes_vs_tracks.region_or_gene_ids,
                    ct_rankings_db_genes_vs_tracks.motif_or_track_ids
-               ) == CisTargetDatabase.get_all_feature_ids_and_motif_or_track_ids_from_db(
+               ) == CisTargetDatabase.get_all_region_or_gene_ids_and_motif_or_track_ids_from_db(
             db_filename_or_dbs_filenames=ct_rankings_db_genes_vs_tracks_db_filename,
             db_type=None
         )
@@ -596,7 +605,8 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
         assert ct_rankings_db_genes_vs_tracks_db_filename_with_custom_name_returned \
                == f'test/ct_rankings_db_genes_vs_tracks_with_custom_name.feather_version{feather_version}.db'
 
-        # Read cisTarget database from Feather file with a custom name (database type can not be automatically retrieved).
+        # Read cisTarget database from Feather file with a custom name (database type can not be automatically
+        # retrieved).
         ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name = CisTargetDatabase.read_db(
             db_filename_or_dbs_filenames=ct_rankings_db_genes_vs_tracks_db_filename_with_custom_name_returned,
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS
@@ -609,13 +619,13 @@ def test_cistargetdatabase_read_db_and_write_db(ct_scores_db_motifs_vs_regions, 
             ct_db_read_from_feather=ct_rankings_db_genes_vs_tracks_read_from_feather_with_custom_name
         )
 
-        # Get database type, Feature IDs and motif IDs or track IDs directly from the cisTarget database Feather file
-        # and check if all of them are the same as the one from the original cisTarget database object.
+        # Get database type, region or gene IDs and motif or track IDs directly from the cisTarget database Feather
+        # file and check if all of them are the same as the one from the original cisTarget database object.
         assert (
                    ct_rankings_db_genes_vs_tracks.db_type,
-                   ct_rankings_db_genes_vs_tracks.feature_ids,
+                   ct_rankings_db_genes_vs_tracks.region_or_gene_ids,
                    ct_rankings_db_genes_vs_tracks.motif_or_track_ids
-               ) == CisTargetDatabase.get_all_feature_ids_and_motif_or_track_ids_from_db(
+               ) == CisTargetDatabase.get_all_region_or_gene_ids_and_motif_or_track_ids_from_db(
             db_filename_or_dbs_filenames=f'test/ct_rankings_db_genes_vs_tracks_with_custom_name.feather_version{feather_version}.db',
             db_type=DatabaseTypes.RANKINGS_DB_GENES_VS_TRACKS
         )
@@ -889,5 +899,5 @@ def test_cistargetdatabase_create_cross_species_rankings_db(ct_rankings_db_motif
     assert ct_cross_species_rankings_db_motifs_vs_regions.db_type == ct_rankings_db_motifs_vs_regions.db_type
     assert np.all(ct_cross_species_rankings_db_motifs_vs_regions.df.to_numpy()
                   == ct_rankings_db_motifs_vs_regions.df.to_numpy())
-    assert ct_cross_species_rankings_db_motifs_vs_regions.feature_ids == ct_rankings_db_motifs_vs_regions.feature_ids
+    assert ct_cross_species_rankings_db_motifs_vs_regions.region_or_gene_ids == ct_rankings_db_motifs_vs_regions.region_or_gene_ids
     assert ct_cross_species_rankings_db_motifs_vs_regions.motif_or_track_ids == ct_rankings_db_motifs_vs_regions.motif_or_track_ids

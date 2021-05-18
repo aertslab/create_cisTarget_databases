@@ -129,8 +129,8 @@ When running the scripts in this repo, you might need around 3 times the amount 
 | script | description |
 | ---: | --- |
 | [`create_cistarget_motif_databases.py`](#create_cistarget_motif_databasespy)                                                                                             | Create cisTarget motif databases. |
-| [`combine_partial_regions_or_genes_vs_ motifs_or_tracks_scores_cistarget_dbs.py`](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy)          | Combine partial cisTarget regions or genes (features) vs motifs or tracks scores databases to: **1)** a complete cisTarget regions or genes (features) vs motifs or tracks scores database and **2)** a complete cisTarget motifs or tracks vs regions or genes (features) scores database. |
-| [`convert_motifs_or_tracks_vs_ regions_or_genes_scores_to_ rankings_cistarget_dbs.py`](#convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy) | Convert cisTarget motifs or tracks vs regions or genes (features) scores database to cisTarget rankings database. |
+| [`combine_partial_regions_or_genes_vs_ motifs_or_tracks_scores_cistarget_dbs.py`](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy)          | Combine partial cisTarget regions or genes vs motifs or tracks scores databases to: **1)** a complete cisTarget regions or genes vs motifs or tracks scores database and **2)** a complete cisTarget motifs or tracks vs regions or genes scores database. |
+| [`convert_motifs_or_tracks_vs_ regions_or_genes_scores_to_ rankings_cistarget_dbs.py`](#convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy) | Convert cisTarget motifs or tracks vs regions or genes scores database to cisTarget rankings database. |
 | [`create_cross_species_motifs_rankings_db.py`](#create_cross_species_motifs_rankings_dbpy)                                                                               | Create cisTarget cross-species motifs rankings databases. |
 
 
@@ -214,20 +214,19 @@ optional arguments:
 usage: combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py
        [-h] -i INPUT -o OUTPUT_DIR
 
-Combine partial cisTarget regions or genes (features) vs motifs or tracks scores databases to: 1) a
-complete cisTarget regions or genes (features) vs motifs or tracks scores database and 2) a complete
-cisTarget motifs or tracks vs regions or genes (features) scores database.
+Combine partial cisTarget regions or genes vs motifs or tracks scores databases to: 1) a
+complete cisTarget regions or genes vs motifs or tracks scores database and 2) a complete
+cisTarget motifs or tracks vs regions or genes scores database.
 
 optional arguments:
   -h, --help            show this help message and exit
   -i INPUT, --input INPUT
                         Input directory or database prefix with partial cisTarget regions or genes
-                        (features) vs motif or track scores database Feather files.
+                        vs motif or track scores database Feather files.
   -o OUTPUT_DIR, --output OUTPUT_DIR
-                        Output directory to which the 1) complete cisTarget regions or genes (features)
+                        Output directory to which the 1) complete cisTarget regions or genes
                         vs motif or track scores database Feather files and 2) complete cisTarget motifs
-                        or tracks vs regions or genes (features) scores database Feather files will be
-                        written.
+                        or tracks vs regions or genes scores database Feather files will be written.
 ```
 
 
@@ -238,15 +237,15 @@ optional arguments:
 usage: convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbs.py
        [-h] -i CT_SCORES_DB_MOTIFS_OR_TRACKS_VS_REGIONS_OR_GENES_FILENAME [-s SEED]
 
-Convert cisTarget motifs or tracks vs regions or genes (features) scores database to cisTarget rankings
+Convert cisTarget motifs or tracks vs regions or genes scores database to cisTarget rankings
 database.
 
 optional arguments:
   -h, --help            show this help message and exit
   -i CT_SCORES_DB_MOTIFS_OR_TRACKS_VS_REGIONS_OR_GENES_FILENAME, --db CT_SCORES_DB_MOTIFS_OR_TRACKS_VS_REGIONS_OR_GENES_FILENAME
-                        cisTarget motifs or tracks vs regions or genes (features) scores database
-                        filename. The cisTarget rankings database Feather file will be written to the
-                        same directory.
+                        cisTarget motifs or tracks vs regions or genes scores database filename.
+                        The cisTarget rankings database Feather file will be written to the same
+                        directory.
   -s SEED, --seed SEED  Random seed used for breaking ties when creating rankings for a range of tied
                         scores. When setting this seed to a specific value and running this script with
                         the same input, will result in the same cisTarget rankings databases as output.
@@ -266,7 +265,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -i INPUT, --input INPUT
                         Input directory or database prefix with cisTarget motifs vs regions or genes
-                        (features) rankings databases per species.
+                        rankings databases per species.
   -o OUTPUT_DIR, --output OUTPUT_DIR
                         Output directory to which the cisTarget cross-species motifs rankings database
                         files will be written.

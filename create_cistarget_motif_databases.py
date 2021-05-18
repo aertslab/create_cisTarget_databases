@@ -19,7 +19,7 @@ from typing import Tuple
 
 import pandas as pd
 
-from cistarget_db import MotifsOrTracksType, FeatureIDs, MotifOrTrackIDs, DatabaseTypes, CisTargetDatabase
+from cistarget_db import MotifsOrTracksType, RegionOrGeneIDs, MotifOrTrackIDs, DatabaseTypes, CisTargetDatabase
 from clusterbuster import get_motif_id_to_filename_dict, run_cluster_buster_for_motif
 
 
@@ -70,7 +70,8 @@ def main():
         action='store',
         type=str,
         required=True,
-        help='Filename with list of motif IDs or motif MD5 names to be scored from directory specified by "--motifs_dir".'
+        help='Filename with list of motif IDs or motif MD5 names to be scored from directory specified by '
+             '"--motifs_dir".'
     )
 
     parser.add_argument(
@@ -264,19 +265,19 @@ def main():
         # be lost in the current species, but the cisTarget database needs to contain all regions/genes from the
         # original species to create the cisTarget cross-species database later.
 
-        # Get all region IDs or gene IDs from current species FASTA sequence names as a FeaturesIDs object.
-        region_ids_or_gene_ids_current_species = FeatureIDs.get_region_ids_or_gene_ids_from_fasta(
+        # Get all region or gene IDs from current species FASTA sequence names as a RegionOrGeneIDs object.
+        region_or_gene_ids_current_species = RegionOrGeneIDs.get_region_or_gene_ids_from_fasta(
             fasta_filename=args.fasta_filename,
             extract_gene_id_from_region_id_regex_replace=args.extract_gene_id_from_region_id_regex_replace
         )
 
-        # Get all region IDs or gene IDs from the original FASTA sequence names as a FeaturesIDs object.
-        region_ids_or_gene_ids = FeatureIDs.get_region_ids_or_gene_ids_from_fasta(
+        # Get all region or gene IDs from the original FASTA sequence names as a RegionOrGeneIDs object.
+        region_or_gene_ids = RegionOrGeneIDs.get_region_or_gene_ids_from_fasta(
             fasta_filename=args.original_species_fasta_filename,
             extract_gene_id_from_region_id_regex_replace=args.extract_gene_id_from_region_id_regex_replace
         )
 
-        if not region_ids_or_gene_ids_current_species.issubset(region_ids_or_gene_ids):
+        if not region_or_gene_ids_current_species.issubset(region_or_gene_ids):
             print(
                 f'Error: Region IDs/gene IDs in "{args.fasta_filename}" are not all present in '
                 f'"{args.original_species_fasta_filename}".',
@@ -284,8 +285,8 @@ def main():
             )
             sys.exit(1)
     else:
-        # Get all region IDs or gene IDs from the FASTA sequence names as a FeaturesIDs object.
-        region_ids_or_gene_ids = FeatureIDs.get_region_ids_or_gene_ids_from_fasta(
+        # Get all region or gene IDs from the FASTA sequence names as a RegionOrGeneIDs object.
+        region_or_gene_ids = RegionOrGeneIDs.get_region_or_gene_ids_from_fasta(
             fasta_filename=args.fasta_filename,
             extract_gene_id_from_region_id_regex_replace=args.extract_gene_id_from_region_id_regex_replace
         )
@@ -305,11 +306,11 @@ def main():
         motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
     )
 
-    nbr_region_ids_or_gene_ids = len(region_ids_or_gene_ids)
+    nbr_region_or_gene_ids = len(region_or_gene_ids)
     nbr_motifs = len(motif_id_to_filename_dict)
 
-    if nbr_region_ids_or_gene_ids == 0:
-        print(f'Error: No {region_ids_or_gene_ids.type.value} provided.', file=sys.stderr)
+    if nbr_region_or_gene_ids == 0:
+        print(f'Error: No {region_or_gene_ids.type.value} provided.', file=sys.stderr)
         sys.exit(1)
 
     if nbr_motifs == 0:
@@ -343,8 +344,8 @@ def main():
         nbr_motifs = len(motif_ids)
 
     print(
-        f'Initialize dataframe ({nbr_region_ids_or_gene_ids} {region_ids_or_gene_ids.type.value} '
-        f'x {nbr_motifs} motifs) for storing CRM scores for each {region_ids_or_gene_ids.type.value} per motif.',
+        f'Initialize dataframe ({nbr_region_or_gene_ids} {region_or_gene_ids.type.value} '
+        f'x {nbr_motifs} motifs) for storing CRM scores for each {region_or_gene_ids.type.value} per motif.',
         file=sys.stderr
     )
 
@@ -352,9 +353,9 @@ def main():
         db_type=DatabaseTypes.from_strings(
             scores_or_rankings='scores',
             column_kind='motifs',
-            row_kind=region_ids_or_gene_ids.type.value
+            row_kind=region_or_gene_ids.type.value
         ),
-        feature_ids=region_ids_or_gene_ids,
+        region_or_gene_ids=region_or_gene_ids,
         motif_or_track_ids=motif_ids,
         order='F'
     )
