@@ -1,13 +1,13 @@
+import re
+from enum import Enum, unique
+from typing import List, Optional, Set, Tuple, Type, Union
+
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.feather as pf
 
 import orderstatistics
-
-from enum import Enum, unique
-from typing import List, Optional, Set, Tuple, Type, Union
-
 from feather_v1_or_v2 import get_all_column_names_from_feather
 
 
@@ -64,6 +64,57 @@ class FeatureIDs:
     FeatureIDs class represents a unique sorted tuple of region IDs or gene IDs for constructing a Pandas dataframe
     index for a cisTarget database.
     """
+
+    @staticmethod
+    def get_region_ids_or_gene_ids_from_fasta(fasta_filename: str,
+                                              extract_gene_id_from_region_id_regex_replace: Optional[str] = None
+                                              ) -> 'FeatureIDs':
+        """
+        Get all region IDs or gene IDs from FASTA filename:
+          - When extract_gene_id_from_region_id_regex_replace=None, region IDs are returned and each region ID is only
+            allowed once in the FASTA file.
+          - When extract_gene_id_from_region_id_regex_replace is set to a regex to remove the non gene ID part from the
+            region IDs, gene IDs are returned and each gene is allowed to appear more than once in the FASTA file.
+
+        :param fasta_filename:
+             FASTA filename with sequences for region IDs or gene IDs.
+        :param extract_gene_id_from_region_id_regex_replace:
+             regex for removing unwanted parts from the region ID to extract the gene ID.
+        :return: FeatureIDs object for regions or genes.
+        """
+
+        gene_ids = set()
+        region_ids = set()
+        duplicated_region_ids = False
+
+        with open(fasta_filename, 'r') as fh:
+            for line in fh:
+                if line.startswith('>'):
+                    # Get region ID by getting everything after '>' up till the first whitespace.
+                    region_id = line[1:].split(maxsplit=1)[0]
+
+                    if extract_gene_id_from_region_id_regex_replace:
+                        # Extract gene ID from region ID.
+                        gene_id = re.sub(
+                            extract_gene_id_from_region_id_regex_replace,
+                            '',
+                            region_id
+                        )
+
+                        gene_ids.add(gene_id)
+                    else:
+                        # Check if all region IDs only appear once.
+                        if region_id in region_ids:
+                            raise ValueError(
+                                f'Error: region ID "{region_id:s}" is not unique in FASTA file "{fasta_filename:s}".'
+                            )
+
+                        region_ids.add(region_id)
+
+        if extract_gene_id_from_region_id_regex_replace:
+            return FeatureIDs(feature_ids=gene_ids, features_type=FeaturesType.GENES)
+        else:
+            return FeatureIDs(feature_ids=region_ids, features_type=FeaturesType.REGIONS)
 
     def __init__(self,
                  feature_ids: Union[List[str], Set[str], Tuple[str, ...]],
