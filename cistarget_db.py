@@ -66,6 +66,63 @@ class RegionOrGeneIDs:
     """
 
     @staticmethod
+    def get_region_or_gene_ids_from_bed(bed_filename: str,
+                                        extract_gene_id_from_region_id_regex_replace: Optional[str] = None
+                                        ) -> 'RegionOrGeneIDs':
+        """
+        Get all region or gene IDs (from column 4) from BED filename:
+          - When extract_gene_id_from_region_id_regex_replace=None, region IDs are returned and each region ID is only
+            allowed once in the BED file.
+          - When extract_gene_id_from_region_id_regex_replace is set to a regex to remove the non gene ID part from the
+            region IDs, gene IDs are returned and each gene is allowed to appear more than once in the BED file.
+
+        :param bed_filename:
+             BED filename with sequences for region or gene IDs.
+        :param extract_gene_id_from_region_id_regex_replace:
+             regex for removing unwanted parts from the region ID to extract the gene ID.
+        :return: RegionOrGeneIDs object for regions or genes.
+        """
+
+        gene_ids = set()
+        region_ids = set()
+
+        with open(bed_filename, 'r') as fh:
+            for line in fh:
+                if line and not line.startswith('#'):
+                    columns = line.strip().split('\t')
+
+                    if len(columns) < 4:
+                        raise ValueError(
+                            f'Error: BED file "{bed_filename:s}" has less than 4 columns.'
+                        )
+
+                    # Get region ID from column 4 of the BED file.
+                    region_id = columns[3]
+
+                    if extract_gene_id_from_region_id_regex_replace:
+                        # Extract gene ID from region ID.
+                        gene_id = re.sub(
+                            extract_gene_id_from_region_id_regex_replace,
+                            '',
+                            region_id
+                        )
+
+                        gene_ids.add(gene_id)
+                    else:
+                        # Check if all region IDs only appear once.
+                        if region_id in region_ids:
+                            raise ValueError(
+                                f'Error: region ID "{region_id:s}" is not unique in BED file "{bed_filename:s}".'
+                            )
+
+                        region_ids.add(region_id)
+
+        if extract_gene_id_from_region_id_regex_replace:
+            return RegionOrGeneIDs(region_or_gene_ids=gene_ids, regions_or_genes_type=RegionsOrGenesType.GENES)
+        else:
+            return RegionOrGeneIDs(region_or_gene_ids=region_ids, regions_or_genes_type=RegionsOrGenesType.REGIONS)
+
+    @staticmethod
     def get_region_or_gene_ids_from_fasta(fasta_filename: str,
                                           extract_gene_id_from_region_id_regex_replace: Optional[str] = None
                                           ) -> 'RegionOrGeneIDs':
@@ -85,7 +142,6 @@ class RegionOrGeneIDs:
 
         gene_ids = set()
         region_ids = set()
-        duplicated_region_ids = False
 
         with open(fasta_filename, 'r') as fh:
             for line in fh:
