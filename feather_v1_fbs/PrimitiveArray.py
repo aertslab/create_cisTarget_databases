@@ -10,12 +10,16 @@ class PrimitiveArray(object):
     __slots__ = ['_tab']
 
     @classmethod
-    def GetRootAsPrimitiveArray(cls, buf, offset):
+    def GetRootAs(cls, buf, offset=0):
         n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
         x = PrimitiveArray()
         x.Init(buf, n + offset)
         return x
 
+    @classmethod
+    def GetRootAsPrimitiveArray(cls, buf, offset=0):
+        """This method is deprecated. Please switch to GetRootAs."""
+        return cls.GetRootAs(buf, offset)
     # PrimitiveArray
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
@@ -67,11 +71,35 @@ class PrimitiveArray(object):
             return self._tab.Get(flatbuffers.number_types.Int64Flags, o + self._tab.Pos)
         return 0
 
-def PrimitiveArrayStart(builder): builder.StartObject(6)
-def PrimitiveArrayAddType(builder, type): builder.PrependInt8Slot(0, type, 0)
-def PrimitiveArrayAddEncoding(builder, encoding): builder.PrependInt8Slot(1, encoding, 0)
-def PrimitiveArrayAddOffset(builder, offset): builder.PrependInt64Slot(2, offset, 0)
-def PrimitiveArrayAddLength(builder, length): builder.PrependInt64Slot(3, length, 0)
-def PrimitiveArrayAddNullCount(builder, nullCount): builder.PrependInt64Slot(4, nullCount, 0)
-def PrimitiveArrayAddTotalBytes(builder, totalBytes): builder.PrependInt64Slot(5, totalBytes, 0)
-def PrimitiveArrayEnd(builder): return builder.EndObject()
+def Start(builder): builder.StartObject(6)
+def PrimitiveArrayStart(builder):
+    """This method is deprecated. Please switch to Start."""
+    return Start(builder)
+def AddType(builder, type): builder.PrependInt8Slot(0, type, 0)
+def PrimitiveArrayAddType(builder, type):
+    """This method is deprecated. Please switch to AddType."""
+    return AddType(builder, type)
+def AddEncoding(builder, encoding): builder.PrependInt8Slot(1, encoding, 0)
+def PrimitiveArrayAddEncoding(builder, encoding):
+    """This method is deprecated. Please switch to AddEncoding."""
+    return AddEncoding(builder, encoding)
+def AddOffset(builder, offset): builder.PrependInt64Slot(2, offset, 0)
+def PrimitiveArrayAddOffset(builder, offset):
+    """This method is deprecated. Please switch to AddOffset."""
+    return AddOffset(builder, offset)
+def AddLength(builder, length): builder.PrependInt64Slot(3, length, 0)
+def PrimitiveArrayAddLength(builder, length):
+    """This method is deprecated. Please switch to AddLength."""
+    return AddLength(builder, length)
+def AddNullCount(builder, nullCount): builder.PrependInt64Slot(4, nullCount, 0)
+def PrimitiveArrayAddNullCount(builder, nullCount):
+    """This method is deprecated. Please switch to AddNullCount."""
+    return AddNullCount(builder, nullCount)
+def AddTotalBytes(builder, totalBytes): builder.PrependInt64Slot(5, totalBytes, 0)
+def PrimitiveArrayAddTotalBytes(builder, totalBytes):
+    """This method is deprecated. Please switch to AddTotalBytes."""
+    return AddTotalBytes(builder, totalBytes)
+def End(builder): return builder.EndObject()
+def PrimitiveArrayEnd(builder):
+    """This method is deprecated. Please switch to End."""
+    return End(builder)

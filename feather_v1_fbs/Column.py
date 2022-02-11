@@ -10,12 +10,16 @@ class Column(object):
     __slots__ = ['_tab']
 
     @classmethod
-    def GetRootAsColumn(cls, buf, offset):
+    def GetRootAs(cls, buf, offset=0):
         n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
         x = Column()
         x.Init(buf, n + offset)
         return x
 
+    @classmethod
+    def GetRootAsColumn(cls, buf, offset=0):
+        """This method is deprecated. Please switch to GetRootAs."""
+        return cls.GetRootAs(buf, offset)
     # Column
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
@@ -63,10 +67,31 @@ class Column(object):
             return self._tab.String(o + self._tab.Pos)
         return None
 
-def ColumnStart(builder): builder.StartObject(5)
-def ColumnAddName(builder, name): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(name), 0)
-def ColumnAddValues(builder, values): builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(values), 0)
-def ColumnAddMetadataType(builder, metadataType): builder.PrependUint8Slot(2, metadataType, 0)
-def ColumnAddMetadata(builder, metadata): builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(metadata), 0)
-def ColumnAddUserMetadata(builder, userMetadata): builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(userMetadata), 0)
-def ColumnEnd(builder): return builder.EndObject()
+def Start(builder): builder.StartObject(5)
+def ColumnStart(builder):
+    """This method is deprecated. Please switch to Start."""
+    return Start(builder)
+def AddName(builder, name): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(name), 0)
+def ColumnAddName(builder, name):
+    """This method is deprecated. Please switch to AddName."""
+    return AddName(builder, name)
+def AddValues(builder, values): builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(values), 0)
+def ColumnAddValues(builder, values):
+    """This method is deprecated. Please switch to AddValues."""
+    return AddValues(builder, values)
+def AddMetadataType(builder, metadataType): builder.PrependUint8Slot(2, metadataType, 0)
+def ColumnAddMetadataType(builder, metadataType):
+    """This method is deprecated. Please switch to AddMetadataType."""
+    return AddMetadataType(builder, metadataType)
+def AddMetadata(builder, metadata): builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(metadata), 0)
+def ColumnAddMetadata(builder, metadata):
+    """This method is deprecated. Please switch to AddMetadata."""
+    return AddMetadata(builder, metadata)
+def AddUserMetadata(builder, userMetadata): builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(userMetadata), 0)
+def ColumnAddUserMetadata(builder, userMetadata):
+    """This method is deprecated. Please switch to AddUserMetadata."""
+    return AddUserMetadata(builder, userMetadata)
+def End(builder): return builder.EndObject()
+def ColumnEnd(builder):
+    """This method is deprecated. Please switch to End."""
+    return End(builder)

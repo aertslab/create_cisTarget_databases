@@ -10,12 +10,16 @@ class TimeMetadata(object):
     __slots__ = ['_tab']
 
     @classmethod
-    def GetRootAsTimeMetadata(cls, buf, offset):
+    def GetRootAs(cls, buf, offset=0):
         n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
         x = TimeMetadata()
         x.Init(buf, n + offset)
         return x
 
+    @classmethod
+    def GetRootAsTimeMetadata(cls, buf, offset=0):
+        """This method is deprecated. Please switch to GetRootAs."""
+        return cls.GetRootAs(buf, offset)
     # TimeMetadata
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
@@ -27,6 +31,15 @@ class TimeMetadata(object):
             return self._tab.Get(flatbuffers.number_types.Int8Flags, o + self._tab.Pos)
         return 0
 
-def TimeMetadataStart(builder): builder.StartObject(1)
-def TimeMetadataAddUnit(builder, unit): builder.PrependInt8Slot(0, unit, 0)
-def TimeMetadataEnd(builder): return builder.EndObject()
+def Start(builder): builder.StartObject(1)
+def TimeMetadataStart(builder):
+    """This method is deprecated. Please switch to Start."""
+    return Start(builder)
+def AddUnit(builder, unit): builder.PrependInt8Slot(0, unit, 0)
+def TimeMetadataAddUnit(builder, unit):
+    """This method is deprecated. Please switch to AddUnit."""
+    return AddUnit(builder, unit)
+def End(builder): return builder.EndObject()
+def TimeMetadataEnd(builder):
+    """This method is deprecated. Please switch to End."""
+    return End(builder)

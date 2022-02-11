@@ -10,12 +10,16 @@ class CategoryMetadata(object):
     __slots__ = ['_tab']
 
     @classmethod
-    def GetRootAsCategoryMetadata(cls, buf, offset):
+    def GetRootAs(cls, buf, offset=0):
         n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
         x = CategoryMetadata()
         x.Init(buf, n + offset)
         return x
 
+    @classmethod
+    def GetRootAsCategoryMetadata(cls, buf, offset=0):
+        """This method is deprecated. Please switch to GetRootAs."""
+        return cls.GetRootAs(buf, offset)
     # CategoryMetadata
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
@@ -40,7 +44,19 @@ class CategoryMetadata(object):
             return bool(self._tab.Get(flatbuffers.number_types.BoolFlags, o + self._tab.Pos))
         return False
 
-def CategoryMetadataStart(builder): builder.StartObject(2)
-def CategoryMetadataAddLevels(builder, levels): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(levels), 0)
-def CategoryMetadataAddOrdered(builder, ordered): builder.PrependBoolSlot(1, ordered, 0)
-def CategoryMetadataEnd(builder): return builder.EndObject()
+def Start(builder): builder.StartObject(2)
+def CategoryMetadataStart(builder):
+    """This method is deprecated. Please switch to Start."""
+    return Start(builder)
+def AddLevels(builder, levels): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(levels), 0)
+def CategoryMetadataAddLevels(builder, levels):
+    """This method is deprecated. Please switch to AddLevels."""
+    return AddLevels(builder, levels)
+def AddOrdered(builder, ordered): builder.PrependBoolSlot(1, ordered, 0)
+def CategoryMetadataAddOrdered(builder, ordered):
+    """This method is deprecated. Please switch to AddOrdered."""
+    return AddOrdered(builder, ordered)
+def End(builder): return builder.EndObject()
+def CategoryMetadataEnd(builder):
+    """This method is deprecated. Please switch to End."""
+    return End(builder)

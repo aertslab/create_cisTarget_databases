@@ -10,12 +10,16 @@ class TimestampMetadata(object):
     __slots__ = ['_tab']
 
     @classmethod
-    def GetRootAsTimestampMetadata(cls, buf, offset):
+    def GetRootAs(cls, buf, offset=0):
         n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
         x = TimestampMetadata()
         x.Init(buf, n + offset)
         return x
 
+    @classmethod
+    def GetRootAsTimestampMetadata(cls, buf, offset=0):
+        """This method is deprecated. Please switch to GetRootAs."""
+        return cls.GetRootAs(buf, offset)
     # TimestampMetadata
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
@@ -36,7 +40,19 @@ class TimestampMetadata(object):
             return self._tab.String(o + self._tab.Pos)
         return None
 
-def TimestampMetadataStart(builder): builder.StartObject(2)
-def TimestampMetadataAddUnit(builder, unit): builder.PrependInt8Slot(0, unit, 0)
-def TimestampMetadataAddTimezone(builder, timezone): builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(timezone), 0)
-def TimestampMetadataEnd(builder): return builder.EndObject()
+def Start(builder): builder.StartObject(2)
+def TimestampMetadataStart(builder):
+    """This method is deprecated. Please switch to Start."""
+    return Start(builder)
+def AddUnit(builder, unit): builder.PrependInt8Slot(0, unit, 0)
+def TimestampMetadataAddUnit(builder, unit):
+    """This method is deprecated. Please switch to AddUnit."""
+    return AddUnit(builder, unit)
+def AddTimezone(builder, timezone): builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(timezone), 0)
+def TimestampMetadataAddTimezone(builder, timezone):
+    """This method is deprecated. Please switch to AddTimezone."""
+    return AddTimezone(builder, timezone)
+def End(builder): return builder.EndObject()
+def TimestampMetadataEnd(builder):
+    """This method is deprecated. Please switch to End."""
+    return End(builder)

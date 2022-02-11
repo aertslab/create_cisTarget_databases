@@ -10,12 +10,16 @@ class CTable(object):
     __slots__ = ['_tab']
 
     @classmethod
-    def GetRootAsCTable(cls, buf, offset):
+    def GetRootAs(cls, buf, offset=0):
         n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
         x = CTable()
         x.Init(buf, n + offset)
         return x
 
+    @classmethod
+    def GetRootAsCTable(cls, buf, offset=0):
+        """This method is deprecated. Please switch to GetRootAs."""
+        return cls.GetRootAs(buf, offset)
     # CTable
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
@@ -79,11 +83,35 @@ class CTable(object):
             return self._tab.String(o + self._tab.Pos)
         return None
 
-def CTableStart(builder): builder.StartObject(5)
-def CTableAddDescription(builder, description): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(description), 0)
-def CTableAddNumRows(builder, numRows): builder.PrependInt64Slot(1, numRows, 0)
-def CTableAddColumns(builder, columns): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(columns), 0)
-def CTableStartColumnsVector(builder, numElems): return builder.StartVector(4, numElems, 4)
-def CTableAddVersion(builder, version): builder.PrependInt32Slot(3, version, 0)
-def CTableAddMetadata(builder, metadata): builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(metadata), 0)
-def CTableEnd(builder): return builder.EndObject()
+def Start(builder): builder.StartObject(5)
+def CTableStart(builder):
+    """This method is deprecated. Please switch to Start."""
+    return Start(builder)
+def AddDescription(builder, description): builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(description), 0)
+def CTableAddDescription(builder, description):
+    """This method is deprecated. Please switch to AddDescription."""
+    return AddDescription(builder, description)
+def AddNumRows(builder, numRows): builder.PrependInt64Slot(1, numRows, 0)
+def CTableAddNumRows(builder, numRows):
+    """This method is deprecated. Please switch to AddNumRows."""
+    return AddNumRows(builder, numRows)
+def AddColumns(builder, columns): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(columns), 0)
+def CTableAddColumns(builder, columns):
+    """This method is deprecated. Please switch to AddColumns."""
+    return AddColumns(builder, columns)
+def StartColumnsVector(builder, numElems): return builder.StartVector(4, numElems, 4)
+def CTableStartColumnsVector(builder, numElems):
+    """This method is deprecated. Please switch to Start."""
+    return StartColumnsVector(builder, numElems)
+def AddVersion(builder, version): builder.PrependInt32Slot(3, version, 0)
+def CTableAddVersion(builder, version):
+    """This method is deprecated. Please switch to AddVersion."""
+    return AddVersion(builder, version)
+def AddMetadata(builder, metadata): builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(metadata), 0)
+def CTableAddMetadata(builder, metadata):
+    """This method is deprecated. Please switch to AddMetadata."""
+    return AddMetadata(builder, metadata)
+def End(builder): return builder.EndObject()
+def CTableEnd(builder):
+    """This method is deprecated. Please switch to End."""
+    return End(builder)
