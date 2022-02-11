@@ -68,7 +68,7 @@ def get_all_column_names_from_feather(feather_file: str) -> List:
 
             # Read Feather v1 metadata.
             fh_feather.seek(- (metadata_length + 8), 2)
-            feather_metadata = feather_v1_fbs.CTable.GetRootAsCTable(bytearray(fh_feather.read(metadata_length)), 0)
+            feather_metadata = feather_v1_fbs.CTable.GetRootAs(bytearray(fh_feather.read(metadata_length)), 0)
 
             num_columns = feather_metadata.ColumnsLength()
 
