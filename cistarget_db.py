@@ -461,6 +461,16 @@ class DatabaseTypes(Enum):
         """Return row kind for DatabaseTypes member."""
         return self._row_kind
 
+    @property
+    def has_regions_or_genes_column_kind(self) -> bool:
+        """Check if cisTarget database has regions or genes in columns."""
+        return self._column_kind == 'regions' or self._column_kind == 'genes'
+
+    @property
+    def has_motifs_or_track_column_kind(self) -> bool:
+        """Check if cisTarget database has motifs or tracks in columns."""
+        return self._column_kind == 'motifs' or self._column_kind == 'track'
+
     def get_dtype(self, nbr_regions_or_genes: int) -> Type[Union[np.core.single, np.core.short, np.core.intc]]:
         """
         Get optimal dtype for storing values in cisTarget database.
