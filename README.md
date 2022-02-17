@@ -22,11 +22,11 @@ echo "create_cistarget_databases_dir='""${PWD}""'"
 ```bash
 # Create conda environment.
 conda create -n create_cistarget_databases \
-    'python=3.8' \
-    'numpy=1.19.5' \
-    'pandas>=1.2.0' \
-    'pyarrow>=4.0.0' \
-    'numba>=0.52.0' \
+    'python=3.10' \
+    'numpy=1.21' \
+    'pandas>=1.4.1' \
+    'pyarrow>=7.0.0' \
+    'numba>=0.55.1' \
     'python-flatbuffers'
 ```
 
@@ -126,12 +126,13 @@ When running the scripts in this repo, you might need around 3 times the amount 
 
 ## Scripts overview
 
-| script | description |
-| ---: | --- |
-| [`create_cistarget_motif_databases.py`](#create_cistarget_motif_databasespy)                                                                                             | Create cisTarget motif databases. |
-| [`combine_partial_regions_or_genes_vs_ motifs_or_tracks_scores_cistarget_dbs.py`](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy)          | Combine partial cisTarget regions or genes vs motifs or tracks scores databases to: **1)** a complete cisTarget regions or genes vs motifs or tracks scores database and **2)** a complete cisTarget motifs or tracks vs regions or genes scores database. |
-| [`convert_motifs_or_tracks_vs_ regions_or_genes_scores_to_ rankings_cistarget_dbs.py`](#convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy) | Convert cisTarget motifs or tracks vs regions or genes scores database to cisTarget rankings database. |
-| [`create_cross_species_motifs_rankings_db.py`](#create_cross_species_motifs_rankings_dbpy)                                                                               | Create cisTarget cross-species motifs rankings databases. |
+|                                                                                                                                                                   script | description                                                                                                                                                                                                                                                |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|                                                                                             [`create_cistarget_motif_databases.py`](#create_cistarget_motif_databasespy) | Create cisTarget motif databases.                                                                                                                                                                                                                          |
+|           [`combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbs.py`](#combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbspy) | Combine partial cisTarget motifs or tracks vs regions or genes scores databases to: **1)** a complete cisTarget motifs or tracks regions or genes scores database and **2)** a complete cisTarget regions or genes vs motifs or tracks scores database.    |
+|           [`combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py`](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy) | Combine partial cisTarget regions or genes vs motifs or tracks scores databases to: **1)** a complete cisTarget regions or genes vs motifs or tracks scores database and **2)** a complete cisTarget motifs or tracks vs regions or genes scores database. |
+| [`convert_motifs_or_tracks_vs_ regions_or_genes_scores_to_ rankings_cistarget_dbs.py`](#convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy) | Convert cisTarget motifs or tracks vs regions or genes scores database to cisTarget rankings database.                                                                                                                                                     |
+|                                                                               [`create_cross_species_motifs_rankings_db.py`](#create_cross_species_motifs_rankings_dbpy) | Create cisTarget cross-species motifs rankings databases.                                                                                                                                                                                                  |
 
 
 ### Usage
@@ -207,6 +208,29 @@ optional arguments:
 ```
 
 
+#### combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbs.py
+
+```bash
+❯ ${create_cistarget_databases_dir}/combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbs.py --help
+usage: combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbs.py
+       [-h] -i INPUT -o OUTPUT_DIR
+
+Combine partial cisTarget motifs or tracks vs regions or genes scores databases to: 1) a complete
+cisTarget motifs or tracks vs regions or genes scores database and2) a complete cisTarget regions or
+genes vs motifs or tracks scores database.
+
+options:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Input directory or database prefix with partial cisTarget motif or track vs
+                        regions or genes scores database Feather files.
+  -o OUTPUT_DIR, --output OUTPUT_DIR
+                        Output directory to which the 1) complete cisTarget motifs or tracks vs
+                        regions or genes scores database Feather files and 2) complete cisTarget
+                        regions or genes vs motif or track scores database Feather files will be
+                        written.
+```
+
 #### combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py
 
 ```bash
@@ -214,19 +238,19 @@ optional arguments:
 usage: combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py
        [-h] -i INPUT -o OUTPUT_DIR
 
-Combine partial cisTarget regions or genes vs motifs or tracks scores databases to: 1) a
-complete cisTarget regions or genes vs motifs or tracks scores database and 2) a complete
-cisTarget motifs or tracks vs regions or genes scores database.
+Combine partial cisTarget regions or genes vs motifs or tracks scores databases to: 1) a complete
+cisTarget regions or genes vs motifs or tracks scores database and 2) a complete cisTarget motifs or
+tracks vs regions or genes scores database.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -i INPUT, --input INPUT
-                        Input directory or database prefix with partial cisTarget regions or genes
-                        vs motif or track scores database Feather files.
+                        Input directory or database prefix with partial cisTarget regions or genes vs
+                        motif or track scores database Feather files.
   -o OUTPUT_DIR, --output OUTPUT_DIR
-                        Output directory to which the 1) complete cisTarget regions or genes
-                        vs motif or track scores database Feather files and 2) complete cisTarget motifs
-                        or tracks vs regions or genes scores database Feather files will be written.
+                        Output directory to which the 1) complete cisTarget regions or genes vs motif
+                        or track scores database Feather files and 2) complete cisTarget motifs or
+                        tracks vs regions or genes scores database Feather files will be written.
 ```
 
 
@@ -336,15 +360,15 @@ Create cisTarget motif databases:
       - score the whole list of motifs in several parts by running `create_cistarget_motif_databases.py` with the
         `-p ${current_part} ${nbr_total_parts}`  option with `${current_part}` set from `1` to `${nbr_total_parts}`.
         Each run will create motif scores (for the current subset of motifs) for all regulatory regions and create a partial
-        cisTarget regions/genes vs motifs scores db:
-          - `*.part_${current_part}_of_${nbr_total_parts}.regions_vs_motifs.scores.feather`
-          - `*.part_${current_part}_of_${nbr_total_parts}.genes_vs_motifs.scores.feather`
-  2) [`combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py`](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy):
-      - Combine partial cisTarget regions/genes vs motifs scores db to:
-          - a complete cisTarget regions/genes vs motifs scores database:
+        cisTarget motifs vs regions/genes scores db:
+          - `*.part_${current_part}_of_${nbr_total_parts}.motifs_vs_regions.scores.feather`
+          - `*.part_${current_part}_of_${nbr_total_parts}.motifs_vs_genes.scores.feather`
+  2) [`combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbs.py`](#combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbspy):
+      - Combine partial cisTarget motifs vs regions/genes scores db to:
+          - a complete cisTarget motifs vs regions/genes scores database:
               - `*.motifs_vs_regions.scores.feather`
               - `*.motifs_vs_genes.scores.feather`
-          - a complete cisTarget motifs vs regions/genes scores database:
+          - a complete cisTarget regions/genes vs motifs scores database:
               - `*.regions_vs_motifs.scores.feather`
               - `*.genes_vs_motifs.scores.feather`
           - partial cisTarget scores databases can be deleted afterwards.
@@ -360,17 +384,17 @@ Create cisTarget motif databases:
 
 #### Step 1
 
-Using `-p` or `--partial` of [`create_cistarget_motif_databases.py` (help)](#create_cistarget_motif_databasespy) will divide
-the motif list in a number of total parts (`${nbr_total_parts}`) (of similar size) and score only the part defined by
-`${current_part}`.
+Using `-p` or `--partial` of [`create_cistarget_motif_databases.py` (help)](#create_cistarget_motif_databasespy) will
+divide the motif list in a number of total parts (`${nbr_total_parts}`) (of similar size) and score only the part
+defined by`${current_part}`.
 
 This allows creating partial databases on machines which do not have enough RAM to score all motifs in one iteration
 and/or running the motif scoring on multiple nodes (where each node runs the motif scoring with a different value for
 `${current_part}`) in parallel. This is quite useful if the number of region/genes is quite high.
 
-This will only create a partial cisTarget regions/genes vs motifs scores database files:
-   - `${output_db_prefix}.part_0*${current_part}_of_0*${nbr_total_parts}.regions_vs_motifs.scores.feather`
-   - `${output_db_prefix}.part_0*${current_part}_of_0*${nbr_total_parts}.genes_vs_motifs.scores.feather`
+This will only create a partial cisTarget motifs vs regions/genes scores database files:
+   - `${output_db_prefix}.part_0*${current_part}_of_0*${nbr_total_parts}.motifs_vs_regions.scores.feather`
+   - `${output_db_prefix}.part_0*${current_part}_of_0*${nbr_total_parts}.motifs_vs_genes.scores.feather`
 
 
 ```bash
@@ -432,11 +456,11 @@ have a rough guess about the amount of memory needed in case you have problems r
 
 
 When all partial cisTarget regions/genes vs motifs scores database files are created:
-  - `${db_prefix}.part_0*of_0*${nbr_total_parts}.regions_vs_motifs.scores.feather`
-  - `${db_prefix}.part_0*_of_0*${nbr_total_parts}.genes_vs_motifs.scores.feather`
+  - `${db_prefix}.part_0*of_0*${nbr_total_parts}.motifs_vs_regions.scores.feather`
+  - `${db_prefix}.part_0*_of_0*${nbr_total_parts}.motifs_vs_genes.scores.feather`
 
 they can be combined with
-[`combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py` (help)](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy)
+[`combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbs.py` (help)](#combine_partial_rmotifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbspy)
 to:
   - a complete cisTarget regions/genes vs motifs scores database:
       - `*.motifs_vs_regions.scores.feather`
@@ -449,12 +473,12 @@ Partial cisTarget scores databases can be deleted afterwards.
 
 
 ```bash
-"${create_cistarget_databases_dir}/combine_partial_regions_or_genes_vs_motifs_or_tracks_cistarget_dbs.py \
+"${create_cistarget_databases_dir}/combine_partial_motifs_or_tracks_vs_regions_or_genes_cistarget_dbs.py \
     -i partial/ \
     -o .
 
 # Partial cisTarget databases can be removed.
-#rm partial
+#rm -r partial
 ```
 
 
