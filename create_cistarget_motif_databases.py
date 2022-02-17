@@ -453,17 +453,16 @@ def main():
             f'{ct_db.db_type.scores_or_rankings} db took: {elapsed_time:.06f} seconds\n'
         )
 
-    if not args.partial:
-        # Write cisTarget scores database (motifs vs regions or genes) to Feather file.
-        write_db(ct_db=ct_scores_db_motifs_vs_regions_or_genes, db_prefix=db_prefix)
-
-    # Create cisTarget scores database (regions or genes vs motifs) from (motifs vs regions or genes) version.
-    ct_scores_db_regions_or_genes_vs_motifs = ct_scores_db_motifs_vs_regions_or_genes.transpose()
-
-    # Write cisTarget scores database (regions or genes vs motifs) to Feather file.
-    write_db(ct_db=ct_scores_db_regions_or_genes_vs_motifs, db_prefix=db_prefix)
+    # Write cisTarget scores database (motifs vs regions or genes) to Feather file.
+    write_db(ct_db=ct_scores_db_motifs_vs_regions_or_genes, db_prefix=db_prefix)
 
     if not args.partial:
+        # Create cisTarget scores database (regions or genes vs motifs) from (motifs vs regions or genes) version.
+        ct_scores_db_regions_or_genes_vs_motifs = ct_scores_db_motifs_vs_regions_or_genes.transpose()
+
+        # Write cisTarget scores database (regions or genes vs motifs) to Feather file.
+        write_db(ct_db=ct_scores_db_regions_or_genes_vs_motifs, db_prefix=db_prefix)
+
         # Create cisTarget rankings database (motifs vs regions or genes) from cisTarget scores database filename
         # (motifs vs regions or genes).
         print(
