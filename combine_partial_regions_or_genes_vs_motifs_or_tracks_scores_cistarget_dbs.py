@@ -32,7 +32,7 @@ partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_pattern = re.compile(
 )
 
 
-def combine_partial_cistarget_dbs(
+def combine_partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_cistarget_dbs(
         partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_vs_one_species_filenames: List[str],
         output_db_prefix: str):
     """
@@ -227,8 +227,9 @@ def main():
                 output_db_prefix = f'{os.path.join(args.output_dir, os.path.basename(db_prefix_minimal))}' \
                                    f'{"." + str(species) if species != "no_species" else ""}'
 
-                combine_partial_cistarget_dbs(
-                    partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_vs_one_species_filenames=partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_vs_one_species_filenames,
+                combine_partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_cistarget_dbs(
+                    partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_vs_one_species_filenames=
+                    partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_vs_one_species_filenames,
                     output_db_prefix=output_db_prefix
                 )
 
