@@ -789,17 +789,109 @@ class CisTargetDatabase:
                 else:
                     raise ValueError('db_type must be of "DatabaseTypes" type.')
 
-        # Read Feather file(s) in dataframe.
-        df = pf.FeatherDataset(
-            path_or_paths=db_filename_or_dbs_filenames, validate_schema=True
-        ).read_pandas(columns=None)
+        if db_type.has_motifs_or_track_column_kind:
+            if len(db_filename_or_dbs_filenames) == 1:
+                # Only one motif or track vs regions or genes cisTarget scores/rankings database file.
 
-        # Set indexes and index names for rows.
-        if db_type.row_kind in df:
-            df.set_index(db_type.row_kind, inplace=True)
-        elif 'features' in df:
-            df.set_index('features', inplace=True)
-            df.index.set_names([db_type.row_kind], inplace=True)
+                # Read cisTarget database file in pyarrow table.
+                # Read one Feather database files in a pyarrow table.
+                pa_table = pf.FeatherDataset(
+                    path_or_paths=db_filename_or_dbs_filenames, validate_schema=True
+                ).read_table(columns=None)
+            else:
+                # Multiple partial motif or track vs regions or genes cisTarget scores/rankings database files.
+                # Partial motif or track vs regions or genes cisTarget scores/rankings databases have the same number
+                # of rows (regions or genes), but a different columns names (motif or tracks).
+                # pyarrow.feather.FeatherDataset can not read multiple files with a different schema.
+                #
+                # This is solved below by reading each partial motif or track vs regions or genes cisTarget
+                # scores/rankings database file as a pyarrow table and constructing the full motif or track vs
+                # regions or genes cisTarget database by appending all columns (motifs or tracks) from multiple files.
+
+                # Read each partial motif or track vs regions or genes cisTarget scores/rankings database file as a
+                # pyarrow Table and save them as an element in a list.
+                pa_table_partial_list = [
+                    pf.FeatherDataset(
+                        path_or_paths=[db_filename, ],
+                        validate_schema=True
+                    ).read_table(columns=None)
+                    for db_filename in db_filename_or_dbs_filenames
+                ]
+
+                # Get region or gene column from the first partial motif or track vs regions or genes cisTarget
+                # scores/rankings database.
+                regions_or_genes_column = pa_table_partial_list[0].column(db_type.row_kind)
+
+                # Remove region or gene column from first partial motif or track vs regions or genes cisTarget
+                # scores/rankings database from pyarrow table representation.
+                pa_table = pa_table_partial_list[0].drop([db_type.row_kind])
+
+                # Create merged motif or track vs regions or genes cisTarget scores/rankings database from partial
+                # databases, by adding each column of the partial motif or track vs regions or genes cisTarget
+                # scores/rankings database (starting from the second partial database as the first partial motif or
+                # track vs regions or genes cisTarget scores/rankings database can be used to start from.
+                for df_partial in pa_table_partial_list[1:]:
+                    for column in df_partial.itercolumns():
+                        if column._name != db_type.row_kind:
+                            # Append column to merged motif or track vs regions or genes cisTarget scores/rankings
+                            # database pyarrow table if the column is a scores/rankings column (no "regions" or "genes"
+                            # column).
+                            pa_table = pa_table.append_column(column._name, column)
+                        else:
+                            # Check if the "regions" or "genes" column contains the same list of genes/regions across
+                            # all partial databases.
+                            if column != regions_or_genes_column:
+                                raise ValueError(
+                                    f'Partial cisTarget databases do not all contain the same {db_type.row_kind}.'
+                                )
+
+                # Get all column names (without "regions" or "genes" column) and sort them alphabetically.
+                column_names = pa_table.column_names
+                column_names_sorted = sorted(column_names)
+
+                # Reorder column names if necessary.
+                if column_names != column_names_sorted:
+                    pa_table = pa_table.select(column_names)
+
+                # Add "regions" or "genes" column as last column.
+                pa_table = pa_table.append_column(db_type.row_kind, regions_or_genes_column)
+
+        elif db_type.has_regions_or_genes_column_kind:
+            # Read one or more cisTarget Feather database files in a pyarrow table.
+            # For partial regions or genes vs motifs or track partial databases, the number of columns (regions or
+            # genes) is the same for each partial database.
+            pa_table = pf.FeatherDataset(
+                path_or_paths=db_filename_or_dbs_filenames, validate_schema=True
+            ).read_table(columns=None)
+
+        # Get all column names.
+        all_column_names = pa_table.column_names
+
+        try:
+            # Check if we have an old database that still used a "features" column and rename it.
+            features_idx = all_column_names.index('features')
+            all_column_names[features_idx] = db_type.row_kind
+            pa_table = pa_table.rename_columns(all_column_names)
+        except ValueError:
+            pass
+
+        if db_type.row_kind in all_column_names:
+            # Sort column names (non-index columns) and add index column as last column.
+            column_names_sorted_and_index = sorted(
+                [
+                    column_name
+                    for column_name in all_column_names
+                    if column_name != db_type.row_kind
+                ]
+            )
+            column_names_sorted_and_index.append(db_type.row_kind)
+
+            # Convert pyarrow Table to Pandas dataframe.
+            df = pa_table.select(column_names_sorted_and_index).to_pandas()
+
+            # Set indexes and index names for rows.
+            if db_type.row_kind in df:
+                df.set_index(db_type.row_kind, inplace=True)
         else:
             raise ValueError(
                 f'cisTarget database file "{db_filename}" does not contain a "{db_type.row_kind}" or "features" column.'
@@ -808,11 +900,10 @@ class CisTargetDatabase:
         # Set column name.
         df.columns.set_names([db_type.column_kind], inplace=True)
 
-        # Sort dataframe by both row and column indexes, if not in sorted order.
+        # Sort dataframe by both row indexes, if not in sorted order. The dataframe is already sorted by column names
+        # when the data is read with pyarrow.
         if list(df.index) != sorted(df.index):
             df.sort_index(axis=0, inplace=True, ascending=True)
-        if list(df.columns) != sorted(df.columns):
-            df.sort_index(axis=1, inplace=True, ascending=True)
 
         return CisTargetDatabase(db_type, df)
 
