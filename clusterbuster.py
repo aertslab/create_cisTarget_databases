@@ -3,7 +3,6 @@
 import io
 import os
 import subprocess
-import sys
 from typing import Optional, Dict, Union, Tuple
 
 import numpy as np
@@ -62,11 +61,9 @@ def get_motif_id_to_filename_dict(motifs_dir: str,
                         motif_id = motif_md5_or_id
                         motif_md5 = motif_id_to_motif_md5_dict[motif_md5_or_id]
                     else:
-                        print(
-                            f'Error: Could not find motif MD5 name <=> motif ID association for "{motif_md5_or_id}".',
-                            file=sys.stderr
+                        raise ValueError(
+                            f'Error: Could not find motif MD5 name <=> motif ID association for "{motif_md5_or_id}".'
                         )
-                        sys.exit(1)
 
                     # Cluster-Buster motif MD5 name filename.
                     motif_filename = os.path.join(motifs_dir, motif_md5 + '.cb')
@@ -79,11 +76,9 @@ def get_motif_id_to_filename_dict(motifs_dir: str,
                     motif_filename = os.path.join(motifs_dir, motif_id + '.cb')
 
                 if not os.path.exists(motif_filename):
-                    print(
-                        f'Error: Cluster-Buster motif filename "{motif_filename}" does not exist for motif {motif_id}.',
-                        file=sys.stderr
+                    raise IOError(
+                        f'Error: Cluster-Buster motif filename "{motif_filename}" does not exist for motif {motif_id}.'
                     )
-                    sys.exit(1)
 
                 motif_id_to_filename_dict[motif_id] = motif_filename
 
