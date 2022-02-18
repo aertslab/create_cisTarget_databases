@@ -9,22 +9,47 @@ import numpy as np
 import pandas as pd
 
 
-def get_motif_id_to_filename_dict(motifs_dir: str,
-                                  motifs_list_filename: str,
-                                  motif_md5_to_motif_id_filename: Optional[str] = None
-                                  ) -> Dict[str, str]:
+def get_motif_id_to_filename_and_nbr_motifs_dict(
+        motifs_dir: str,
+        motifs_list_filename: str,
+        partial: Optional[Tuple[int, int]] = None,
+        min_nbr_motifs: Optional[int] = 1,
+        max_nbr_motifs: Optional[int]= None,
+        motif_md5_to_motif_id_filename: Optional[str] = None,
+) -> (Dict[str, str], Dict[str, int]):
     """
-    Create motif ID to Cluster-Buster motif file mapping.
+    Create motif ID to Cluster-Buster motif file and number of motifs per motif file mapping.
 
-    :param motifs_dir: Directory with Cluster-Buster motif files (with motif MD5 name or motif ID motif files).
-    :param motifs_list_filename: File with Cluster-Buster motif MD5 names or motif IDs.
+    :param motifs_dir:
+        Directory with Cluster-Buster motif files (with motif MD5 name or motif ID motif files).
+    :param motifs_list_filename:
+        File with Cluster-Buster motif MD5 names or motif IDs.
+    :param partial: (current_part, nbr_total_parts)
+        Divide the motif list in a number of total parts (of similar size) and return only the part defined by
+        current_part. This makes it easier to create partial cisTarget motifs or tracks vs regions or genes scores
+        database on machines which do not have enough RAM to score all motifs in one iteration, while still being able
+        to give the same list of motifs to each instance.
+    :param min_nbr_motifs:
+        Only include motif IDs which have at least min_nbr_motifs of motifs in motif ID Cluster-Buster file.
+        This allows to easily score e.g clustered Cluster-Buster motif files with at least 2 motifs as the singletons
+        might already be scored before.
+        Default: 1.
+    :param max_nbr_motifs:
+        Only include motif IDs which have at maximum max_nbr_motifs of motifs in motif ID Cluster-Buster file.
+        Default: None.
     :param motif_md5_to_motif_id_filename: TSV file with motif MD5 names to motif IDs mapping (optional).
-    :return: motif_id_to_filename_dict: motif ID to CLuster-Buster motif filename mapping.
+    :return: (motif_id_to_filename_dict, motif_id_to_nbr_motifs_dict):
+        motif ID to CLuster-Buster motif filename mapping.
+        motif ID to number of motifs in motif ID file mapping.
     """
 
     motif_id_to_filename_dict = dict()
+    motif_id_to_nbr_motifs_dict = dict()
     motif_md5_to_motif_id_dict = dict()
     motif_id_to_motif_md5_dict = dict()
+
+    if not min_nbr_motifs:
+       min_nbr_motifs = 1
 
     if motif_md5_to_motif_id_filename:
         # Get motif MD5 name to motif ID mapping if motif_md5_to_motif_id_filename was provided.
@@ -79,10 +104,85 @@ def get_motif_id_to_filename_dict(motifs_dir: str,
                     raise IOError(
                         f'Error: Cluster-Buster motif filename "{motif_filename}" does not exist for motif {motif_id}.'
                     )
+                else:
+                    # Number of motifs in current motif ID Cluster-Buster file.
+                    nbr_motifs_for_motif_id = 0
 
-                motif_id_to_filename_dict[motif_id] = motif_filename
+                    with open(motif_filename, 'r') as motif_fh:
+                        # Count number of motifs in one motif file.
+                        for motif_line in motif_fh:
+                            if motif_line.startswith('>'):
+                                nbr_motifs_for_motif_id += 1
 
-    return motif_id_to_filename_dict
+                    # Filter out if motif ID Cluster-Buster file does have too little or too many motifs.
+                    if nbr_motifs_for_motif_id >= min_nbr_motifs:
+                        if max_nbr_motifs:
+                            if nbr_motifs_for_motif_id <= max_nbr_motifs:
+                                motif_id_to_filename_dict[motif_id] = motif_filename
+                                motif_id_to_nbr_motifs_dict[motif_id] = nbr_motifs_for_motif_id
+                        else:
+                            motif_id_to_filename_dict[motif_id] = motif_filename
+                            motif_id_to_nbr_motifs_dict[motif_id] = nbr_motifs_for_motif_id
+
+    # Sort motif IDs by number of motifs in motif ID CLuster-Buster file (high to low) and then by motif ID name, so
+    # motif IDs with a lot of motifs appear first, so the chance of having a few motif IDs with a lot of motifs only
+    # running after all other ones are finished, should be much lower.
+    motif_ids_sorted_by_nbr_motifs_for_motif_id = [
+        motif_id
+        for motif_id, nbr_motifs_for_motif_id in sorted(
+            motif_id_to_nbr_motifs_dict.items(),
+            key=lambda nbr_motifs_and_motif_id: (-nbr_motifs_and_motif_id[1], nbr_motifs_and_motif_id[0])
+        )
+    ]
+
+    if partial:
+        current_part, nbr_total_parts = partial
+
+        if nbr_total_parts < 1:
+            raise ValueError(f'"nbr_total_parts" ({nbr_total_parts}) of partial argument should be >= 1.')
+
+        if current_part < 1:
+            raise ValueError(f'"current_part" ({current_part}) of partial argument should be >= 1.')
+
+        if current_part > nbr_total_parts:
+            raise ValueError(
+                f'"current_part" ({current_part}) of partial argument should be <= "nbr_total_parts" '
+                f'({nbr_total_parts}).'
+            )
+
+        # Get partial motif IDs list for current requested part of the motif IDs.
+        # If this function is run with a different current_part number, each partial motif IDs list should have
+        # a similar number of motifs with a lot of motifs per motif ID Cluster-Buster file (in case a clustered motif
+        # collection was given).
+        partial_motif_ids_list = [
+            motif_ids_sorted_by_nbr_motifs_for_motif_id[i]
+            for i in range(current_part - 1, len(motif_id_to_nbr_motifs_dict), nbr_total_parts)
+        ]
+
+        # Recreate dictionaries with subset (corresponding to current_part) of motif IDs sorted by number of motifs in
+        # motif ID Cluster-Buster file.
+        motif_id_to_filename_dict = {
+            motif_id: motif_id_to_filename_dict[motif_id]
+            for motif_id in partial_motif_ids_list
+        }
+
+        motif_id_to_nbr_motifs_dict = {
+            motif_id: motif_id_to_nbr_motifs_dict[motif_id]
+            for motif_id in partial_motif_ids_list
+        }
+    else:
+        # Recreate dictionaries with motif IDs sorted by number of motifs in motif ID Cluster-Buster file (high to low).
+        motif_id_to_filename_dict = {
+            motif_id: motif_id_to_filename_dict[motif_id]
+            for motif_id in motif_ids_sorted_by_nbr_motifs_for_motif_id
+        }
+
+        motif_id_to_nbr_motifs_dict = {
+            motif_id: motif_id_to_nbr_motifs_dict[motif_id]
+            for motif_id in motif_ids_sorted_by_nbr_motifs_for_motif_id
+        }
+
+    return motif_id_to_filename_dict, motif_id_to_nbr_motifs_dict
 
 
 def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, motif_filename: str, motif_id: str,
