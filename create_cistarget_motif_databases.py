@@ -4,7 +4,7 @@
 """
 Purpose :      Create cisTarget motif databases.
 
-Copyright (C): 2019-2021 - Gert Hulselmans
+Copyright (C): 2019-2022 - Gert Hulselmans
 """
 
 
@@ -15,12 +15,13 @@ import random
 import shutil
 import sys
 import time
+
 from typing import Tuple
 
 import pandas as pd
 
 from cistarget_db import MotifsOrTracksType, RegionOrGeneIDs, MotifOrTrackIDs, DatabaseTypes, CisTargetDatabase
-from clusterbuster import get_motif_id_to_filename_dict, run_cluster_buster_for_motif
+from clusterbuster import get_motif_id_to_filename_and_nbr_motifs_dict, run_cluster_buster_for_motif
 
 
 def main():
@@ -157,6 +158,28 @@ def main():
     )
 
     parser.add_argument(
+        '--min',
+        dest='min_nbr_motifs',
+        action='store',
+        type=int,
+        required=False,
+        default=1,
+        help='Minimum number of motifs needed per Cluster-Buster motif file to be considered for scoring '
+             '(filters motifs list). Default: 1.'
+    )
+
+    parser.add_argument(
+        '--max',
+        dest='max_nbr_motifs',
+        action='store',
+        type=int,
+        required=False,
+        default=None,
+        help='Maximum number of motifs needed per Cluster-Buster motif file to be considered for scoring '
+             '(filters motifs list). Default: None.'
+    )
+
+    parser.add_argument(
         '-l',
         '--mask',
         dest='mask',
@@ -249,6 +272,13 @@ def main():
     else:
         db_prefix = args.db_prefix
 
+    if not (args.min_nbr_motifs == 1 and not args.max_nbr_motifs):
+        # Add info about Cluster-Buster motif files are scored (if min or max is set to a non-default value).
+        if args.max_nbr_motifs:
+            db_prefix = f'{args.db_prefix}.min_{args.min_nbr_motifs:d}_to_max_{args.max_nbr_motifs:d}_motifs'
+        else:
+            db_prefix = f'{args.db_prefix}.min_{args.min_nbr_motifs:d}_to_max_motifs'
+
     # Get absolute path to Cluster-Buster binary and see if it can be executed.
     cluster_buster_path = shutil.which(args.cluster_buster_path)
 
@@ -294,10 +324,18 @@ def main():
     # Get absolute path name for FASTA filename so in case Cluster-Buster is ran over ssh, the FASTA file can be found.
     fasta_filename = os.path.abspath(args.fasta_filename)
 
-    motif_id_to_filename_dict = get_motif_id_to_filename_dict(
+    # Get motif ID to motif file name mapping and motif ID to number of motifs per motif file mapping for
+    # and (optionally) filtered list of motif IDs:
+    #   - if partial is set
+    #   - if min_nbr_motifs is set
+    #   - if max_nbr_motifs is set
+    motif_id_to_filename_dict, motif_id_to_nbr_motifs_dict = get_motif_id_to_filename_and_nbr_motifs_dict(
         motifs_dir=os.path.abspath(args.motifs_dir),
         motifs_list_filename=args.motifs_list_filename,
-        motif_md5_to_motif_id_filename=args.motif_md5_to_motif_id_filename
+        motif_md5_to_motif_id_filename=args.motif_md5_to_motif_id_filename,
+        partial=(current_part, nbr_total_parts) if args.partial else None,
+        min_nbr_motifs=args.min_nbr_motifs,
+        max_nbr_motifs=args.max_nbr_motifs
     )
 
     # Create MotifOrTracksIDs object from plain motif IDs.
@@ -316,32 +354,6 @@ def main():
     if nbr_motifs == 0:
         print('Error: No motifs provided.', file=sys.stderr)
         sys.exit(1)
-
-    if args.partial:
-        def divide_in_chunks(list_to_chunk, n):
-            """
-            Yield n number of sequential chunks from list_to_chunk, where each chunk is similar in size (max diff = 1).
-            """
-
-            d, r = divmod(len(list_to_chunk), n)
-
-            for i in range(n):
-                si = (d + 1) * (i if i < r else r) + d * (0 if i < r else i - r)
-                yield list_to_chunk[si:si + (d + 1 if i < r else d)]
-
-        # Create a new MotifOrTracksIDs object with only the motif IDs for the requested part (defined by current_part).
-        motif_ids = MotifOrTrackIDs(
-            motif_or_track_ids=list(divide_in_chunks(list_to_chunk=motif_ids.ids, n=nbr_total_parts))[current_part - 1],
-            motifs_or_tracks_type=MotifsOrTracksType.MOTIFS
-        )
-
-        motif_id_to_filename_dict = {
-            motif_id: filename
-            for motif_id, filename in motif_id_to_filename_dict.items()
-            if motif_id in motif_ids.ids
-        }
-
-        nbr_motifs = len(motif_ids)
 
     print(
         f'Initialize dataframe ({nbr_region_or_gene_ids} {region_or_gene_ids.type.value} '
@@ -385,7 +397,13 @@ def main():
         print(exception, file=sys.stderr)
 
     with mp.Pool(processes=args.nbr_threads) as pool:
+        # Motif IDs are sorted by number of motifs in motif ID Cluster-Buster file (high to low) and then by motif ID
+        # name (in get_motif_id_to_filename_and_nbr_motifs_dict()), so motif IDs which have a lot of motifs in their
+        # Cluster-Buster motif file are scored first, before singletons are scored to prevent that a few Cluster-Buster
+        # motifs files with a huge number of motifs got sheduled near the end of the motif scoring and underutilizing
+        # the compute node.
         for motif_id, motif_filename in motif_id_to_filename_dict.items():
+
             # Score all regions/genes in the FASTA file for the current motif and write the result in the
             # ct_scores_db_motifs_vs_regions_or_genes CisTargetDatabase object.
             pool.apply_async(
