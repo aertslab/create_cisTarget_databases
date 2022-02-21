@@ -273,11 +273,18 @@ def main():
         db_prefix = args.db_prefix
 
     if not (args.min_nbr_motifs == 1 and not args.max_nbr_motifs):
-        # Add info about Cluster-Buster motif files are scored (if min or max is set to a non-default value).
+        if not args.partial:
+            # Add ".part_0001_of_0001" if partial was not specified but if min and max number of motifs per
+            # Cluster-Buster motif file is specified, so it is easier to combine those databases with different subsets
+            # of motifs in a later step.
+            db_prefix = f'{args.db_prefix}.part_0001_of_0001'
+
+        # Add info about number of motifs in Cluster-Buster motif file which will be scored (if min or max is set to a
+        # non-default value).
         if args.max_nbr_motifs:
-            db_prefix = f'{args.db_prefix}.min_{args.min_nbr_motifs:d}_to_max_{args.max_nbr_motifs:d}_motifs'
+            db_prefix = f'{db_prefix}.min_{args.min_nbr_motifs:d}_to_max_{args.max_nbr_motifs:d}_motifs'
         else:
-            db_prefix = f'{args.db_prefix}.min_{args.min_nbr_motifs:d}_to_max_motifs'
+            db_prefix = f'{db_prefix}.min_{args.min_nbr_motifs:d}_to_max_motifs'
 
     # Get absolute path to Cluster-Buster binary and see if it can be executed.
     cluster_buster_path = shutil.which(args.cluster_buster_path)
