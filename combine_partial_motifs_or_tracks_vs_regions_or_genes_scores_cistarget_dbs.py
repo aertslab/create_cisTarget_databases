@@ -26,7 +26,7 @@ from cistarget_db import DatabaseTypes, CisTargetDatabase
 
 
 partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_pattern = re.compile(
-    r'''^(?P<db_prefix_minimal>.*?)(\.(?P<species>(?!part[^.]+[0-9]+)[^.]+))?\.part_(?P<current_part>[0-9]+)_of_(?P<nbr_total_parts>[0-9]+)\.(?P<db_type>(?P<motifs_or_tracks_type>motifs|tracks)_vs_(?P<regions_or_genes_type>regions|genes)\.scores\.feather)$'''
+    r'''^(?P<db_prefix_minimal>.*?)(\.(?P<species>(?!part[^.]+[0-9]+)[^.]+))?\.part_(?P<current_part>[0-9]+)_of_(?P<nbr_total_parts>[0-9]+)(\.(?P<min_max_motifs>min_[0-9]+_to_max_([0-9]+_)?motifs))?\.(?P<db_type>(?P<motifs_or_tracks_type>motifs|tracks)_vs_(?P<regions_or_genes_type>regions|genes)\.scores\.feather)$'''
 )
 
 
@@ -155,7 +155,7 @@ def main():
 
     args = parser.parse_args()
 
-    # Construct glob string to find '*.part*_*_of_*.*_vs_*.scores.feather' cisTarget databases.
+    # Construct glob string to find "*.part*_*_of_*.*_vs_*.scores.feather" cisTarget databases.
     partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_glob_str = (
         os.path.join(args.input, '*.part*_*_of_*.*_vs_*.scores.feather')
         if os.path.isdir(args.input)
@@ -168,10 +168,26 @@ def main():
         glob.glob(partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_glob_str)
     )
 
+    # Construct glob string to find "*.part*_*_of_*.min_*_to_max_*motifs.*_vs_*.scores.feather" cisTarget databases.
+    partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_with_min_max_motifs_glob_str = (
+        os.path.join(args.input, '*.part*_*_of_*.min_*_to_max_*motifs.*_vs_*.scores.feather')
+        if os.path.isdir(args.input)
+        else args.input + '*.part*_*_of_*.min_*_to_max_*motifs.*_vs_*.scores.feather'
+    )
+
+    # Get all "*.part*_*_of_*.min_*_to_max_*motifs.*_vs_*.scores.feather" cisTarget databases in the input directory or
+    # the ones that start with the requested prefix and sort them.
+    partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_vs_filenames.extend(
+        sorted(
+            glob.glob(partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_with_min_max_motifs_glob_str)
+        )
+    )
+
     if len(partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_vs_filenames) == 0:
         print(
             f'Error: No partial cisTarget motifs or tracks or regions or genes scores databases found '
-            f'matching glob: "{partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_glob_str}".',
+            f'matching glob: "{partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_glob_str}" '
+            f'or "{partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_with_min_max_motifs_glob_str}".',
             file=sys.stderr
         )
         sys.exit(1)
@@ -193,29 +209,32 @@ def main():
             species = match.group('species') if match.group('species') else 'no_species'
             current_part = int(match.group('current_part'))
             nbr_total_parts = int(match.group('nbr_total_parts'))
+            min_max_motifs = match.group('min_max_motifs') if match.group('min_max_motifs') else 'no_min_max_motifs'
 
             # Group databases in a hierarchical structure:
             #   - db_prefix_minimal
             #   - db_type
             #   - species
-            #   - current part number, total number of parts
+            #   - min and max number of motifs per Cluster-Buster file, current part number, total number of parts
             ct_dbs_hierarchical_dict.setdefault(db_prefix_minimal, dict())
             ct_dbs_hierarchical_dict[db_prefix_minimal].setdefault(db_type, dict())
             ct_dbs_hierarchical_dict[db_prefix_minimal][db_type].setdefault(species, dict())
-            ct_dbs_hierarchical_dict[db_prefix_minimal][db_type][species].setdefault(
-                (current_part, nbr_total_parts), dict()
-            )
-            ct_dbs_hierarchical_dict[db_prefix_minimal][db_type][species][(current_part, nbr_total_parts)] = \
-                partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_filename
+
+            ct_dbs_hierarchical_dict[db_prefix_minimal][db_type][species][
+                (min_max_motifs, current_part, nbr_total_parts)
+            ] = partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_filename
 
     for db_prefix_minimal in ct_dbs_hierarchical_dict:
         for db_type in ct_dbs_hierarchical_dict[db_prefix_minimal]:
             for species in ct_dbs_hierarchical_dict[db_prefix_minimal][db_type]:
                 # Get all partial cisTarget motifs or tracks vs regions or genes scores database filenames for the
-                # current species and sort them by current part and nbr of total parts number.
+                # current species and sort them by min and max number of motifs per Cluster-Buster file, current part
+                # and nbr of total parts number.
                 partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_vs_one_species_filenames = [
-                    ct_dbs_hierarchical_dict[db_prefix_minimal][db_type][species][(current_part, nbr_total_parts)]
-                    for current_part, nbr_total_parts in sorted(
+                    ct_dbs_hierarchical_dict[db_prefix_minimal][db_type][species][
+                        (min_max_motifs, current_part, nbr_total_parts)
+                    ]
+                    for min_max_motifs, current_part, nbr_total_parts in sorted(
                         ct_dbs_hierarchical_dict[db_prefix_minimal][db_type][species]
                     )
                 ]
