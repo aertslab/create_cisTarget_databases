@@ -32,22 +32,57 @@ conda create -n create_cistarget_databases \
 
 ### Install Cluster-Buster
 
-Install [Cluster-Buster](https://github.com/weng-lab/cluster-buster/) for scoring regulatory regions with motifs.
+Install [Cluster-Buster](https://github.com/ghuls/cluster-buster/) for scoring regulatory regions with motifs.
+
+#### Install precompiled binary
+
+```bash
+# Activate conda environment.
+conda activate create_cistarget_databases
+
+cd "${CONDA_PREFIX}/bin"
+
+# Download precompiled Cluster-Buster binary.
+wget https://resources.aertslab.org/cistarget/programs/cbust
+
+# Make downloaded binary executable.
+chmod a+x cbust
+```
+
+#### Compile from source
 
 ```bash
 # Clone Cluster-Buster repo.
-git clone https://github.com/weng-lab/cluster-buster/
+#git clone https://github.com/weng-lab/cluster-buster/
+git clone -b change_f4_output https://github.com/ghuls/cluster-buster/
 
 cd cluster-buster
 
 # Compile Cluster-Buster.
 make cbust
 
+# Compile Cluster-Buster with AMD Math Library (LibM).
+#
+# This can be much faster (like twice as fast) than using the
+# glibc math library on older distributions.
+#
+#   https://developer.amd.com/amd-aocl/amd-math-library-libm/
+#
+#     mkdir ../aocl-libm
+#     cd ../aocl-libm
+#
+#     AMD_LIB_VERSION=3.1.0
+#
+#     tar xzf aocl-libm-linux-aocc-${AMD_LIB_VERSION}.tar.gz
+#     mv amd-libm amd-libm-aocc
+make cbust_amd_libm_aocc
+
 # Activate conda environment.
 conda activate create_cistarget_databases
 
-# Copy CLuster-Buster binary in conda environment.
+# Copy CLuster-Buster binary of your choice in conda environment.
 cp -a cbust "${CONDA_PREFIX}/bin/cbust"
+cp -a cbust_amd_libm_aocc "${CONDA_PREFIX}/bin/cbust"
 ```
 
 
@@ -148,11 +183,12 @@ usage: create_cistarget_motif_databases.py [-h] -f FASTA_FILENAME [-F ORIGINAL_S
                                            [-c CLUSTER_BUSTER_PATH] [-t NBR_THREADS]
                                            [-p CURRENT_PART NBR_TOTAL_PARTS]
                                            [-g EXTRACT_GENE_ID_FROM_REGION_ID_REGEX_REPLACE]
-                                           [-b BG_PADDING] [-l] [-s SEED] [-r SSH_COMMAND]
+                                           [-b BG_PADDING] [--min MIN_NBR_MOTIFS] [--max MAX_NBR_MOTIFS]
+                                           [-l] [-s SEED] [-r SSH_COMMAND]
 
 Create cisTarget motif databases.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -f FASTA_FILENAME, --fasta FASTA_FILENAME
                         FASTA filename which contains the regions/genes to score with Cluster-Buster for
@@ -196,6 +232,10 @@ optional arguments:
   -b BG_PADDING, --bgpadding BG_PADDING
                         Background padding in bp that was added for each sequence in FASTA file.
                         Default: 0.
+  --min MIN_NBR_MOTIFS  Minimum number of motifs needed per Cluster-Buster motif file to be considered
+                        for scoring (filters motifs list). Default: 1.
+  --max MAX_NBR_MOTIFS  Maximum number of motifs needed per Cluster-Buster motif file to be considered
+                        for scoring (filters motifs list). Default: None.
   -l, --mask            Consider masked (lowercase) nucleotides as Ns.
   -s SEED, --seed SEED  Random seed used for breaking ties when creating rankings for a range of tied
                         scores. When setting this seed to a specific value and running this script with
