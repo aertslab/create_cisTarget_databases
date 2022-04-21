@@ -14,7 +14,7 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
         motifs_list_filename: str,
         partial: Optional[Tuple[int, int]] = None,
         min_nbr_motifs: Optional[int] = 1,
-        max_nbr_motifs: Optional[int]= None,
+        max_nbr_motifs: Optional[int] = None,
         motif_md5_to_motif_id_filename: Optional[str] = None,
 ) -> (Dict[str, str], Dict[str, int]):
     """
@@ -266,7 +266,7 @@ def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, 
         filepath_or_buffer=io.BytesIO(stdout_data),
         sep='\t',
         header=0,
-        names=['seq_name', 'crm_score', 'seq_number', 'rank'],
+        names=['seq_name', 'crm_score'],
         index_col='seq_name',
         usecols=['seq_name', 'crm_score'],
         dtype={'seq_name': str, 'crm_score': np.float32},
