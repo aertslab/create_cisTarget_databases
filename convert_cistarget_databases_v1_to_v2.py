@@ -30,7 +30,7 @@ def convert_feather_v1_to_v2_vice_versa(
     :param output_ct_db_filename: output cisTarget database filename.
     :param compression: Compression method: "zstd" (default), "lz4" or "uncompressed".
     :param compression_level: Compression level for "zstd" or "lz4".
-    :param to_version: Output Feather file version: 1 (legacy) or 2 (default).
+    :param to_version: Output Feather file format version: 1 (legacy) or 2 (default).
     :return:
     """
 
@@ -147,11 +147,10 @@ def main():
         "--level",
         dest="compression_level",
         action="store",
-        type=str,
-        choices=["zstd", "lz4", "uncompressed"],
+        type=int,
         required=False,
-        default="zstd",
-        help='Compression method for output cisTarget Feather database: "zstd" (default), "lz4" or "uncompressed".'
+        default=6,
+        help="Compression level for zstd or lz4 (default: 6)."
     )
 
     parser.add_argument(
@@ -161,8 +160,8 @@ def main():
         action="store",
         type=int,
         required=False,
-        default=6,
-        help="Compression level for zstd or lz4. Default: 6."
+        default=2,
+        help="Output Feather file format version: 1 (legacy) or 2 (default)."
     )
 
     args = parser.parse_args()
