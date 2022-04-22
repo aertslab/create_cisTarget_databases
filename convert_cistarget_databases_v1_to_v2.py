@@ -34,8 +34,8 @@ def convert_feather_v1_to_v2_vice_versa(
     :return:
     """
 
-    if to_version != 2 or to_version != 1:
-        raise ValueError("Feather file version only supports 1 or 2 (default).")
+    if to_version != 2 and to_version != 1:
+        raise ValueError("Feather file version only supports 1 (legacy) or 2 (default).")
 
     if to_version == 1:
         # Compression is not supported in Feather v1 format.
@@ -76,9 +76,9 @@ def convert_feather_v1_to_v2_vice_versa(
         pass
 
     # Get database index column ("motifs", "tracks", "regions" or "genes" depending of the database type).
-    for column_name in all_column_names:
+    for column_idx, column_name in enumerate(all_column_names):
         if column_name in {"motifs", "tracks", "regions", "genes"}:
-            index_column = df_pa_table.column(features_idx)
+            index_column = df_pa_table.column(column_idx)
             break
 
     # Sort column names (non-index columns) and add index column as last column.
