@@ -403,6 +403,8 @@ def main():
     def report_error(exception: BaseException) -> None:
         print(exception, file=sys.stderr)
 
+    start_time = time.monotonic()
+
     with mp.Pool(processes=args.nbr_threads) as pool:
         # Motif IDs are sorted by number of motifs in motif ID Cluster-Buster file (high to low) and then by motif ID
         # name (in get_motif_id_to_filename_and_nbr_motifs_dict()), so motif IDs which have a lot of motifs in their
@@ -434,6 +436,12 @@ def main():
 
         # Wait for worker processes to exit.
         pool.join()
+
+    elapsed_time = time.monotonic() - start_time
+
+    print(
+        f'\nScoring {nbr_motifs} motifs with Cluster-Buster took: {elapsed_time:.06f} seconds\n'
+    )
 
     if 'nbr_of_scored_motifs' not in write_crm_scores_for_motif_to_ct_scores_db.__dict__:
         print(
