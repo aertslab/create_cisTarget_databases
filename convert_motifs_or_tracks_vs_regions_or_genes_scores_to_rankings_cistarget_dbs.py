@@ -4,7 +4,7 @@
 """
 Purpose :      Convert cisTarget motifs or track vs regions or genes scores database to cisTarget rankings database.
 
-Copyright (C): 2020-2021 - Gert Hulselmans
+Copyright (C): 2020-2022 - Gert Hulselmans
 """
 
 
@@ -134,8 +134,11 @@ def main():
     # Reclaim memory occupied by motifs or tracks vs regions or genes cisTarget scores database.
     del ct_scores_db_motifs_or_tracks_vs_regions_or_genes
 
-    # Write cisTarget rankings database (motifs or tracks vs regions or genes) to Feather file.
-    write_db(ct_db=ct_rankings_db_motifs_or_tracks_vs_regions_or_genes, db_prefix=db_prefix)
+    # Do not write cisTarget rankings database (motifs or tracks vs regions or genes) to
+    # Feather file as it can take a very long time to write it (1.5 hours for 1 milion
+    # regions) as the rankings database numpy array is in "C" order and writing a Feather
+    # database requires travering the numpy array in column order.
+    #write_db(ct_db=ct_rankings_db_motifs_or_tracks_vs_regions_or_genes, db_prefix=db_prefix)
 
     # Create cisTarget rankings database (regions or genes vs motifs or tracks) from (motifs or tracks vs regions or
     # genes) version.

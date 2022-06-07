@@ -522,8 +522,11 @@ def main():
         del ct_scores_db_motifs_vs_regions_or_genes
         del ct_scores_db_regions_or_genes_vs_motifs
 
-        # Write cisTarget rankings database (motifs vs regions or genes) to Feather file.
-        write_db(ct_db=ct_rankings_db_motifs_vs_regions_or_genes, db_prefix=db_prefix)
+        # Do not write cisTarget rankings database (motifs vs regions or genes) to Feather file
+        # as it can take a very long time to write it (1.5 hours for 1 milion regions) as the
+        # rankings database numpy array is in "C" order and writing a Feather database requires
+        # travering the numpy array in column order.
+        #write_db(ct_db=ct_rankings_db_motifs_vs_regions_or_genes, db_prefix=db_prefix)
 
         # Create cisTarget rankings database (regions or genes vs motifs) from (motifs vs regions or genes) version.
         ct_rankings_db_regions_or_genes_vs_motifs = ct_rankings_db_motifs_vs_regions_or_genes.transpose()
