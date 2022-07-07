@@ -1140,7 +1140,7 @@ class CisTargetDatabase:
 
         return self.df.shape[1]
 
-    def write_db(self, db_prefix: Optional[str] = None, db_filename: Optional[str] = None, version: int = 2) -> str:
+    def write_db(self, db_prefix: Optional[str] = None, db_filename: Optional[str] = None, version: int = 2, compression: Optional[str] = "zstd", compression_level: int = 6) -> str:
         """
         Write cisTarget database to Feather file.
         If db_prefix is used, the database type will be encoded in the Feather database filename.
@@ -1149,6 +1149,8 @@ class CisTargetDatabase:
         :param db_prefix: Database prefix path.
         :param db_filename: Full database filename.
         :param version: Feather file version. Version 2 is the current. Version 1 is the more limited legacy format.
+        :param compression: Compression method: "zstd" (default), "lz4" or "uncompressed".
+        :param compression_level: Compression level for "zstd" or "lz4".
         :return: db_filename: cisTarget database filename (constructed from db_prefix).
         """
 
@@ -1159,7 +1161,20 @@ class CisTargetDatabase:
 
         assert isinstance(db_filename, str)
 
-        assert isinstance(version, int) and version in (1, 2), 'Feather file version should be 1 or 2.'
+        if not isinstance(version, int) or version not in (1, 2):
+            raise ValueError(
+                "Feather file version only supports 1 (legacy) or 2 (default)."
+            )
+
+        if version == 1:
+            # Compression is not supported in Feather v1 format.
+            compression = "uncompressed"
+            compression_level = None
+
+        if compression not in {"zstd", "lz4", "uncompressed"}:
+            raise ValueError(
+                f'Unsupported compression value "{compression}". Choose "zstd" (default), "lz4" or "uncompressed".'
+            )
 
         # Temporarily add the index column with the name of the row kind to the dataframe,
         # so row names of the dataframe are written to the Feather file.
@@ -1168,7 +1183,7 @@ class CisTargetDatabase:
         if version == 2:
             # Create Arrow table from dataframe, but remove pandas metadata from schema,
             # so dataframes with a lot of columns can be written to a feather v2 file.
-            table = pa.Table.from_pandas(
+            df_pa_table = pa.Table.from_pandas(
                 df=self.df,
                 schema=None,
                 preserve_index=False,
@@ -1177,8 +1192,15 @@ class CisTargetDatabase:
                 safe=True
             ).replace_schema_metadata()
 
-            # Write cisTarget database in Feather v2 format with lz4 compression.
-            pf.write_feather(df=table, dest=db_filename, compression='lz4', version=2)
+            # Write cisTarget database in Feather v2 format.
+            pf.write_feather(
+                df=df_pa_table,
+                dest=db_filename,
+                compression=compression,
+                compression_level=compression_level,
+                version=version,
+            )
+
         elif version == 1:
             # Write cisTarget database in Feather v1 (legacy) format.
             pf.write_feather(df=self.df, dest=db_filename, version=1)

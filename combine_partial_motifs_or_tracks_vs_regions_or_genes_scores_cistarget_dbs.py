@@ -80,7 +80,7 @@ def combine_partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_cistarget_
     
     ct_scores_db_motifs_or_tracks_vs_regions_or_genes.write_db(
         db_prefix=output_db_prefix,
-        version=1
+        version=2,
     )
 
     elapsed_writing_motifs_or_tracks_vs_regions_or_genes_scores_db_time = (
@@ -110,7 +110,7 @@ def combine_partial_ct_scores_db_motifs_or_tracks_vs_regions_or_genes_cistarget_
 
     ct_scores_db_motifs_or_tracks_vs_regions_or_genes.transpose(order='F').write_db(
         db_prefix=output_db_prefix,
-        version=1
+        version=2,
     )
 
     elapsed_writing_motifs_or_tracks_vs_regions_or_genes_scores_db_time = (

@@ -70,7 +70,7 @@ def create_cross_species_motifs_rankings_db(cross_species_db_prefix: str,
 
     ct_cross_species_rankings_db_motifs_vs_regions_or_genes.write_db(
         db_prefix=cross_species_db_prefix,
-        version=1
+        version=2,
     )
 
     elapsed_writing_ct_cross_species_rankings_db_motifs_vs_regions_or_genes_time = (
@@ -102,7 +102,7 @@ def create_cross_species_motifs_rankings_db(cross_species_db_prefix: str,
 
     ct_cross_species_rankings_db_motifs_vs_regions_or_genes.transpose().write_db(
         db_prefix=cross_species_db_prefix,
-        version=1
+        version=2,
     )
 
     elapsed_writing_ct_cross_species_rankings_db_regions_or_genes_vs_motifs_time = (
