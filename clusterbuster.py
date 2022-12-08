@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import io
 import os
 import subprocess
@@ -101,7 +99,7 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
                     motif_filename = os.path.join(motifs_dir, motif_id + '.cb')
 
                 if not os.path.exists(motif_filename):
-                    raise IOError(
+                    raise OSError(
                         f'Error: Cluster-Buster motif filename "{motif_filename}" does not exist for motif {motif_id}.'
                     )
                 else:

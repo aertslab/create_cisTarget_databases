@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Purpose :      Convert cisTarget Feather database from Feather v1 to v2 format (with or without compression) and vice

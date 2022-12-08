@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Purpose :      Combine partial motif or track vs regions or genes cisTarget scores databases to a complete

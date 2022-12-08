@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Purpose :      Create cisTarget cross-species motif rankings databases.

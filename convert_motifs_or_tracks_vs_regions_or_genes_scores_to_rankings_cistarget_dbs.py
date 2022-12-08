@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Purpose :      Convert cisTarget motifs or track vs regions or genes scores database to cisTarget rankings database.
