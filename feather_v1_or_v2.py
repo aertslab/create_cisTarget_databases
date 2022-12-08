@@ -1,7 +1,7 @@
+from typing import List, Optional
+
 import numpy as np
 import pyarrow.dataset as ds
-
-from typing import List, Optional
 
 # To get column names from a Feather v1 file without needing to load the whole Feather file first,
 # get FlatBuffer Feather v1 schema and compile it, so we can read all column names without loading all data.

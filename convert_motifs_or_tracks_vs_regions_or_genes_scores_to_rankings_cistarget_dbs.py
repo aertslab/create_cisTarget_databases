@@ -12,7 +12,7 @@ import random
 import sys
 import time
 
-from cistarget_db import DatabaseTypes, CisTargetDatabase
+from cistarget_db import CisTargetDatabase, DatabaseTypes
 
 
 def main():

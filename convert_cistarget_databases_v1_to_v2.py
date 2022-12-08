@@ -8,7 +8,6 @@ Copyright (C): 2022 - Gert Hulselmans
 """
 
 import argparse
-
 from typing import Optional
 
 import pyarrow.compute as pc

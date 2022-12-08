@@ -1,7 +1,7 @@
 import io
 import os
 import subprocess
-from typing import Optional, Dict, Union, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd

@@ -13,11 +13,9 @@ import os
 import re
 import sys
 import time
-
 from typing import List
 
-from cistarget_db import DatabaseTypes, CisTargetDatabase
-
+from cistarget_db import CisTargetDatabase, DatabaseTypes
 
 ct_rankings_db_motifs_vs_regions_or_genes_species_pattern = re.compile(
     r'''^(?P<db_prefix_minimal>.*?)(\.(?P<species>(?!(part[^.]+[0-9]+)|cross_?species)[^.]+))\.(?P<db_type>(?P<motifs_or_tracks_type>motifs)_vs_(?P<regions_or_genes_type>regions|genes)\.rankings\.feather)$'''

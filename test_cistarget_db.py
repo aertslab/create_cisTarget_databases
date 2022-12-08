@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cistarget_db import RegionsOrGenesType, MotifsOrTracksType, RegionOrGeneIDs, MotifOrTrackIDs, DatabaseTypes, \
-    CisTargetDatabase
+from cistarget_db import (CisTargetDatabase, DatabaseTypes, MotifOrTrackIDs,
+                          MotifsOrTracksType, RegionOrGeneIDs,
+                          RegionsOrGenesType)
 
 
 def test_RegionsOrGenesType_from_str():

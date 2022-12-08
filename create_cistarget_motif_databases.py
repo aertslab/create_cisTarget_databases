@@ -14,13 +14,14 @@ import random
 import shutil
 import sys
 import time
-
 from typing import Tuple
 
 import pandas as pd
 
-from cistarget_db import MotifsOrTracksType, RegionOrGeneIDs, MotifOrTrackIDs, DatabaseTypes, CisTargetDatabase
-from clusterbuster import get_motif_id_to_filename_and_nbr_motifs_dict, run_cluster_buster_for_motif
+from cistarget_db import (CisTargetDatabase, DatabaseTypes, MotifOrTrackIDs,
+                          MotifsOrTracksType, RegionOrGeneIDs)
+from clusterbuster import (get_motif_id_to_filename_and_nbr_motifs_dict,
+                           run_cluster_buster_for_motif)
 
 
 def main():

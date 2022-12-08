@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from orderstatistics import _calculate_cross_species_rank_ratio_with_order_statistics, create_cross_species_ranking_for_motif
+from orderstatistics import (
+    _calculate_cross_species_rank_ratio_with_order_statistics,
+    create_cross_species_ranking_for_motif)
 
 
 @pytest.fixture

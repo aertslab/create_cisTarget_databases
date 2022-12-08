@@ -20,11 +20,9 @@ import os
 import re
 import sys
 import time
-
 from typing import List
 
-from cistarget_db import DatabaseTypes, CisTargetDatabase
-
+from cistarget_db import CisTargetDatabase, DatabaseTypes
 
 partial_ct_scores_db_regions_or_genes_vs_motifs_or_tracks_pattern = re.compile(
     r'''^(?P<db_prefix_minimal>.*?)(\.(?P<species>(?!part[^.]+[0-9]+)[^.]+))?\.part_(?P<current_part>[0-9]+)_of_(?P<nbr_total_parts>[0-9]+)\.(?P<db_type>(?P<regions_or_genes_type>regions|genes)_vs_(?P<motifs_or_tracks_type>motifs|tracks)\.scores\.feather)$'''
