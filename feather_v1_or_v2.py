@@ -16,7 +16,7 @@ import pyarrow.dataset as ds
 #         flatc --python feather_v1.fbs
 #
 # This will not be needed anymore if:
-#   https://issues.apache.org/jira/projects/ARROW/issues/ARROW-10344
+#   https://issues.apache.org/jira/browse/ARROW-10344
 # gets resolved.
 import feather_v1_fbs.CTable as feather_v1_fbs
 
