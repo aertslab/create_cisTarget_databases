@@ -15,11 +15,11 @@ from feather_v1_or_v2 import get_all_column_names_from_feather
 class RegionsOrGenesType(Enum):
     """Enum describing all possible regions or genes types."""
 
-    REGIONS = 'regions'
-    GENES = 'genes'
+    REGIONS = "regions"
+    GENES = "genes"
 
     @classmethod
-    def from_str(cls, regions_or_genes_type: str) -> 'RegionsOrGenesType':
+    def from_str(cls, regions_or_genes_type: str) -> "RegionsOrGenesType":
         """
         Create RegionsOrGenesType Enum member from string.
 
@@ -32,18 +32,20 @@ class RegionsOrGenesType(Enum):
         if regions_or_genes_type_instance:
             return regions_or_genes_type_instance
         else:
-            raise ValueError(f'Unsupported RegionsOrGenesType "{regions_or_genes_type}".')
+            raise ValueError(
+                f'Unsupported RegionsOrGenesType "{regions_or_genes_type}".'
+            )
 
 
 @unique
 class MotifsOrTracksType(Enum):
     """Enum describing all possible motif or track types."""
 
-    MOTIFS = 'motifs'
-    TRACKS = 'tracks'
+    MOTIFS = "motifs"
+    TRACKS = "tracks"
 
     @classmethod
-    def from_str(cls, motifs_or_tracks_type: str) -> 'MotifsOrTracksType':
+    def from_str(cls, motifs_or_tracks_type: str) -> "MotifsOrTracksType":
         """
         Create MotifsOrTracksType Enum member from string.
 
@@ -56,7 +58,9 @@ class MotifsOrTracksType(Enum):
         if motifs_or_tracks_type_instance:
             return motifs_or_tracks_type_instance
         else:
-            raise ValueError(f'Unsupported MotifsOrTracksType "{motifs_or_tracks_type}".')
+            raise ValueError(
+                f'Unsupported MotifsOrTracksType "{motifs_or_tracks_type}".'
+            )
 
 
 class RegionOrGeneIDs:
@@ -66,9 +70,10 @@ class RegionOrGeneIDs:
     """
 
     @staticmethod
-    def get_region_or_gene_ids_from_bed(bed_filename: str,
-                                        extract_gene_id_from_region_id_regex_replace: Optional[str] = None
-                                        ) -> 'RegionOrGeneIDs':
+    def get_region_or_gene_ids_from_bed(
+        bed_filename: str,
+        extract_gene_id_from_region_id_regex_replace: Optional[str] = None,
+    ) -> "RegionOrGeneIDs":
         """
         Get all region or gene IDs (from column 4) from BED filename:
           - When extract_gene_id_from_region_id_regex_replace=None, region IDs are returned and each region ID is only
@@ -86,10 +91,10 @@ class RegionOrGeneIDs:
         gene_ids = set()
         region_ids = set()
 
-        with open(bed_filename, 'r') as fh:
+        with open(bed_filename, "r") as fh:
             for line in fh:
-                if line and not line.startswith('#'):
-                    columns = line.strip().split('\t')
+                if line and not line.startswith("#"):
+                    columns = line.strip().split("\t")
 
                     if len(columns) < 4:
                         raise ValueError(
@@ -102,9 +107,7 @@ class RegionOrGeneIDs:
                     if extract_gene_id_from_region_id_regex_replace:
                         # Extract gene ID from region ID.
                         gene_id = re.sub(
-                            extract_gene_id_from_region_id_regex_replace,
-                            '',
-                            region_id
+                            extract_gene_id_from_region_id_regex_replace, "", region_id
                         )
 
                         gene_ids.add(gene_id)
@@ -118,14 +121,21 @@ class RegionOrGeneIDs:
                         region_ids.add(region_id)
 
         if extract_gene_id_from_region_id_regex_replace:
-            return RegionOrGeneIDs(region_or_gene_ids=gene_ids, regions_or_genes_type=RegionsOrGenesType.GENES)
+            return RegionOrGeneIDs(
+                region_or_gene_ids=gene_ids,
+                regions_or_genes_type=RegionsOrGenesType.GENES,
+            )
         else:
-            return RegionOrGeneIDs(region_or_gene_ids=region_ids, regions_or_genes_type=RegionsOrGenesType.REGIONS)
+            return RegionOrGeneIDs(
+                region_or_gene_ids=region_ids,
+                regions_or_genes_type=RegionsOrGenesType.REGIONS,
+            )
 
     @staticmethod
-    def get_region_or_gene_ids_from_fasta(fasta_filename: str,
-                                          extract_gene_id_from_region_id_regex_replace: Optional[str] = None
-                                          ) -> 'RegionOrGeneIDs':
+    def get_region_or_gene_ids_from_fasta(
+        fasta_filename: str,
+        extract_gene_id_from_region_id_regex_replace: Optional[str] = None,
+    ) -> "RegionOrGeneIDs":
         """
         Get all region or gene IDs from FASTA filename:
           - When extract_gene_id_from_region_id_regex_replace=None, region IDs are returned and each region ID is only
@@ -143,18 +153,16 @@ class RegionOrGeneIDs:
         gene_ids = set()
         region_ids = set()
 
-        with open(fasta_filename, 'r') as fh:
+        with open(fasta_filename, "r") as fh:
             for line in fh:
-                if line.startswith('>'):
+                if line.startswith(">"):
                     # Get region ID by getting everything after '>' up till the first whitespace.
                     region_id = line[1:].split(maxsplit=1)[0]
 
                     if extract_gene_id_from_region_id_regex_replace:
                         # Extract gene ID from region ID.
                         gene_id = re.sub(
-                            extract_gene_id_from_region_id_regex_replace,
-                            '',
-                            region_id
+                            extract_gene_id_from_region_id_regex_replace, "", region_id
                         )
 
                         gene_ids.add(gene_id)
@@ -168,13 +176,21 @@ class RegionOrGeneIDs:
                         region_ids.add(region_id)
 
         if extract_gene_id_from_region_id_regex_replace:
-            return RegionOrGeneIDs(region_or_gene_ids=gene_ids, regions_or_genes_type=RegionsOrGenesType.GENES)
+            return RegionOrGeneIDs(
+                region_or_gene_ids=gene_ids,
+                regions_or_genes_type=RegionsOrGenesType.GENES,
+            )
         else:
-            return RegionOrGeneIDs(region_or_gene_ids=region_ids, regions_or_genes_type=RegionsOrGenesType.REGIONS)
+            return RegionOrGeneIDs(
+                region_or_gene_ids=region_ids,
+                regions_or_genes_type=RegionsOrGenesType.REGIONS,
+            )
 
-    def __init__(self,
-                 region_or_gene_ids: Union[List[str], Set[str], Tuple[str, ...]],
-                 regions_or_genes_type: Union[RegionsOrGenesType, str]):
+    def __init__(
+        self,
+        region_or_gene_ids: Union[List[str], Set[str], Tuple[str, ...]],
+        regions_or_genes_type: Union[RegionsOrGenesType, str],
+    ):
         """
         Create unique sorted tuple of region or gene IDs from a list, set or tuple of region or gene IDs,
         annotated with RegionsOrGenesType Enum.
@@ -190,7 +206,7 @@ class RegionOrGeneIDs:
         self.type = regions_or_genes_type
 
     def __repr__(self) -> str:
-        return f'RegionOrGeneIDs(\n  region_or_gene_ids={self.ids},\n  regions_or_genes_type={self.type}\n)'
+        return f"RegionOrGeneIDs(\n  region_or_gene_ids={self.ids},\n  regions_or_genes_type={self.type}\n)"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RegionOrGeneIDs):
@@ -201,7 +217,7 @@ class RegionOrGeneIDs:
     def __len__(self) -> int:
         return len(self.ids)
 
-    def issubset(self, other: 'RegionOrGeneIDs') -> bool:
+    def issubset(self, other: "RegionOrGeneIDs") -> bool:
         """
         Check if all region or gene IDs in the current RegionOrGeneIDs object are at least present in the other
         RegionOrGeneIDs object.
@@ -212,11 +228,13 @@ class RegionOrGeneIDs:
         if not isinstance(other, RegionOrGeneIDs):
             return NotImplemented
 
-        assert self.type == other.type, 'RegionOrGeneIDs objects are of a different type.'
+        assert (
+            self.type == other.type
+        ), "RegionOrGeneIDs objects are of a different type."
 
         return set(self.ids).issubset(other.ids)
 
-    def issuperset(self, other: 'RegionOrGeneIDs') -> bool:
+    def issuperset(self, other: "RegionOrGeneIDs") -> bool:
         """
         Check if all region or gene IDs in the other RegionOrGeneIDs object are at least present in the current
         RegionOrGeneIDs object.
@@ -227,7 +245,9 @@ class RegionOrGeneIDs:
         if not isinstance(other, RegionOrGeneIDs):
             return NotImplemented
 
-        assert self.type == other.type, 'RegionOrGeneIDs objects are of a different type.'
+        assert (
+            self.type == other.type
+        ), "RegionOrGeneIDs objects are of a different type."
 
         return set(self.ids).issuperset(set(other.ids))
 
@@ -238,9 +258,11 @@ class MotifOrTrackIDs:
     dataframe index for a cisTarget database.
     """
 
-    def __init__(self,
-                 motif_or_track_ids: Union[List[str], Set[str], Tuple[str, ...]],
-                 motifs_or_tracks_type: Union[MotifsOrTracksType, str]):
+    def __init__(
+        self,
+        motif_or_track_ids: Union[List[str], Set[str], Tuple[str, ...]],
+        motifs_or_tracks_type: Union[MotifsOrTracksType, str],
+    ):
         """
         Create unique sorted tuple of motif IDs or track IDs from a list, set or tuple of motif IDs or track IDs,
         annotated with MotifsOrTracksType Enum.
@@ -256,7 +278,7 @@ class MotifOrTrackIDs:
         self.type = motifs_or_tracks_type
 
     def __repr__(self) -> str:
-        return f'MotifOrTrackIDs(\n  motif_or_track_ids={self.ids},\n  motifs_or_tracks_type={self.type}\n)'
+        return f"MotifOrTrackIDs(\n  motif_or_track_ids={self.ids},\n  motifs_or_tracks_type={self.type}\n)"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, MotifOrTrackIDs):
@@ -282,28 +304,28 @@ class DatabaseTypes(Enum):
         # Describe type of data in the row index of the cisTarget database.
         self._row_kind = row_kind
 
-    SCORES_DB_MOTIFS_VS_REGIONS = ('scores', 'motifs', 'regions')
-    SCORES_DB_MOTIFS_VS_GENES = ('scores', 'motifs', 'genes')
-    SCORES_DB_TRACKS_VS_REGIONS = ('scores', 'tracks', 'regions')
-    SCORES_DB_TRACKS_VS_GENES = ('scores', 'tracks', 'genes')
+    SCORES_DB_MOTIFS_VS_REGIONS = ("scores", "motifs", "regions")
+    SCORES_DB_MOTIFS_VS_GENES = ("scores", "motifs", "genes")
+    SCORES_DB_TRACKS_VS_REGIONS = ("scores", "tracks", "regions")
+    SCORES_DB_TRACKS_VS_GENES = ("scores", "tracks", "genes")
 
-    SCORES_DB_REGIONS_VS_MOTIFS = ('scores', 'regions', 'motifs')
-    SCORES_DB_GENES_VS_MOTIFS = ('scores', 'genes', 'motifs')
-    SCORES_DB_REGIONS_VS_TRACKS = ('scores', 'regions', 'tracks')
-    SCORES_DB_GENES_VS_TRACKS = ('scores', 'genes', 'tracks')
+    SCORES_DB_REGIONS_VS_MOTIFS = ("scores", "regions", "motifs")
+    SCORES_DB_GENES_VS_MOTIFS = ("scores", "genes", "motifs")
+    SCORES_DB_REGIONS_VS_TRACKS = ("scores", "regions", "tracks")
+    SCORES_DB_GENES_VS_TRACKS = ("scores", "genes", "tracks")
 
-    RANKINGS_DB_MOTIFS_VS_REGIONS = ('rankings', 'motifs', 'regions')
-    RANKINGS_DB_MOTIFS_VS_GENES = ('rankings', 'motifs', 'genes')
-    RANKINGS_DB_TRACKS_VS_REGIONS = ('rankings', 'tracks', 'regions')
-    RANKINGS_DB_TRACKS_VS_GENES = ('rankings', 'tracks', 'genes')
+    RANKINGS_DB_MOTIFS_VS_REGIONS = ("rankings", "motifs", "regions")
+    RANKINGS_DB_MOTIFS_VS_GENES = ("rankings", "motifs", "genes")
+    RANKINGS_DB_TRACKS_VS_REGIONS = ("rankings", "tracks", "regions")
+    RANKINGS_DB_TRACKS_VS_GENES = ("rankings", "tracks", "genes")
 
-    RANKINGS_DB_REGIONS_VS_MOTIFS = ('rankings', 'regions', 'motifs')
-    RANKINGS_DB_GENES_VS_MOTIFS = ('rankings', 'genes', 'motifs')
-    RANKINGS_DB_REGIONS_VS_TRACKS = ('rankings', 'regions', 'tracks')
-    RANKINGS_DB_GENES_VS_TRACKS = ('rankings', 'genes', 'tracks')
+    RANKINGS_DB_REGIONS_VS_MOTIFS = ("rankings", "regions", "motifs")
+    RANKINGS_DB_GENES_VS_MOTIFS = ("rankings", "genes", "motifs")
+    RANKINGS_DB_REGIONS_VS_TRACKS = ("rankings", "regions", "tracks")
+    RANKINGS_DB_GENES_VS_TRACKS = ("rankings", "genes", "tracks")
 
     @classmethod
-    def from_str(cls, database_type: str) -> 'DatabaseTypes':
+    def from_str(cls, database_type: str) -> "DatabaseTypes":
         """
         Create DatabaseTypes Enum member from string.
 
@@ -312,7 +334,7 @@ class DatabaseTypes(Enum):
         """
 
         database_type = database_type.upper()
-        if database_type.startswith('DATABASETYPES.'):
+        if database_type.startswith("DATABASETYPES."):
             database_type = database_type[14:]
 
         database_type_instance = cls.__members__.get(database_type)
@@ -322,7 +344,9 @@ class DatabaseTypes(Enum):
             raise ValueError(f'Unsupported DatabaseTypes "{database_type}".')
 
     @classmethod
-    def from_strings(cls, scores_or_rankings: str, column_kind: str, row_kind: str) -> 'DatabaseTypes':
+    def from_strings(
+        cls, scores_or_rankings: str, column_kind: str, row_kind: str
+    ) -> "DatabaseTypes":
         """
         Create DatabaseTypes Enum member.
 
@@ -341,10 +365,14 @@ class DatabaseTypes(Enum):
             if database_type.value == database_type_tuple:
                 return database_type
 
-        raise ValueError(f'"{database_type_tuple}" could not be converted to a valid DatabaseTypes member.')
+        raise ValueError(
+            f'"{database_type_tuple}" could not be converted to a valid DatabaseTypes member.'
+        )
 
     @classmethod
-    def create_database_type_and_db_prefix_and_extension_from_db_filename(cls, db_filename: str) -> Tuple['DatabaseTypes', str, str]:
+    def create_database_type_and_db_prefix_and_extension_from_db_filename(
+        cls, db_filename: str
+    ) -> Tuple["DatabaseTypes", str, str]:
         """
         Create DatabaseTypes Enum member from cisTarget database filename.
 
@@ -354,15 +382,17 @@ class DatabaseTypes(Enum):
             DatabaseTypes Enum member and database prefix and extension.
         """
 
-        db_filename_dot_splitted = db_filename.split('.')
+        db_filename_dot_splitted = db_filename.split(".")
 
         if len(db_filename_dot_splitted) < 4:
-            raise ValueError(f'Database filename "{db_filename}" does not contain 3 dots.')
+            raise ValueError(
+                f'Database filename "{db_filename}" does not contain 3 dots.'
+            )
 
-        db_prefix = '.'.join(db_filename_dot_splitted[0:-3])
+        db_prefix = ".".join(db_filename_dot_splitted[0:-3])
         extension = db_filename_dot_splitted[-1]
         scores_or_rankings = db_filename_dot_splitted[-2]
-        column_kind_vs_row_kind = db_filename_dot_splitted[-3].split('_vs_')
+        column_kind_vs_row_kind = db_filename_dot_splitted[-3].split("_vs_")
 
         if len(column_kind_vs_row_kind) != 2:
             raise ValueError(
@@ -371,9 +401,13 @@ class DatabaseTypes(Enum):
 
         column_kind, row_kind = column_kind_vs_row_kind
 
-        return cls.from_strings(scores_or_rankings, column_kind, row_kind), db_prefix, extension
+        return (
+            cls.from_strings(scores_or_rankings, column_kind, row_kind),
+            db_prefix,
+            extension,
+        )
 
-    def create_db_filename(self, db_prefix: str, extension: str = 'feather') -> str:
+    def create_db_filename(self, db_prefix: str, extension: str = "feather") -> str:
         """
         Create cisTarget database filename based on a database prefix string and extension.
         Between the database prefix string and extension the database type will be encoded.
@@ -383,48 +417,50 @@ class DatabaseTypes(Enum):
         :return: Database filename.
         """
 
-        return f'{db_prefix}.{self._column_kind}_vs_{self._row_kind}.{self._scores_or_rankings}.{extension}'
+        return f"{db_prefix}.{self._column_kind}_vs_{self._row_kind}.{self._scores_or_rankings}.{extension}"
 
     @property
     def is_scores_db(self) -> bool:
         """Check if cisTarget database contains scores."""
-        return 'scores' == self._scores_or_rankings
+        return "scores" == self._scores_or_rankings
 
     @property
     def is_rankings_db(self) -> bool:
         """Check if cisTarget database contains rankings."""
-        return 'rankings' == self._scores_or_rankings
+        return "rankings" == self._scores_or_rankings
 
-    def _is_some_kind_of_db_by_checking_column_and_row_kind(self, some_kind: str) -> bool:
+    def _is_some_kind_of_db_by_checking_column_and_row_kind(
+        self, some_kind: str
+    ) -> bool:
         """Check if cisTarget database has some_kind set in column_kind or row_kind."""
         return some_kind == self._column_kind or some_kind == self._row_kind
 
     @property
     def is_regions_db(self) -> bool:
         """Check if cisTarget database has regions in columns or rows."""
-        return self._is_some_kind_of_db_by_checking_column_and_row_kind('regions')
+        return self._is_some_kind_of_db_by_checking_column_and_row_kind("regions")
 
     @property
     def is_genes_db(self) -> bool:
         """Check if cisTarget database has genes in columns or rows."""
-        return self._is_some_kind_of_db_by_checking_column_and_row_kind('genes')
+        return self._is_some_kind_of_db_by_checking_column_and_row_kind("genes")
 
     @property
     def is_motifs_db(self) -> bool:
         """Check if cisTarget database has motifs in columns or rows."""
-        return self._is_some_kind_of_db_by_checking_column_and_row_kind('motifs')
+        return self._is_some_kind_of_db_by_checking_column_and_row_kind("motifs")
 
     @property
     def is_tracks_db(self) -> bool:
         """Check if cisTarget database has tracks in columns or rows."""
-        return self._is_some_kind_of_db_by_checking_column_and_row_kind('tracks')
+        return self._is_some_kind_of_db_by_checking_column_and_row_kind("tracks")
 
     @property
     def allowed_as_cross_species_rankings_db_input(self) -> bool:
         """
         Check if cisTarget database is allowed as CistargetDatabase.create_cross_species_rankings_db() input database.
         """
-        return self.is_rankings_db and self._column_kind == 'motifs'
+        return self.is_rankings_db and self._column_kind == "motifs"
 
     @property
     def scores_or_rankings(self) -> str:
@@ -432,7 +468,7 @@ class DatabaseTypes(Enum):
         return self._scores_or_rankings
 
     @property
-    def regions_or_genes_type(self) -> 'RegionsOrGenesType':
+    def regions_or_genes_type(self) -> "RegionsOrGenesType":
         """Return RegionsOrGenesType Enum member for DatabaseTypes member."""
         if self.is_regions_db:
             return RegionsOrGenesType.REGIONS
@@ -442,7 +478,7 @@ class DatabaseTypes(Enum):
         assert False, f'"regions_or_genes_type" is not handled for {self}'
 
     @property
-    def motifs_or_tracks_type(self) -> 'MotifsOrTracksType':
+    def motifs_or_tracks_type(self) -> "MotifsOrTracksType":
         """Return MotifsOrTracksType Enum member for DatabaseTypes member."""
         if self.is_motifs_db:
             return MotifsOrTracksType.MOTIFS
@@ -464,14 +500,16 @@ class DatabaseTypes(Enum):
     @property
     def has_regions_or_genes_column_kind(self) -> bool:
         """Check if cisTarget database has regions or genes in columns."""
-        return self._column_kind == 'regions' or self._column_kind == 'genes'
+        return self._column_kind == "regions" or self._column_kind == "genes"
 
     @property
     def has_motifs_or_track_column_kind(self) -> bool:
         """Check if cisTarget database has motifs or tracks in columns."""
-        return self._column_kind == 'motifs' or self._column_kind == 'track'
+        return self._column_kind == "motifs" or self._column_kind == "track"
 
-    def get_dtype(self, nbr_regions_or_genes: int) -> Type[Union[np.core.single, np.core.short, np.core.intc]]:
+    def get_dtype(
+        self, nbr_regions_or_genes: int
+    ) -> Type[Union[np.core.single, np.core.short, np.core.intc]]:
         """
         Get optimal dtype for storing values in cisTarget database.
 
@@ -486,7 +524,7 @@ class DatabaseTypes(Enum):
             # Rankings databases store the zero-based rankings as optimally as possible in a:
             #   - 16-bit signed integer: max value = 2^15 - 1 = 32767 ==> can store 32768 rankings.
             #   - 32-bit signed integer: max value = 2^31 - 1 = 2147483647 ==> can store 2147483648
-            if nbr_regions_or_genes <= 2 ** 15:
+            if nbr_regions_or_genes <= 2**15:
                 # Range int16: -2^15 (= -32768) to 2^15 - 1 (= 32767).
                 return np.int16
             else:
@@ -502,11 +540,13 @@ class CisTargetDatabase:
     """
 
     @staticmethod
-    def create_db(db_type: Union['DatabaseTypes', str],
-                  region_or_gene_ids: RegionOrGeneIDs,
-                  motif_or_track_ids: MotifOrTrackIDs,
-                  db_numpy_array: Optional[np.ndarray] = None,
-                  order: Optional[str] = None) -> 'CisTargetDatabase':
+    def create_db(
+        db_type: Union["DatabaseTypes", str],
+        region_or_gene_ids: RegionOrGeneIDs,
+        motif_or_track_ids: MotifOrTrackIDs,
+        db_numpy_array: Optional[np.ndarray] = None,
+        order: Optional[str] = None,
+    ) -> "CisTargetDatabase":
         """
         Create cisTarget scores or rankings database of one of the DatabaseTypes types for RegionOrGeneIDs vs
         MotifOrTrackIDs or vice versa.
@@ -531,14 +571,20 @@ class CisTargetDatabase:
                 raise ValueError('db_type must be of "DatabaseTypes" type.')
 
         if not isinstance(region_or_gene_ids, RegionOrGeneIDs):
-            if isinstance(region_or_gene_ids, List) or isinstance(region_or_gene_ids, Set) or isinstance(region_or_gene_ids, Tuple):
+            if (
+                isinstance(region_or_gene_ids, List)
+                or isinstance(region_or_gene_ids, Set)
+                or isinstance(region_or_gene_ids, Tuple)
+            ):
                 # If region or gene IDs were given as a list, set or tuple, convert it to a RegionOrGeneIDs object.
                 region_or_gene_ids = RegionOrGeneIDs(
                     region_or_gene_ids=region_or_gene_ids,
-                    regions_or_genes_type=db_type.regions_or_genes_type
+                    regions_or_genes_type=db_type.regions_or_genes_type,
                 )
             else:
-                raise ValueError('region_or_gene_ids must be of "RegionOrGeneIDs" type.')
+                raise ValueError(
+                    'region_or_gene_ids must be of "RegionOrGeneIDs" type.'
+                )
         else:
             if region_or_gene_ids.type != db_type.regions_or_genes_type:
                 raise ValueError(
@@ -547,14 +593,20 @@ class CisTargetDatabase:
                 )
 
         if not isinstance(motif_or_track_ids, MotifOrTrackIDs):
-            if isinstance(motif_or_track_ids, List) or isinstance(motif_or_track_ids, Set) or isinstance(motif_or_track_ids, Tuple):
+            if (
+                isinstance(motif_or_track_ids, List)
+                or isinstance(motif_or_track_ids, Set)
+                or isinstance(motif_or_track_ids, Tuple)
+            ):
                 # If motif or track IDs were given as a list, set or tuple, convert it to a MotifOrTrackIDs object.
                 motif_or_track_ids = MotifOrTrackIDs(
                     motif_or_track_ids=motif_or_track_ids,
-                    motifs_or_tracks_type=db_type.motifs_or_tracks_type
+                    motifs_or_tracks_type=db_type.motifs_or_tracks_type,
                 )
             else:
-                raise ValueError('motif_or_track_ids must be of "MotifOrTrackIDs" type.')
+                raise ValueError(
+                    'motif_or_track_ids must be of "MotifOrTrackIDs" type.'
+                )
         else:
             if motif_or_track_ids.type != db_type.motifs_or_tracks_type:
                 raise ValueError(
@@ -565,118 +617,154 @@ class CisTargetDatabase:
         # Get info in which dimension of the 2D numpy array the region or gene IDs and motif or track IDs are stored.
         region_or_gene_ids_shape_idx, motifs_or_tracks_ids_shape_idx = (
             (1, 0)
-            if db_type.column_kind == 'regions' or db_type.column_kind == 'genes'
+            if db_type.column_kind == "regions" or db_type.column_kind == "genes"
             else (0, 1)
         )
 
         if isinstance(db_numpy_array, np.ndarray):
             if len(db_numpy_array.shape) != 2:
                 raise ValueError(
-                    f'Numpy array needs to have exactly 2 dimensions ({len(db_numpy_array)} dimensions found).'
+                    f"Numpy array needs to have exactly 2 dimensions ({len(db_numpy_array)} dimensions found)."
                 )
 
-            if db_type.get_dtype(nbr_regions_or_genes=db_numpy_array.shape[region_or_gene_ids_shape_idx]) != db_numpy_array.dtype:
+            if (
+                db_type.get_dtype(
+                    nbr_regions_or_genes=db_numpy_array.shape[
+                        region_or_gene_ids_shape_idx
+                    ]
+                )
+                != db_numpy_array.dtype
+            ):
                 raise ValueError(
-                    f'dtype of numpy array ({db_numpy_array.dtype}) should be '
-                    f'{db_type.get_dtype(nbr_regions_or_genes=db_numpy_array.shape[region_or_gene_ids_shape_idx])}.'
+                    f"dtype of numpy array ({db_numpy_array.dtype}) should be "
+                    f"{db_type.get_dtype(nbr_regions_or_genes=db_numpy_array.shape[region_or_gene_ids_shape_idx])}."
                 )
 
         # Create region or gene IDs index and motif or track IDs index.
         region_or_gene_ids_idx = pd.Index(
-            data=region_or_gene_ids.ids,
-            name=region_or_gene_ids.type.value
+            data=region_or_gene_ids.ids, name=region_or_gene_ids.type.value
         )
         motif_or_track_ids_idx = pd.Index(
-            data=motif_or_track_ids.ids,
-            name=motif_or_track_ids.type.value
+            data=motif_or_track_ids.ids, name=motif_or_track_ids.type.value
         )
 
-        if db_type.column_kind == 'regions' or db_type.column_kind == 'genes':
+        if db_type.column_kind == "regions" or db_type.column_kind == "genes":
             if isinstance(db_numpy_array, np.ndarray):
-                if len(motif_or_track_ids) != db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]:
+                if (
+                    len(motif_or_track_ids)
+                    != db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]
+                ):
                     raise ValueError(
-                        f'Numpy array needs to have same number of rows as {db_type.row_kind}: '
-                        f'{db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]} vs {len(motif_or_track_ids)}'
+                        f"Numpy array needs to have same number of rows as {db_type.row_kind}: "
+                        f"{db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]} vs {len(motif_or_track_ids)}"
                     )
-                if len(region_or_gene_ids) != db_numpy_array.shape[region_or_gene_ids_shape_idx]:
+                if (
+                    len(region_or_gene_ids)
+                    != db_numpy_array.shape[region_or_gene_ids_shape_idx]
+                ):
                     raise ValueError(
-                        f'Numpy array needs to have same number of columns as {db_type.column_kind}: '
-                        f'{db_numpy_array.shape[region_or_gene_ids_shape_idx]} vs {len(region_or_gene_ids)}'
+                        f"Numpy array needs to have same number of columns as {db_type.column_kind}: "
+                        f"{db_numpy_array.shape[region_or_gene_ids_shape_idx]} vs {len(region_or_gene_ids)}"
                     )
 
                 # Create dataframe from numpy array for all region or gene IDs vs all motif or track IDs.
                 df = pd.DataFrame(
                     data=db_numpy_array,
                     index=motif_or_track_ids_idx,
-                    columns=region_or_gene_ids_idx
+                    columns=region_or_gene_ids_idx,
                 )
             else:
                 # Create zeroed dataframe for all region or gene IDs vs all motif or track IDs.
                 df = pd.DataFrame(
-                    data=np.zeros((len(motif_or_track_ids), len(region_or_gene_ids)),
-                                  dtype=db_type.get_dtype(nbr_regions_or_genes=len(region_or_gene_ids)),
-                                  order=order),
+                    data=np.zeros(
+                        (len(motif_or_track_ids), len(region_or_gene_ids)),
+                        dtype=db_type.get_dtype(
+                            nbr_regions_or_genes=len(region_or_gene_ids)
+                        ),
+                        order=order,
+                    ),
                     index=motif_or_track_ids_idx,
-                    columns=region_or_gene_ids_idx
+                    columns=region_or_gene_ids_idx,
                 )
-        elif db_type.column_kind == 'motifs' or db_type.column_kind == 'tracks':
+        elif db_type.column_kind == "motifs" or db_type.column_kind == "tracks":
             if isinstance(db_numpy_array, np.ndarray):
-                if len(region_or_gene_ids) != db_numpy_array.shape[region_or_gene_ids_shape_idx]:
+                if (
+                    len(region_or_gene_ids)
+                    != db_numpy_array.shape[region_or_gene_ids_shape_idx]
+                ):
                     raise ValueError(
-                        f'Numpy array needs to have same number of rows as {db_type.row_kind}: '
-                        f'{db_numpy_array.shape[region_or_gene_ids_shape_idx]} vs {len(region_or_gene_ids)}'
+                        f"Numpy array needs to have same number of rows as {db_type.row_kind}: "
+                        f"{db_numpy_array.shape[region_or_gene_ids_shape_idx]} vs {len(region_or_gene_ids)}"
                     )
-                if len(motif_or_track_ids) != db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]:
+                if (
+                    len(motif_or_track_ids)
+                    != db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]
+                ):
                     raise ValueError(
-                        f'Numpy array needs to have same number of columns as {db_type.column_kind}: '
-                        f'{db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]} vs {len(motif_or_track_ids)}'
+                        f"Numpy array needs to have same number of columns as {db_type.column_kind}: "
+                        f"{db_numpy_array.shape[motifs_or_tracks_ids_shape_idx]} vs {len(motif_or_track_ids)}"
                     )
 
                 # Create dataframe from numpy array for all motif or track IDs vs all region or gene IDs.
                 df = pd.DataFrame(
                     data=db_numpy_array,
                     index=region_or_gene_ids_idx,
-                    columns=motif_or_track_ids_idx
+                    columns=motif_or_track_ids_idx,
                 )
             else:
                 # Create zeroed dataframe for all motif or track IDs vs all region or gene IDs.
                 df = pd.DataFrame(
-                    data=np.zeros((len(region_or_gene_ids), len(motif_or_track_ids)),
-                                  dtype=db_type.get_dtype(nbr_regions_or_genes=len(region_or_gene_ids)),
-                                  order=order),
+                    data=np.zeros(
+                        (len(region_or_gene_ids), len(motif_or_track_ids)),
+                        dtype=db_type.get_dtype(
+                            nbr_regions_or_genes=len(region_or_gene_ids)
+                        ),
+                        order=order,
+                    ),
                     index=region_or_gene_ids_idx,
-                    columns=motif_or_track_ids_idx
+                    columns=motif_or_track_ids_idx,
                 )
 
         return CisTargetDatabase(db_type, df)
 
     @staticmethod
-    def create_cross_species_rankings_db(species_rankings_db_filenames=Union[List[str], Tuple[str]]):
+    def create_cross_species_rankings_db(
+        species_rankings_db_filenames=Union[List[str], Tuple[str]]
+    ):
         for species_rankings_db_filename in species_rankings_db_filenames:
             # Get database type for each provided cisTarget database Feather file and check if it is a supported type
             # for creating cross-species rankings databases.
-            species_rankings_db_type, db_prefix, extension = \
-                DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
-                    db_filename=species_rankings_db_filename
-                )
+            (
+                species_rankings_db_type,
+                db_prefix,
+                extension,
+            ) = DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
+                db_filename=species_rankings_db_filename
+            )
 
-            assert \
-                species_rankings_db_type.allowed_as_cross_species_rankings_db_input, \
-                f'"{species_rankings_db_filename}" ({species_rankings_db_type}) is not allowed as input database type.'
+            assert (
+                species_rankings_db_type.allowed_as_cross_species_rankings_db_input
+            ), f'"{species_rankings_db_filename}" ({species_rankings_db_type}) is not allowed as input database type.'
 
         # Create Feather dataset object with all provided cisTarget rankings databases (from different species).
         multiple_species_rankings_feather_dataset = pf.FeatherDataset(
-            path_or_paths=species_rankings_db_filenames,
-            validate_schema=True
+            path_or_paths=species_rankings_db_filenames, validate_schema=True
         )
 
         # Read Feather dataset object in a pyarrow table. Each column in the Feather dataset consists of X amount of
         # chunks (where X is the number of Feather databases).
-        multiple_species_rankings_table = multiple_species_rankings_feather_dataset.read_table(columns=None)
+        multiple_species_rankings_table = (
+            multiple_species_rankings_feather_dataset.read_table(columns=None)
+        )
 
         # Check if a "regions" or "genes" column name (row index column) is found in the Feather database.
-        if species_rankings_db_type.row_kind in multiple_species_rankings_table.column_names:
-            regions_or_genes_type = RegionsOrGenesType.from_str(species_rankings_db_type.row_kind)
+        if (
+            species_rankings_db_type.row_kind
+            in multiple_species_rankings_table.column_names
+        ):
+            regions_or_genes_type = RegionsOrGenesType.from_str(
+                species_rankings_db_type.row_kind
+            )
         else:
             raise ValueError(
                 'Feather rankings databases for creating cross-species rankings need to have a column named "regions" '
@@ -686,27 +774,36 @@ class CisTargetDatabase:
         # Get region or gene IDs from the regions/genes column from the first Feather database, by taking the data from
         # the first chunk of the pyarrow table.
         region_or_gene_ids_tuple = tuple(
-            multiple_species_rankings_table.column(regions_or_genes_type.value).chunk(0).to_pylist()
+            multiple_species_rankings_table.column(regions_or_genes_type.value)
+            .chunk(0)
+            .to_pylist()
         )
         region_or_gene_ids = RegionOrGeneIDs(
             region_or_gene_ids=region_or_gene_ids_tuple,
-            regions_or_genes_type=regions_or_genes_type
+            regions_or_genes_type=regions_or_genes_type,
         )
 
         # Check if Feather databases were created with the CisTargetDatabase class (RegionOrGeneIDs are made unique and
         # are sorted).
-        assert \
-            len(region_or_gene_ids.ids) == len(region_or_gene_ids_tuple), \
-            f'{regions_or_genes_type.value} IDs are not unique in "{species_rankings_db_filenames[0]}".'
+        assert len(region_or_gene_ids.ids) == len(
+            region_or_gene_ids_tuple
+        ), f'{regions_or_genes_type.value} IDs are not unique in "{species_rankings_db_filenames[0]}".'
 
         # Check if each database contains exactly the same regions/genes and in the same order.
-        for chunk_idx in range(1, multiple_species_rankings_table.column(regions_or_genes_type.value).num_chunks):
-            assert \
-                region_or_gene_ids_tuple == tuple(
-                    multiple_species_rankings_table.column(regions_or_genes_type.value).chunk(chunk_idx).to_pylist()
-                ), \
-                f'Feather rankings database "{species_rankings_db_filenames[chunk_idx]}" contains different region ' \
+        for chunk_idx in range(
+            1,
+            multiple_species_rankings_table.column(
+                regions_or_genes_type.value
+            ).num_chunks,
+        ):
+            assert region_or_gene_ids_tuple == tuple(
+                multiple_species_rankings_table.column(regions_or_genes_type.value)
+                .chunk(chunk_idx)
+                .to_pylist()
+            ), (
+                f'Feather rankings database "{species_rankings_db_filenames[chunk_idx]}" contains different region '
                 f'or gene IDs or in a different order than in "{species_rankings_db_filenames[0]}".'
+            )
 
         # Get all motif IDs by getting all column names except the "regions" or "genes" column name.
         motif_or_track_ids = MotifOrTrackIDs(
@@ -715,7 +812,7 @@ class CisTargetDatabase:
                 for motif_id in multiple_species_rankings_table.column_names
                 if motif_id != regions_or_genes_type.value
             ),
-            motifs_or_tracks_type=species_rankings_db_type.column_kind
+            motifs_or_tracks_type=species_rankings_db_type.column_kind,
         )
 
         # Create zeroed rankings database for storing cross-species rankings.
@@ -731,12 +828,14 @@ class CisTargetDatabase:
             # for one region/gene. After transposition the motif_id_rankings_per_species array is in 'C' order again, so
             # is more cache friendly for usage in orderstatistics.create_cross_species_ranking_for_motif().
             motif_id_rankings_per_species = np.array(
-                multiple_species_rankings_table.column(motif_id).chunks, order='F'
+                multiple_species_rankings_table.column(motif_id).chunks, order="F"
             ).transpose()
 
             # Create cross-species ranking for current motif by combining the individual ranking in each species per
             # region/gene with order statistics.
-            cross_species_rankings_ct.df.loc[:, motif_id] = orderstatistics.create_cross_species_ranking_for_motif(
+            cross_species_rankings_ct.df.loc[
+                :, motif_id
+            ] = orderstatistics.create_cross_species_ranking_for_motif(
                 motif_id_rankings_per_species=motif_id_rankings_per_species
             )
 
@@ -744,8 +843,10 @@ class CisTargetDatabase:
         return cross_species_rankings_ct
 
     @staticmethod
-    def read_db(db_filename_or_dbs_filenames: Union[str, List, Tuple],
-                db_type: Optional[Union['DatabaseTypes', str]] = None) -> 'CisTargetDatabase':
+    def read_db(
+        db_filename_or_dbs_filenames: Union[str, List, Tuple],
+        db_type: Optional[Union["DatabaseTypes", str]] = None,
+    ) -> "CisTargetDatabase":
         """
         Read cisTarget database from Feather file(s) to CisTargetDatabase object.
 
@@ -760,7 +861,9 @@ class CisTargetDatabase:
             db_filename = db_filename_or_dbs_filenames
             # Convert to a tuple with one element.
             db_filename_or_dbs_filenames = (db_filename_or_dbs_filenames,)
-        elif isinstance(db_filename_or_dbs_filenames, List) or isinstance(db_filename_or_dbs_filenames, Tuple):
+        elif isinstance(db_filename_or_dbs_filenames, List) or isinstance(
+            db_filename_or_dbs_filenames, Tuple
+        ):
             # Look at the first (partial) cisTarget database for most checks when multiple databases are given.
             db_filename = db_filename_or_dbs_filenames[0]
         else:
@@ -769,14 +872,17 @@ class CisTargetDatabase:
         # Try to extract the database type from database filename if database type was not specified.
         if not db_type:
             try:
-                db_type, db_prefix, extension = \
-                    DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
-                        db_filename=db_filename
-                    )
+                (
+                    db_type,
+                    db_prefix,
+                    extension,
+                ) = DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
+                    db_filename=db_filename
+                )
             except ValueError:
                 raise ValueError(
-                    'cisTarget database type could not be automatically determined from db_filename_or_dbs_filenames. '
-                    'Specify db_type instead.'
+                    "cisTarget database type could not be automatically determined from db_filename_or_dbs_filenames. "
+                    "Specify db_type instead."
                 )
         else:
             if not isinstance(db_type, DatabaseTypes):
@@ -812,15 +918,19 @@ class CisTargetDatabase:
                 # pyarrow Table and save them as an element in a list.
                 pa_table_partial_list = [
                     pf.FeatherDataset(
-                        path_or_paths=[db_filename, ],
-                        validate_schema=True
+                        path_or_paths=[
+                            db_filename,
+                        ],
+                        validate_schema=True,
                     ).read_table(columns=None)
                     for db_filename in db_filename_or_dbs_filenames
                 ]
 
                 # Get region or gene column from the first partial motif or track vs regions or genes cisTarget
                 # scores/rankings database.
-                regions_or_genes_column = pa_table_partial_list[0].column(db_type.row_kind)
+                regions_or_genes_column = pa_table_partial_list[0].column(
+                    db_type.row_kind
+                )
 
                 # Remove region or gene column from first partial motif or track vs regions or genes cisTarget
                 # scores/rankings database from pyarrow table representation.
@@ -842,7 +952,7 @@ class CisTargetDatabase:
                             # all partial databases.
                             if column != regions_or_genes_column:
                                 raise ValueError(
-                                    f'Partial cisTarget databases do not all contain the same {db_type.row_kind}.'
+                                    f"Partial cisTarget databases do not all contain the same {db_type.row_kind}."
                                 )
 
                 # Get all column names (without "regions" or "genes" column) and sort them alphabetically.
@@ -854,7 +964,9 @@ class CisTargetDatabase:
                     pa_table = pa_table.select(column_names)
 
                 # Add "regions" or "genes" column as last column.
-                pa_table = pa_table.append_column(db_type.row_kind, regions_or_genes_column)
+                pa_table = pa_table.append_column(
+                    db_type.row_kind, regions_or_genes_column
+                )
 
         elif db_type.has_regions_or_genes_column_kind:
             # Read one or more cisTarget Feather database files in a pyarrow table.
@@ -869,7 +981,7 @@ class CisTargetDatabase:
 
         try:
             # Check if we have an old database that still used a "features" column and rename it.
-            features_idx = all_column_names.index('features')
+            features_idx = all_column_names.index("features")
             all_column_names[features_idx] = db_type.row_kind
             pa_table = pa_table.rename_columns(all_column_names)
         except ValueError:
@@ -909,9 +1021,9 @@ class CisTargetDatabase:
 
     @staticmethod
     def get_all_region_or_gene_ids_and_motif_or_track_ids_from_db(
-            db_filename_or_dbs_filenames: Union[str, List, Tuple],
-            db_type: Optional[Union['DatabaseTypes', str]] = None
-    ) -> ('DatabaseTypes', 'RegionOrGeneIDs', 'MotifOrTrackIDs'):
+        db_filename_or_dbs_filenames: Union[str, List, Tuple],
+        db_type: Optional[Union["DatabaseTypes", str]] = None,
+    ) -> ("DatabaseTypes", "RegionOrGeneIDs", "MotifOrTrackIDs"):
         """
         Get all region or gene IDs and motif IDs or track IDs from cisTarget database Feather file(s).
 
@@ -926,7 +1038,9 @@ class CisTargetDatabase:
             db_filename = db_filename_or_dbs_filenames
             # Convert to a tuple with one element.
             db_filename_or_dbs_filenames = (db_filename_or_dbs_filenames,)
-        elif isinstance(db_filename_or_dbs_filenames, List) or isinstance(db_filename_or_dbs_filenames, Tuple):
+        elif isinstance(db_filename_or_dbs_filenames, List) or isinstance(
+            db_filename_or_dbs_filenames, Tuple
+        ):
             # Look at the first (partial) cisTarget database for most checks when multiple databases are given.
             db_filename = db_filename_or_dbs_filenames[0]
         else:
@@ -935,14 +1049,17 @@ class CisTargetDatabase:
         # Try to extract the database type from database filename if database type was not specified.
         if not db_type:
             try:
-                db_type, db_prefix, extension = \
-                    DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
-                        db_filename=db_filename
-                    )
+                (
+                    db_type,
+                    db_prefix,
+                    extension,
+                ) = DatabaseTypes.create_database_type_and_db_prefix_and_extension_from_db_filename(
+                    db_filename=db_filename
+                )
             except ValueError:
                 raise ValueError(
-                    'cisTarget database type could not be automatically determined from db_filename_or_dbs_filenames. '
-                    'Specify db_type instead.'
+                    "cisTarget database type could not be automatically determined from db_filename_or_dbs_filenames. "
+                    "Specify db_type instead."
                 )
         else:
             if not isinstance(db_type, DatabaseTypes):
@@ -955,19 +1072,23 @@ class CisTargetDatabase:
                 else:
                     raise ValueError('db_type must be of "DatabaseTypes" type.')
 
-        column_names = get_all_column_names_from_feather(feather_file=db_filename_or_dbs_filenames[0])
+        column_names = get_all_column_names_from_feather(
+            feather_file=db_filename_or_dbs_filenames[0]
+        )
 
-        if db_type.column_kind == 'regions' or db_type.column_kind == 'genes':
+        if db_type.column_kind == "regions" or db_type.column_kind == "genes":
             # Get the name of the motif IDs or track IDs column.
             motif_or_track_ids_column_name = [
                 column_name
                 for column_name in column_names
-                if column_name in (db_type.row_kind, 'features')
+                if column_name in (db_type.row_kind, "features")
             ]
 
             if len(motif_or_track_ids_column_name) != 1:
-                raise ValueError(f'No MotifOrTrackIDs column name ("{db_type.row_kind}" or "features") found in '
-                                 f'"{db_filename_or_dbs_filenames[0]}".')
+                raise ValueError(
+                    f'No MotifOrTrackIDs column name ("{db_type.row_kind}" or "features") found in '
+                    f'"{db_filename_or_dbs_filenames[0]}".'
+                )
 
             # Convert list with one element to plain string.
             motif_or_track_ids_column_name = motif_or_track_ids_column_name[0]
@@ -982,33 +1103,35 @@ class CisTargetDatabase:
             motif_or_track_ids = list(
                 pf.FeatherDataset(
                     path_or_paths=db_filename_or_dbs_filenames, validate_schema=True
-                ).read_pandas(
-                    columns=[motif_or_track_ids_column_name]
-                )[motif_or_track_ids_column_name]
+                ).read_pandas(columns=[motif_or_track_ids_column_name])[
+                    motif_or_track_ids_column_name
+                ]
             )
 
             # Create a RegionOrGeneIDs object.
             region_or_gene_ids = RegionOrGeneIDs(
                 region_or_gene_ids=region_or_gene_ids,
-                regions_or_genes_type=db_type.regions_or_genes_type
+                regions_or_genes_type=db_type.regions_or_genes_type,
             )
 
             # Create a MotifOrTrackIDs object.
             motif_or_track_ids = MotifOrTrackIDs(
                 motif_or_track_ids=motif_or_track_ids,
-                motifs_or_tracks_type=db_type.motifs_or_tracks_type
+                motifs_or_tracks_type=db_type.motifs_or_tracks_type,
             )
-        elif db_type.column_kind == 'motifs' or db_type.column_kind == 'tracks':
+        elif db_type.column_kind == "motifs" or db_type.column_kind == "tracks":
             # Get the name of the column that contains the region or gene IDs.
             region_or_gene_ids_column_name = [
                 column_name
                 for column_name in column_names
-                if column_name in (db_type.row_kind, )
+                if column_name in (db_type.row_kind,)
             ]
 
             if len(region_or_gene_ids_column_name) != 1:
-                raise ValueError(f'No RegionOrGeneIDs column name ("{db_type.row_kind}") found in '
-                                 f'"{db_filename_or_dbs_filenames[0]}".')
+                raise ValueError(
+                    f'No RegionOrGeneIDs column name ("{db_type.row_kind}") found in '
+                    f'"{db_filename_or_dbs_filenames[0]}".'
+                )
 
             # Convert list with one element to plain string.
             region_or_gene_ids_column_name = region_or_gene_ids_column_name[0]
@@ -1023,21 +1146,21 @@ class CisTargetDatabase:
             region_or_gene_ids = list(
                 pf.FeatherDataset(
                     path_or_paths=db_filename_or_dbs_filenames, validate_schema=True
-                ).read_pandas(
-                    columns=[region_or_gene_ids_column_name]
-                )[region_or_gene_ids_column_name]
+                ).read_pandas(columns=[region_or_gene_ids_column_name])[
+                    region_or_gene_ids_column_name
+                ]
             )
 
             # Create a RegionOrGeneIDs object.
             region_or_gene_ids = RegionOrGeneIDs(
                 region_or_gene_ids=region_or_gene_ids,
-                regions_or_genes_type=db_type.regions_or_genes_type
+                regions_or_genes_type=db_type.regions_or_genes_type,
             )
 
             # Create a MotifOrTrackIDs object.
             motif_or_track_ids = MotifOrTrackIDs(
                 motif_or_track_ids=motif_or_track_ids,
-                motifs_or_tracks_type=db_type.motifs_or_tracks_type
+                motifs_or_tracks_type=db_type.motifs_or_tracks_type,
             )
 
         return db_type, region_or_gene_ids, motif_or_track_ids
@@ -1054,22 +1177,30 @@ class CisTargetDatabase:
         :return: region_or_gene_ids
         """
 
-        if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
+        if self.db_type.column_kind == "regions" or self.db_type.column_kind == "genes":
             region_or_gene_ids = RegionOrGeneIDs(
                 region_or_gene_ids=self.df.columns.to_list(),
-                regions_or_genes_type=RegionsOrGenesType.from_str(regions_or_genes_type=self.db_type.column_kind)
+                regions_or_genes_type=RegionsOrGenesType.from_str(
+                    regions_or_genes_type=self.db_type.column_kind
+                ),
             )
 
             if region_or_gene_ids.ids != tuple(self.df.columns.to_list()):
-                raise ValueError('cisTarget database does not contain region or gene IDs in sorted order.')
-        elif self.db_type.row_kind == 'regions' or self.db_type.row_kind == 'genes':
+                raise ValueError(
+                    "cisTarget database does not contain region or gene IDs in sorted order."
+                )
+        elif self.db_type.row_kind == "regions" or self.db_type.row_kind == "genes":
             region_or_gene_ids = RegionOrGeneIDs(
                 region_or_gene_ids=self.df.index.to_list(),
-                regions_or_genes_type=RegionsOrGenesType.from_str(regions_or_genes_type=self.db_type.row_kind)
+                regions_or_genes_type=RegionsOrGenesType.from_str(
+                    regions_or_genes_type=self.db_type.row_kind
+                ),
             )
 
             if region_or_gene_ids.ids != tuple(self.df.index.to_list()):
-                raise ValueError('cisTarget database does not contain region or gene IDs in sorted order.')
+                raise ValueError(
+                    "cisTarget database does not contain region or gene IDs in sorted order."
+                )
 
         return region_or_gene_ids
 
@@ -1081,22 +1212,30 @@ class CisTargetDatabase:
         :return: motif_or_track_ids
         """
 
-        if self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
+        if self.db_type.column_kind == "motifs" or self.db_type.column_kind == "tracks":
             motif_or_track_ids = MotifOrTrackIDs(
                 motif_or_track_ids=self.df.columns.to_list(),
-                motifs_or_tracks_type=MotifsOrTracksType.from_str(motifs_or_tracks_type=self.db_type.column_kind)
+                motifs_or_tracks_type=MotifsOrTracksType.from_str(
+                    motifs_or_tracks_type=self.db_type.column_kind
+                ),
             )
 
             if motif_or_track_ids.ids != tuple(self.df.columns.to_list()):
-                raise ValueError('cisTarget database does not contain motif or track IDs in sorted order.')
-        elif self.db_type.row_kind == 'motifs' or self.db_type.row_kind == 'tracks':
+                raise ValueError(
+                    "cisTarget database does not contain motif or track IDs in sorted order."
+                )
+        elif self.db_type.row_kind == "motifs" or self.db_type.row_kind == "tracks":
             motif_or_track_ids = MotifOrTrackIDs(
                 motif_or_track_ids=self.df.index.to_list(),
-                motifs_or_tracks_type=MotifsOrTracksType.from_str(motifs_or_tracks_type=self.db_type.row_kind)
+                motifs_or_tracks_type=MotifsOrTracksType.from_str(
+                    motifs_or_tracks_type=self.db_type.row_kind
+                ),
             )
 
             if motif_or_track_ids.ids != tuple(self.df.index.to_list()):
-                raise ValueError('cisTarget database does not contain motif or track IDs in sorted order.')
+                raise ValueError(
+                    "cisTarget database does not contain motif or track IDs in sorted order."
+                )
 
         return motif_or_track_ids
 
@@ -1140,7 +1279,14 @@ class CisTargetDatabase:
 
         return self.df.shape[1]
 
-    def write_db(self, db_prefix: Optional[str] = None, db_filename: Optional[str] = None, version: int = 2, compression: Optional[str] = "zstd", compression_level: int = 6) -> str:
+    def write_db(
+        self,
+        db_prefix: Optional[str] = None,
+        db_filename: Optional[str] = None,
+        version: int = 2,
+        compression: Optional[str] = "zstd",
+        compression_level: int = 6,
+    ) -> str:
         """
         Write cisTarget database to Feather file.
         If db_prefix is used, the database type will be encoded in the Feather database filename.
@@ -1154,10 +1300,17 @@ class CisTargetDatabase:
         :return: db_filename: cisTarget database filename (constructed from db_prefix).
         """
 
-        assert isinstance(db_prefix, str) and db_filename is None or db_prefix is None and isinstance(db_filename, str)
+        assert (
+            isinstance(db_prefix, str)
+            and db_filename is None
+            or db_prefix is None
+            and isinstance(db_filename, str)
+        )
 
         if db_prefix:
-            db_filename = self.create_db_filename_from_db_prefix(db_prefix=db_prefix, extension='feather')
+            db_filename = self.create_db_filename_from_db_prefix(
+                db_prefix=db_prefix, extension="feather"
+            )
 
         assert isinstance(db_filename, str)
 
@@ -1189,7 +1342,7 @@ class CisTargetDatabase:
                 preserve_index=False,
                 nthreads=4,
                 columns=None,
-                safe=True
+                safe=True,
             ).replace_schema_metadata()
 
             # Write cisTarget database in Feather v2 format.
@@ -1214,7 +1367,9 @@ class CisTargetDatabase:
 
         return db_filename
 
-    def create_db_filename_from_db_prefix(self, db_prefix: str, extension: str = 'feather') -> str:
+    def create_db_filename_from_db_prefix(
+        self, db_prefix: str, extension: str = "feather"
+    ) -> str:
         """
         Create cisTarget database filename based on a database prefix string and extension.
         Between the database prefix string and extension the database type will be encoded.
@@ -1224,10 +1379,7 @@ class CisTargetDatabase:
         :return: Database filename.
         """
 
-        return self.db_type.create_db_filename(
-            db_prefix=db_prefix,
-            extension=extension
-        )
+        return self.db_type.create_db_filename(db_prefix=db_prefix, extension=extension)
 
     def transpose(self, order: Optional[str] = None):
         """
@@ -1244,17 +1396,18 @@ class CisTargetDatabase:
             # Get numpy array behind dataframe.
             db_numpy_array = self.df.to_numpy()
 
-            if (order == 'C' and db_numpy_array.flags.f_contiguous) \
-                    or (order == 'F' and db_numpy_array.flags.c_contiguous):
+            if (order == "C" and db_numpy_array.flags.f_contiguous) or (
+                order == "F" and db_numpy_array.flags.c_contiguous
+            ):
                 # Transpose dataframe (switch rows and columns) and change database type without creating a new numpy
                 # array as it will be in the correct order (C or Fortran) after transposition.
                 return CisTargetDatabase(
                     db_type=DatabaseTypes.from_strings(
                         scores_or_rankings=self.db_type.scores_or_rankings,
                         column_kind=self.db_type.row_kind,
-                        row_kind=self.db_type.column_kind
+                        row_kind=self.db_type.column_kind,
                     ),
-                    df=self.df.transpose(copy=False)
+                    df=self.df.transpose(copy=False),
                 )
             else:
                 # Create a new cisTarget database (switch rows and columns and change database type) with a newly
@@ -1264,14 +1417,13 @@ class CisTargetDatabase:
                     db_type=DatabaseTypes.from_strings(
                         scores_or_rankings=self.db_type.scores_or_rankings,
                         column_kind=self.db_type.row_kind,
-                        row_kind=self.db_type.column_kind
+                        row_kind=self.db_type.column_kind,
                     ),
                     region_or_gene_ids=self.region_or_gene_ids,
                     motif_or_track_ids=self.motif_or_track_ids,
-                    db_numpy_array=db_numpy_array.transpose().ravel(order=order).reshape(
-                        (self.shape[1], self.shape[0]),
-                        order=order
-                    )
+                    db_numpy_array=db_numpy_array.transpose()
+                    .ravel(order=order)
+                    .reshape((self.shape[1], self.shape[0]), order=order),
                 )
         else:
             # Transpose dataframe (switch rows and columns) and change database type.
@@ -1279,12 +1431,16 @@ class CisTargetDatabase:
                 db_type=DatabaseTypes.from_strings(
                     scores_or_rankings=self.db_type.scores_or_rankings,
                     column_kind=self.db_type.row_kind,
-                    row_kind=self.db_type.column_kind
+                    row_kind=self.db_type.column_kind,
                 ),
-                df=self.df.transpose(copy=False)
+                df=self.df.transpose(copy=False),
             )
 
-    def update_scores_for_motif_or_track(self, motif_or_track_id: str, df_scores_for_motif_or_track: Union[pd.Series, pd.DataFrame]):
+    def update_scores_for_motif_or_track(
+        self,
+        motif_or_track_id: str,
+        df_scores_for_motif_or_track: Union[pd.Series, pd.DataFrame],
+    ):
         """
         Update CRM or track scores for 1 motif or track ID for specific region or gene IDs in cisTarget scores database.
 
@@ -1296,21 +1452,28 @@ class CisTargetDatabase:
         :return:
         """
 
-        assert self.db_type.is_scores_db, 'cisTarget database must be a scores database.'
+        assert (
+            self.db_type.is_scores_db
+        ), "cisTarget database must be a scores database."
 
         # Write CRM or track scores for motif ID or track ID to cisTarget scores dataframe.
-        if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
-            assert motif_or_track_id in self.df.index, \
-                f'"{motif_or_track_id}" not found in row of CisTargetDatabase dataframe.'
+        if self.db_type.column_kind == "regions" or self.db_type.column_kind == "genes":
+            assert (
+                motif_or_track_id in self.df.index
+            ), f'"{motif_or_track_id}" not found in row of CisTargetDatabase dataframe.'
 
             # Get position of motif ID or track ID in index.
             motif_or_track_id_idx_iloc = self.df.index.get_loc(motif_or_track_id)
 
             # Get numpy array with column positions for all motif IDs or track IDs in df_scores_for_motif_or_track.
-            region_or_gene_ids_idx_iloc = self.df.columns.get_indexer(df_scores_for_motif_or_track.index)
+            region_or_gene_ids_idx_iloc = self.df.columns.get_indexer(
+                df_scores_for_motif_or_track.index
+            )
 
-            assert np.all(region_or_gene_ids_idx_iloc != -1.0), f'Not all {self.db_type.column_kind} IDs could be ' \
-                                                                'found in the cisTarget score database.'
+            assert np.all(region_or_gene_ids_idx_iloc != -1.0), (
+                f"Not all {self.db_type.column_kind} IDs could be "
+                "found in the cisTarget score database."
+            )
 
             # Column names contain regions or genes.
             #
@@ -1318,32 +1481,36 @@ class CisTargetDatabase:
             # is faster than to self.df.loc[motif_or_track_id, df_scores_for_motif_or_track.index]
             if len(df_scores_for_motif_or_track.shape) == 1:
                 self.df.to_numpy()[
-                    motif_or_track_id_idx_iloc,
-                    region_or_gene_ids_idx_iloc
+                    motif_or_track_id_idx_iloc, region_or_gene_ids_idx_iloc
                 ] = df_scores_for_motif_or_track
             elif df_scores_for_motif_or_track.shape[1] == 1:
                 self.df.to_numpy()[
-                    motif_or_track_id_idx_iloc,
-                    region_or_gene_ids_idx_iloc
+                    motif_or_track_id_idx_iloc, region_or_gene_ids_idx_iloc
                 ] = df_scores_for_motif_or_track.iloc[:, 0]
             else:
-                score_name = 'crm_score' if self.db_type.is_motifs_db else 'track_score'
+                score_name = "crm_score" if self.db_type.is_motifs_db else "track_score"
                 self.df.to_numpy()[
-                    motif_or_track_id_idx_iloc,
-                    region_or_gene_ids_idx_iloc
+                    motif_or_track_id_idx_iloc, region_or_gene_ids_idx_iloc
                 ] = df_scores_for_motif_or_track[score_name]
-        elif self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
-            assert motif_or_track_id in self.df.columns, \
-                f'"{motif_or_track_id}" not found in column of CisTargetDatabase dataframe.'
+        elif (
+            self.db_type.column_kind == "motifs" or self.db_type.column_kind == "tracks"
+        ):
+            assert (
+                motif_or_track_id in self.df.columns
+            ), f'"{motif_or_track_id}" not found in column of CisTargetDatabase dataframe.'
 
             # Get position of motif ID or track ID in columns.
             motif_or_track_id_idx_iloc = self.df.columns.get_loc(motif_or_track_id)
 
             # Get numpy array with index positions for all motif IDs or track IDs in df_scores_for_motif_or_track.
-            region_or_gene_ids_idx_iloc = self.df.index.get_indexer(df_scores_for_motif_or_track.index)
+            region_or_gene_ids_idx_iloc = self.df.index.get_indexer(
+                df_scores_for_motif_or_track.index
+            )
 
-            assert np.all(region_or_gene_ids_idx_iloc != -1.0), f'Not all {self.db_type.row_kind} IDs could be found ' \
-                                                                'in the cisTarget score database.'
+            assert np.all(region_or_gene_ids_idx_iloc != -1.0), (
+                f"Not all {self.db_type.row_kind} IDs could be found "
+                "in the cisTarget score database."
+            )
 
             # Row names contain regions or genes.
             #
@@ -1351,24 +1518,21 @@ class CisTargetDatabase:
             # is faster than to self.df.loc[df_scores_for_motif_or_track.index, motif_or_track_id]
             if len(df_scores_for_motif_or_track.shape) == 1:
                 self.df.to_numpy()[
-                    region_or_gene_ids_idx_iloc,
-                    motif_or_track_id_idx_iloc
+                    region_or_gene_ids_idx_iloc, motif_or_track_id_idx_iloc
                 ] = df_scores_for_motif_or_track
             elif df_scores_for_motif_or_track.shape[1] == 1:
                 self.df.to_numpy()[
-                    region_or_gene_ids_idx_iloc,
-                    motif_or_track_id_idx_iloc
+                    region_or_gene_ids_idx_iloc, motif_or_track_id_idx_iloc
                 ] = df_scores_for_motif_or_track.iloc[:, 0]
             else:
-                score_name = 'crm_score' if self.db_type.is_motifs_db else 'track_score'
+                score_name = "crm_score" if self.db_type.is_motifs_db else "track_score"
                 self.df.to_numpy()[
-                    region_or_gene_ids_idx_iloc,
-                    motif_or_track_id_idx_iloc
+                    region_or_gene_ids_idx_iloc, motif_or_track_id_idx_iloc
                 ] = df_scores_for_motif_or_track[score_name]
 
-    def convert_scores_db_to_rankings_db(self,
-                                         seed: Optional[int] = None,
-                                         deterministic_per_motif_or_track: bool = False) -> 'CisTargetDatabase':
+    def convert_scores_db_to_rankings_db(
+        self, seed: Optional[int] = None, deterministic_per_motif_or_track: bool = False
+    ) -> "CisTargetDatabase":
         """
         Convert cisTarget scores database to cisTarget rankings database.
 
@@ -1382,19 +1546,23 @@ class CisTargetDatabase:
         :return: cisTarget rankings database
         """
 
-        assert self.db_type.is_scores_db, 'cisTarget database must be a cisTarget scores database.'
+        assert (
+            self.db_type.is_scores_db
+        ), "cisTarget database must be a cisTarget scores database."
 
-        assert deterministic_per_motif_or_track is False or (deterministic_per_motif_or_track is True
-                                                             and isinstance(seed, int)), \
-            'A seed needs to be set to be able to use deterministic per motif or track rankings between cisTarget ' \
-            'databases.'
+        assert deterministic_per_motif_or_track is False or (
+            deterministic_per_motif_or_track is True and isinstance(seed, int)
+        ), (
+            "A seed needs to be set to be able to use deterministic per motif or track rankings between cisTarget "
+            "databases."
+        )
 
         # Initialize random number generator, so same cisTarget rankings database can be generated if the same seed is
         # set.
         rng = np.random.default_rng(seed=seed)
 
         def rank_scores_and_assign_random_ranking_in_range_for_ties(
-                scores_with_ties_for_motif_or_track_numpy: np.ndarray
+            scores_with_ties_for_motif_or_track_numpy: np.ndarray,
         ) -> np.ndarray:
             # Create random permutation so tied scores will have a different ranking each time.
             random_permutations_to_break_ties_numpy = rng.permutation(
@@ -1435,21 +1603,27 @@ class CisTargetDatabase:
             #
             #       ... .argsort().astype(rankings_db_dtype)
             #
-            ranking_with_broken_ties_for_motif_or_track_numpy = random_permutations_to_break_ties_numpy[
-                (-scores_with_ties_for_motif_or_track_numpy)[random_permutations_to_break_ties_numpy].argsort()
-            ].argsort().astype(rankings_db_dtype)
+            ranking_with_broken_ties_for_motif_or_track_numpy = (
+                random_permutations_to_break_ties_numpy[
+                    (-scores_with_ties_for_motif_or_track_numpy)[
+                        random_permutations_to_break_ties_numpy
+                    ].argsort()
+                ]
+                .argsort()
+                .astype(rankings_db_dtype)
+            )
 
             return ranking_with_broken_ties_for_motif_or_track_numpy
 
         # Create zeroed cisTarget rankings database.
         rankings_db = CisTargetDatabase.create_db(
             db_type=DatabaseTypes.from_strings(
-                scores_or_rankings='rankings',
+                scores_or_rankings="rankings",
                 column_kind=self.db_type.column_kind,
-                row_kind=self.db_type.row_kind
+                row_kind=self.db_type.row_kind,
             ),
             region_or_gene_ids=self.region_or_gene_ids,
-            motif_or_track_ids=self.motif_or_track_ids
+            motif_or_track_ids=self.motif_or_track_ids,
         )
 
         # Get dtype of cisTarget rankings database as this is used to return a numpy array of the correct type in
@@ -1457,26 +1631,36 @@ class CisTargetDatabase:
         rankings_db_dtype = rankings_db.dtype
 
         # Rank all scores per motif/track and assign a random ranking in range for regions/genes with the same score.
-        if self.db_type.column_kind == 'regions' or self.db_type.column_kind == 'genes':
+        if self.db_type.column_kind == "regions" or self.db_type.column_kind == "genes":
             for row_idx in range(self.nbr_rows):
                 if deterministic_per_motif_or_track:
                     # Initialize random number generator, so same ranking is generated for a specific motif or track,
                     # if the scores are the same, but the other cisTarget database contains the motif or track at a
                     # different position in the cisTarget database.
-                    rng = np.random.default_rng(seed=seed + hash(self.motif_or_track_ids))
+                    rng = np.random.default_rng(
+                        seed=seed + hash(self.motif_or_track_ids)
+                    )
 
-                rankings_db.df.iloc[row_idx, :] = rank_scores_and_assign_random_ranking_in_range_for_ties(
+                rankings_db.df.iloc[
+                    row_idx, :
+                ] = rank_scores_and_assign_random_ranking_in_range_for_ties(
                     self.df.iloc[row_idx, :].to_numpy()
                 )
-        elif self.db_type.column_kind == 'motifs' or self.db_type.column_kind == 'tracks':
+        elif (
+            self.db_type.column_kind == "motifs" or self.db_type.column_kind == "tracks"
+        ):
             for column_idx in range(self.nbr_columns):
                 if deterministic_per_motif_or_track:
                     # Initialize random number generator, so same ranking is generated for a specific motif or track,
                     # if the scores are the same, but the other cisTarget database contains the motif or track at a
                     # different position in the cisTarget database.
-                    rng = np.random.default_rng(seed=seed + hash(self.motif_or_track_ids))
+                    rng = np.random.default_rng(
+                        seed=seed + hash(self.motif_or_track_ids)
+                    )
 
-                rankings_db.df.iloc[:, column_idx] = rank_scores_and_assign_random_ranking_in_range_for_ties(
+                rankings_db.df.iloc[
+                    :, column_idx
+                ] = rank_scores_and_assign_random_ranking_in_range_for_ties(
                     self.df.iloc[:, column_idx].to_numpy()
                 )
 
