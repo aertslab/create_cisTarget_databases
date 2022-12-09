@@ -8,12 +8,12 @@ import pandas as pd
 
 
 def get_motif_id_to_filename_and_nbr_motifs_dict(
-        motifs_dir: str,
-        motifs_list_filename: str,
-        partial: Optional[Tuple[int, int]] = None,
-        min_nbr_motifs: Optional[int] = 1,
-        max_nbr_motifs: Optional[int] = None,
-        motif_md5_to_motif_id_filename: Optional[str] = None,
+    motifs_dir: str,
+    motifs_list_filename: str,
+    partial: Optional[Tuple[int, int]] = None,
+    min_nbr_motifs: Optional[int] = 1,
+    max_nbr_motifs: Optional[int] = None,
+    motif_md5_to_motif_id_filename: Optional[str] = None,
 ) -> (Dict[str, str], Dict[str, int]):
     """
     Create motif ID to Cluster-Buster motif file and number of motifs per motif file mapping.
@@ -47,28 +47,28 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
     motif_id_to_motif_md5_dict = dict()
 
     if not min_nbr_motifs:
-       min_nbr_motifs = 1
+        min_nbr_motifs = 1
 
     if motif_md5_to_motif_id_filename:
         # Get motif MD5 name to motif ID mapping if motif_md5_to_motif_id_filename was provided.
-        with open(motif_md5_to_motif_id_filename, 'r') as fh:
+        with open(motif_md5_to_motif_id_filename, "r") as fh:
             for line in fh:
                 line = line.rstrip()
 
-                if line and not line.startswith('#'):
-                    motif_md5, motif_id = line.rstrip().split('\t')[0:2]
+                if line and not line.startswith("#"):
+                    motif_md5, motif_id = line.rstrip().split("\t")[0:2]
 
                     # Store motif MD5 name to motif ID mapping and vice versa.
                     motif_md5_to_motif_id_dict[motif_md5] = motif_id
                     motif_id_to_motif_md5_dict[motif_id] = motif_md5
 
     # Create motif ID to Cluster-Buster motif filename mapping.
-    with open(motifs_list_filename, 'r') as fh:
+    with open(motifs_list_filename, "r") as fh:
         for line in fh:
             motif_md5_or_id = line.rstrip()
 
-            if motif_md5_or_id and not motif_md5_or_id.startswith('#'):
-                if motif_md5_or_id.endswith('.cb'):
+            if motif_md5_or_id and not motif_md5_or_id.startswith("#"):
+                if motif_md5_or_id.endswith(".cb"):
                     # Remove ".cb" extension from motif MD5 name or motif ID.
                     motif_md5_or_id = motif_md5_or_id[:-3]
 
@@ -89,14 +89,14 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
                         )
 
                     # Cluster-Buster motif MD5 name filename.
-                    motif_filename = os.path.join(motifs_dir, motif_md5 + '.cb')
+                    motif_filename = os.path.join(motifs_dir, motif_md5 + ".cb")
                 else:
                     # No motif_md5_to_motif_id_filename was provided, so assume Cluster-Buster motif filenames in
                     # motifs_dir have motif IDs.
 
                     motif_id = motif_md5_or_id
                     # Cluster-Buster motif ID filename.
-                    motif_filename = os.path.join(motifs_dir, motif_id + '.cb')
+                    motif_filename = os.path.join(motifs_dir, motif_id + ".cb")
 
                 if not os.path.exists(motif_filename):
                     raise OSError(
@@ -106,10 +106,10 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
                     # Number of motifs in current motif ID Cluster-Buster file.
                     nbr_motifs_for_motif_id = 0
 
-                    with open(motif_filename, 'r') as motif_fh:
+                    with open(motif_filename, "r") as motif_fh:
                         # Count number of motifs in one motif file.
                         for motif_line in motif_fh:
-                            if motif_line.startswith('>'):
+                            if motif_line.startswith(">"):
                                 nbr_motifs_for_motif_id += 1
 
                     # Filter out if motif ID Cluster-Buster file does have too little or too many motifs.
@@ -117,10 +117,14 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
                         if max_nbr_motifs:
                             if nbr_motifs_for_motif_id <= max_nbr_motifs:
                                 motif_id_to_filename_dict[motif_id] = motif_filename
-                                motif_id_to_nbr_motifs_dict[motif_id] = nbr_motifs_for_motif_id
+                                motif_id_to_nbr_motifs_dict[
+                                    motif_id
+                                ] = nbr_motifs_for_motif_id
                         else:
                             motif_id_to_filename_dict[motif_id] = motif_filename
-                            motif_id_to_nbr_motifs_dict[motif_id] = nbr_motifs_for_motif_id
+                            motif_id_to_nbr_motifs_dict[
+                                motif_id
+                            ] = nbr_motifs_for_motif_id
 
     # Sort motif IDs by number of motifs in motif ID CLuster-Buster file (high to low) and then by motif ID name, so
     # motif IDs with a lot of motifs appear first, so the chance of having a few motif IDs with a lot of motifs only
@@ -129,7 +133,10 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
         motif_id
         for motif_id, nbr_motifs_for_motif_id in sorted(
             motif_id_to_nbr_motifs_dict.items(),
-            key=lambda nbr_motifs_and_motif_id: (-nbr_motifs_and_motif_id[1], nbr_motifs_and_motif_id[0])
+            key=lambda nbr_motifs_and_motif_id: (
+                -nbr_motifs_and_motif_id[1],
+                nbr_motifs_and_motif_id[0],
+            ),
         )
     ]
 
@@ -137,15 +144,19 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
         current_part, nbr_total_parts = partial
 
         if nbr_total_parts < 1:
-            raise ValueError(f'"nbr_total_parts" ({nbr_total_parts}) of partial argument should be >= 1.')
+            raise ValueError(
+                f'"nbr_total_parts" ({nbr_total_parts}) of partial argument should be >= 1.'
+            )
 
         if current_part < 1:
-            raise ValueError(f'"current_part" ({current_part}) of partial argument should be >= 1.')
+            raise ValueError(
+                f'"current_part" ({current_part}) of partial argument should be >= 1.'
+            )
 
         if current_part > nbr_total_parts:
             raise ValueError(
                 f'"current_part" ({current_part}) of partial argument should be <= "nbr_total_parts" '
-                f'({nbr_total_parts}).'
+                f"({nbr_total_parts})."
             )
 
         # Get partial motif IDs list for current requested part of the motif IDs.
@@ -154,7 +165,9 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
         # collection was given).
         partial_motif_ids_list = [
             motif_ids_sorted_by_nbr_motifs_for_motif_id[i]
-            for i in range(current_part - 1, len(motif_id_to_nbr_motifs_dict), nbr_total_parts)
+            for i in range(
+                current_part - 1, len(motif_id_to_nbr_motifs_dict), nbr_total_parts
+            )
         ]
 
         # Recreate dictionaries with subset (corresponding to current_part) of motif IDs sorted by number of motifs in
@@ -183,11 +196,16 @@ def get_motif_id_to_filename_and_nbr_motifs_dict(
     return motif_id_to_filename_dict, motif_id_to_nbr_motifs_dict
 
 
-def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, motif_filename: str, motif_id: str,
-                                 extract_gene_id_from_region_id_regex_replace: Optional[str] = None,
-                                 bg_padding: int = 0, mask: bool = False,
-                                 ssh_command: Optional[Union[str, list]] = None
-                                 ) -> Tuple[str, pd.DataFrame]:
+def run_cluster_buster_for_motif(
+    cluster_buster_path: str,
+    fasta_filename: str,
+    motif_filename: str,
+    motif_id: str,
+    extract_gene_id_from_region_id_regex_replace: Optional[str] = None,
+    bg_padding: int = 0,
+    mask: bool = False,
+    ssh_command: Optional[Union[str, list]] = None,
+) -> Tuple[str, pd.DataFrame]:
     """
     Score each sequence in the FASTA file with Cluster-Buster and only keep the top CRM score per region ID/gene ID.
 
@@ -219,56 +237,69 @@ def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, 
             clusterbuster_command.extend(ssh_command)
 
     # Construct Cluster-Buster command line.
-    clusterbuster_command.extend([
-        cluster_buster_path,
-        '-f', '4',
-        '-c', '0.0',
-        '-r', '10000',
-        '-b', str(bg_padding),
-        '-t', '1'
-    ])
+    clusterbuster_command.extend(
+        [
+            cluster_buster_path,
+            "-f",
+            "4",
+            "-c",
+            "0.0",
+            "-r",
+            "10000",
+            "-b",
+            str(bg_padding),
+            "-t",
+            "1",
+        ]
+    )
 
     if mask:
-        clusterbuster_command.append('-l')
+        clusterbuster_command.append("-l")
 
-    clusterbuster_command.extend([
-        motif_filename,
-        fasta_filename
-    ])
+    clusterbuster_command.extend([motif_filename, fasta_filename])
 
     # Score each region in FASTA file with Cluster-Buster for the provided motif and get top CRM score for each region.
     try:
-        pid = subprocess.Popen(args=clusterbuster_command,
-                               bufsize=-1,
-                               executable=None,
-                               stdin=None,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE,
-                               preexec_fn=None,
-                               close_fds=False,
-                               shell=False,
-                               cwd=None,
-                               env=None,
-                               universal_newlines=False,
-                               startupinfo=None,
-                               creationflags=0)
+        pid = subprocess.Popen(
+            args=clusterbuster_command,
+            bufsize=-1,
+            executable=None,
+            stdin=None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=None,
+            close_fds=False,
+            shell=False,
+            cwd=None,
+            env=None,
+            universal_newlines=False,
+            startupinfo=None,
+            creationflags=0,
+        )
         stdout_data, stderr_data = pid.communicate()
     except OSError as msg:
-        raise RuntimeError("Execution error for: '" + ' '.join(clusterbuster_command) + "': " + str(msg))
+        raise RuntimeError(
+            "Execution error for: '"
+            + " ".join(clusterbuster_command)
+            + "': "
+            + str(msg)
+        )
 
     if pid.returncode != 0:
-        raise RuntimeError("Error: Non-zero exit status for: '" + ' '.join(clusterbuster_command) + "'")
+        raise RuntimeError(
+            "Error: Non-zero exit status for: '" + " ".join(clusterbuster_command) + "'"
+        )
 
     # Read Cluster-Buster standard out as a pandas dataframe.
     df_crm_scores = pd.read_csv(
         filepath_or_buffer=io.BytesIO(stdout_data),
-        sep='\t',
+        sep="\t",
         header=0,
-        names=['seq_name', 'crm_score'],
-        index_col='seq_name',
-        usecols=['seq_name', 'crm_score'],
-        dtype={'seq_name': str, 'crm_score': np.float32},
-        engine='c'
+        names=["seq_name", "crm_score"],
+        index_col="seq_name",
+        usecols=["seq_name", "crm_score"],
+        dtype={"seq_name": str, "crm_score": np.float32},
+        engine="c",
     )
 
     if extract_gene_id_from_region_id_regex_replace:
@@ -288,12 +319,14 @@ def run_cluster_buster_for_motif(cluster_buster_path: str, fasta_filename: str, 
         #           "region1@@geneA", "region2@@geneB", "region3@@geneA"
         #       - gene IDs (output):
         #           "geneA", "geneB"
-        df_crm_scores = df_crm_scores.assign(
-            gene_ids=df_crm_scores.index.str.replace(
-                extract_gene_id_from_region_id_regex_replace,
-                '',
-                regex=True
+        df_crm_scores = (
+            df_crm_scores.assign(
+                gene_ids=df_crm_scores.index.str.replace(
+                    extract_gene_id_from_region_id_regex_replace, "", regex=True
+                )
             )
-        ).groupby('gene_ids').max()
+            .groupby("gene_ids")
+            .max()
+        )
 
     return motif_id, df_crm_scores
