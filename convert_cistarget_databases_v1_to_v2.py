@@ -15,11 +15,11 @@ import pyarrow.feather as pf
 
 
 def convert_feather_v1_to_v2_vice_versa(
-        input_ct_db_filename: str,
-        output_ct_db_filename: str,
-        compression: Optional[str] = "zstd",
-        compression_level: int = 6,
-        to_version: int = 2,
+    input_ct_db_filename: str,
+    output_ct_db_filename: str,
+    compression: Optional[str] = "zstd",
+    compression_level: int = 6,
+    to_version: int = 2,
 ):
     """
     Convert cisTarget Feather database from Feather v1 to v2 format (with or without compression) and vice versa.
@@ -33,7 +33,9 @@ def convert_feather_v1_to_v2_vice_versa(
     """
 
     if to_version != 2 and to_version != 1:
-        raise ValueError("Feather file version only supports 1 (legacy) or 2 (default).")
+        raise ValueError(
+            "Feather file version only supports 1 (legacy) or 2 (default)."
+        )
 
     if to_version == 1:
         # Compression is not supported in Feather v1 format.
@@ -98,14 +100,14 @@ def convert_feather_v1_to_v2_vice_versa(
         dest=output_ct_db_filename,
         compression=compression,
         compression_level=compression_level,
-        version=to_version
+        version=to_version,
     )
 
 
 def main():
     parser = argparse.ArgumentParser(
         description="Convert cisTarget Feather database from Feather v1 to v2 format (with or without "
-                    "compression) and vice versa."
+        "compression) and vice versa."
     )
 
     parser.add_argument(
@@ -115,7 +117,7 @@ def main():
         action="store",
         type=str,
         required=True,
-        help="Input cisTarget Feather database filename."
+        help="Input cisTarget Feather database filename.",
     )
 
     parser.add_argument(
@@ -125,7 +127,7 @@ def main():
         action="store",
         type=str,
         required=True,
-        help="Output cisTarget Feather database filename."
+        help="Output cisTarget Feather database filename.",
     )
 
     parser.add_argument(
@@ -137,7 +139,7 @@ def main():
         choices=["zstd", "lz4", "uncompressed"],
         required=False,
         default="zstd",
-        help='Compression method for output cisTarget Feather database: "zstd" (default), "lz4" or "uncompressed".'
+        help='Compression method for output cisTarget Feather database: "zstd" (default), "lz4" or "uncompressed".',
     )
 
     parser.add_argument(
@@ -148,7 +150,7 @@ def main():
         type=int,
         required=False,
         default=6,
-        help="Compression level for zstd or lz4 (default: 6)."
+        help="Compression level for zstd or lz4 (default: 6).",
     )
 
     parser.add_argument(
@@ -159,7 +161,7 @@ def main():
         type=int,
         required=False,
         default=2,
-        help="Output Feather file format version: 1 (legacy) or 2 (default)."
+        help="Output Feather file format version: 1 (legacy) or 2 (default).",
     )
 
     args = parser.parse_args()
