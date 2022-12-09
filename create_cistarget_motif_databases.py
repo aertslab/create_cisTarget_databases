@@ -345,7 +345,7 @@ def main():
     fasta_filename = os.path.abspath(args.fasta_filename)
 
     # Get motif ID to motif file name mapping and motif ID to number of motifs per motif file mapping for
-    # and (optionally) filtered list of motif IDs:
+    # a(n optionally) filtered list of motif IDs:
     #   - if partial is set
     #   - if min_nbr_motifs is set
     #   - if max_nbr_motifs is set
@@ -430,7 +430,7 @@ def main():
         # Motif IDs are sorted by number of motifs in motif ID Cluster-Buster file (high to low) and then by motif ID
         # name (in get_motif_id_to_filename_and_nbr_motifs_dict()), so motif IDs which have a lot of motifs in their
         # Cluster-Buster motif file are scored first, before singletons are scored to prevent that a few Cluster-Buster
-        # motifs files with a huge number of motifs got sheduled near the end of the motif scoring and underutilizing
+        # motifs files with a huge number of motifs got scheduled near the end of the motif scoring and underutilizing
         # the compute node.
         for motif_id, motif_filename in motif_id_to_filename_dict.items():
 
@@ -554,9 +554,9 @@ def main():
         del ct_scores_db_regions_or_genes_vs_motifs
 
         # Do not write cisTarget rankings database (motifs vs regions or genes) to Feather file
-        # as it can take a very long time to write it (1.5 hours for 1 milion regions) as the
+        # as it can take a very long time to write it (1.5 hours for 1 million regions) as the
         # rankings database numpy array is in "C" order and writing a Feather database requires
-        # travering the numpy array in column order.
+        # traversing the numpy array in column order.
         # write_db(ct_db=ct_rankings_db_motifs_vs_regions_or_genes, db_prefix=db_prefix)
 
         # Create cisTarget rankings database (regions or genes vs motifs) from (motifs vs regions or genes) version.
