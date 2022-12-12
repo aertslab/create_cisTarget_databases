@@ -171,6 +171,7 @@ When running the scripts in this repo, you might need around 3 times the amount 
 |                                                                                                                                                                   script | description                                                                                                                                                                                                                                                |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |                                                                                             [`create_cistarget_motif_databases.py`](#create_cistarget_motif_databasespy) | Create cisTarget motif databases.                                                                                                                                                                                                                          |
+|                                                                                             [`create_cistarget_track_databases.py`](#create_cistarget_track_databasespy) | Create cisTarget track databases.                                                                                                                                                                                                                          |
 |           [`combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbs.py`](#combine_partial_motifs_or_tracks_vs_regions_or_genes_scores_cistarget_dbspy) | Combine partial cisTarget motifs or tracks vs regions or genes scores databases to: **1)** a complete cisTarget motifs or tracks regions or genes scores database and **2)** a complete cisTarget regions or genes vs motifs or tracks scores database.    |
 |           [`combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbs.py`](#combine_partial_regions_or_genes_vs_motifs_or_tracks_scores_cistarget_dbspy) | Combine partial cisTarget regions or genes vs motifs or tracks scores databases to: **1)** a complete cisTarget regions or genes vs motifs or tracks scores database and **2)** a complete cisTarget motifs or tracks vs regions or genes scores database. |
 | [`convert_motifs_or_tracks_vs_ regions_or_genes_scores_to_ rankings_cistarget_dbs.py`](#convert_motifs_or_tracks_vs_regions_or_genes_scores_to_rankings_cistarget_dbspy) | Convert cisTarget motifs or tracks vs regions or genes scores database to cisTarget rankings database.                                                                                                                                                     |
@@ -251,6 +252,60 @@ options:
                         If defined, run Cluster-Buster over ssh by running the provided command to make
                         the connection before running Cluster-Buster itself. Example: 'ssh -o
                         ControlMaster=auto -o ControlPath=/tmp/ssh-control-path-%l-%h-%p-%r -o
+                        ControlPersist=600 <hostname>'
+```
+
+
+#### create_cistarget_track_databases.py
+
+```bash
+❯ ${create_cistarget_databases_dir}/create_cistarget_track_databases.py --help
+usage: create_cistarget_track_databases.py [-h] -b BED_FILENAME -T TRACKS_DIR -d TRACKS_LIST_FILENAME
+                                           -o DB_PREFIX [-a BIGWIG_AVERAGE_OVER_BED_PATH]
+                                           [-t NBR_THREADS] [-p CURRENT_PART NBR_TOTAL_PARTS]
+                                           [-g EXTRACT_GENE_ID_FROM_REGION_ID_REGEX_REPLACE] [-s SEED]
+                                           [-r SSH_COMMAND]
+
+Create cisTarget track databases.
+
+options:
+  -h, --help            show this help message and exit
+  -b BED_FILENAME, --bed BED_FILENAME
+                        BED filename which contains the regions/genes to score with
+                        bigWigAverageOverBed for each bigwig track (ChIP-seq) files.
+  -T TRACKS_DIR, --tracks_dir TRACKS_DIR
+                        Path to directory with bigwig track (ChIP-seq) files.
+  -d TRACKS_LIST_FILENAME, --tracks TRACKS_LIST_FILENAME
+                        Filename with list of track IDs to be scored from directory specified by "--
+                        tracks_dir".
+  -o DB_PREFIX, --output DB_PREFIX
+                        Feather database prefix output filename.
+  -a BIGWIG_AVERAGE_OVER_BED_PATH, --bwaob BIGWIG_AVERAGE_OVER_BED_PATH
+                        Path to bigWigAverageOverBed
+                        (http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bigWigAverageOverBed).
+                        Default: "bigWigAverageOverBed".
+  -t NBR_THREADS, --threads NBR_THREADS
+                        Number of threads to use when scoring tracks. Default: 1.
+  -p CURRENT_PART NBR_TOTAL_PARTS, --partial CURRENT_PART NBR_TOTAL_PARTS
+                        Divide the tracks list in a number of total parts (of similar size) and score
+                        only the part defined by current_part. This allows creating partial databases
+                        on machines which do not have enough RAM to score all tracks in one iteration.
+                        This will only create a partial regions/genes vs tracks scoring database ({db_p
+                        refix}.part_000{current_part}_of_000{nbr_total_parts}.regions_vs_tracks.scores.
+                        feather or {db_prefix}.part_000{current_part}_of_000{nbr_total_parts}.genes_vs_
+                        tracks.scores.feather).
+  -g EXTRACT_GENE_ID_FROM_REGION_ID_REGEX_REPLACE, --genes EXTRACT_GENE_ID_FROM_REGION_ID_REGEX_REPLACE
+                        Take top score for a gene by taking the maximum score of multiple regions for
+                        that gene. Define a regex which will remove the non-gene part of the region ID,
+                        so only the gene ID remains. Examples: "gene_id#some_number": "#[0-9]+$" or
+                        "region_id@@gene_id": "^.+@@".
+  -s SEED, --seed SEED  Random seed used for breaking ties when creating rankings for a range of tied
+                        scores. When setting this seed to a specific value and running this script with
+                        the same input, will result in the same rankings databases as output.
+  -r SSH_COMMAND, --ssh SSH_COMMAND
+                        If defined, run bigWigAverageOverBed over ssh by running the provided command
+                        to make the connection before running bigWigAverageOverBed itself. Example:
+                        'ssh -o ControlMaster=auto -o ControlPath=/tmp/ssh-control-path-%l-%h-%p-%r -o
                         ControlPersist=600 <hostname>'
 ```
 
@@ -382,9 +437,13 @@ Create cisTarget motif databases:
 
 
 ```bash
+# FASTA file with sequences per region IDs / gene IDs.
 fasta_filename=
+# Directory with motifs in Cluster-Buster format.
 motifs_dir=
+# File with motif IDs (base name of motif file in ${motifs_dir}).
 motifs_list_filename=
+# cisTarget motif database output prefix.
 db_prefix=
 
 nbr_threads=22
@@ -394,6 +453,47 @@ nbr_threads=22
     -f "${fasta_filename}" \
     -M "${motifs_dir}" \
     -m "${motifs_list_filename}" \
+    -o "${db_prefix}" \
+    -t "${nbr_threads}"
+```
+
+
+### Score all tracks at once and create rankings
+
+Create cisTarget tracks databases:
+  - [`create_cistarget_track_databases.py`](#create_cistarget_track_databasespy)
+      - for each track score all regulatory regions and create a cisTarget tracks vs regions/genes scores db:
+          - `*.tracks_vs_regions.scores.feather`
+          - `*.tracks_vs_genes.scores.feather`
+      - transpose cisTarget track vs regions/genes scores db to cisTarget regions/genes vs tracks scores db:
+          - `*.regions_vs_tracks.scores.feather`
+          - `*.genes_vs_tracks.scores.feather`
+      - creating a ranking for each regulatory region per motif based on the track score of the track for that region
+        and create a cisTarget track vs regions/genes rankings db:
+          - `*.tracks_vs_regions.rankings.feather`
+          - `*.tracks_vs_genes.rankings.feather`
+      - transpose cisTarget tracks vs regions/genes rankings db to cisTarget regions/genes vs tracks rankings db:
+          - `*.regions_vs_tracks.rankings.feather`
+          - `*.genes_vs_tracks.rankings.feather`
+
+
+```bash
+# BED file with regions to score.
+regions_bed_filename=
+# Directory with bigWig tracks of TF-ChIP-seq data.
+tracks_dir=
+# File with track IDs (base names of bigWig files in ${tracks_dir}).
+tracks_list_filename=
+# cisTarget track database output prefix.
+db_prefix=
+
+nbr_threads=22
+
+
+"${create_cistarget_databases_dir}/create_cistarget_motif_databases.py" \
+    -b "${regions_bed_filename}" \
+    -T "${tracks_dir}" \
+    -d "${tracks_list_filename}" \
     -o "${db_prefix}" \
     -t "${nbr_threads}"
 ```
@@ -445,9 +545,13 @@ This will only create a partial cisTarget motifs vs regions/genes scores databas
 
 
 ```bash
+# FASTA file with sequences per region IDs / gene IDs.
 fasta_filename=
+# Directory with motifs in Cluster-Buster format.
 motifs_dir=
+# File with motif IDs (base name of motif file in ${motifs_dir}).
 motifs_list_filename=
+# cisTarget motif database output prefix.
 db_prefix=
 
 nbr_threads=22
@@ -478,10 +582,15 @@ generated cisTarget database as some regions might get lost after liftover. cisT
 generated for each species of interest.
 
 ```bash
+# FASTA file with sequences per region IDs / gene IDs.
 fasta_filename=
+# FASTA file with sequences per region IDs / gene IDs of the original species.
 original_species_fasta_filename=
+# Directory with motifs in Cluster-Buster format.
 motifs_dir=
+# File with motif IDs (base name of motif file in ${motifs_dir}).
 motifs_list_filename=
+# cisTarget motif database output prefix.
 db_prefix=
 
 nbr_threads=22
