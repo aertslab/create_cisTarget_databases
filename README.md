@@ -490,7 +490,7 @@ db_prefix=
 nbr_threads=22
 
 
-"${create_cistarget_databases_dir}/create_cistarget_motif_databases.py" \
+"${create_cistarget_databases_dir}/create_cistarget_track_databases.py" \
     -b "${regions_bed_filename}" \
     -T "${tracks_dir}" \
     -d "${tracks_list_filename}" \
