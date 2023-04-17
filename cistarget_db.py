@@ -503,9 +503,9 @@ class DatabaseTypes(Enum):
         return self._column_kind == "regions" or self._column_kind == "genes"
 
     @property
-    def has_motifs_or_track_column_kind(self) -> bool:
+    def has_motifs_or_tracks_column_kind(self) -> bool:
         """Check if cisTarget database has motifs or tracks in columns."""
-        return self._column_kind == "motifs" or self._column_kind == "track"
+        return self._column_kind == "motifs" or self._column_kind == "tracks"
 
     def get_dtype(
         self, nbr_regions_or_genes: int
@@ -648,7 +648,7 @@ class CisTargetDatabase:
             data=motif_or_track_ids.ids, name=motif_or_track_ids.type.value
         )
 
-        if db_type.column_kind == "regions" or db_type.column_kind == "genes":
+        if db_type.has_regions_or_genes_column_kind:
             if isinstance(db_numpy_array, np.ndarray):
                 if (
                     len(motif_or_track_ids)
@@ -686,7 +686,7 @@ class CisTargetDatabase:
                     index=motif_or_track_ids_idx,
                     columns=region_or_gene_ids_idx,
                 )
-        elif db_type.column_kind == "motifs" or db_type.column_kind == "tracks":
+        elif db_type.has_motifs_or_tracks_column_kind:
             if isinstance(db_numpy_array, np.ndarray):
                 if (
                     len(region_or_gene_ids)
@@ -895,7 +895,7 @@ class CisTargetDatabase:
                 else:
                     raise ValueError('db_type must be of "DatabaseTypes" type.')
 
-        if db_type.has_motifs_or_track_column_kind:
+        if db_type.has_motifs_or_tracks_column_kind:
             if len(db_filename_or_dbs_filenames) == 1:
                 # Only one motif or track vs regions or genes cisTarget scores/rankings database file.
 
@@ -1076,7 +1076,7 @@ class CisTargetDatabase:
             feather_file=db_filename_or_dbs_filenames[0]
         )
 
-        if db_type.column_kind == "regions" or db_type.column_kind == "genes":
+        if db_type.has_regions_or_genes_column_kind:
             # Get the name of the motif IDs or track IDs column.
             motif_or_track_ids_column_name = [
                 column_name
@@ -1119,7 +1119,7 @@ class CisTargetDatabase:
                 motif_or_track_ids=motif_or_track_ids,
                 motifs_or_tracks_type=db_type.motifs_or_tracks_type,
             )
-        elif db_type.column_kind == "motifs" or db_type.column_kind == "tracks":
+        elif db_type.has_motifs_or_tracks_column_kind:
             # Get the name of the column that contains the region or gene IDs.
             region_or_gene_ids_column_name = [
                 column_name
@@ -1457,7 +1457,7 @@ class CisTargetDatabase:
         ), "cisTarget database must be a scores database."
 
         # Write CRM or track scores for motif ID or track ID to cisTarget scores dataframe.
-        if self.db_type.column_kind == "regions" or self.db_type.column_kind == "genes":
+        if self.db_type.has_regions_or_genes_column_kind:
             assert (
                 motif_or_track_id in self.df.index
             ), f'"{motif_or_track_id}" not found in row of CisTargetDatabase dataframe.'
@@ -1492,9 +1492,7 @@ class CisTargetDatabase:
                 self.df.to_numpy()[
                     motif_or_track_id_idx_iloc, region_or_gene_ids_idx_iloc
                 ] = df_scores_for_motif_or_track[score_name]
-        elif (
-            self.db_type.column_kind == "motifs" or self.db_type.column_kind == "tracks"
-        ):
+        elif self.db_type.has_motifs_or_tracks_column_kind:
             assert (
                 motif_or_track_id in self.df.columns
             ), f'"{motif_or_track_id}" not found in column of CisTargetDatabase dataframe.'
@@ -1631,7 +1629,7 @@ class CisTargetDatabase:
         rankings_db_dtype = rankings_db.dtype
 
         # Rank all scores per motif/track and assign a random ranking in range for regions/genes with the same score.
-        if self.db_type.column_kind == "regions" or self.db_type.column_kind == "genes":
+        if self.db_type.has_regions_or_genes_column_kind:
             for row_idx in range(self.nbr_rows):
                 if deterministic_per_motif_or_track:
                     # Initialize random number generator, so same ranking is generated for a specific motif or track,
@@ -1646,9 +1644,7 @@ class CisTargetDatabase:
                 ] = rank_scores_and_assign_random_ranking_in_range_for_ties(
                     self.df.iloc[row_idx, :].to_numpy()
                 )
-        elif (
-            self.db_type.column_kind == "motifs" or self.db_type.column_kind == "tracks"
-        ):
+        elif self.db_type.has_motifs_or_tracks_column_kind:
             for column_idx in range(self.nbr_columns):
                 if deterministic_per_motif_or_track:
                     # Initialize random number generator, so same ranking is generated for a specific motif or track,
