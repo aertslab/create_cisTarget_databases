@@ -1,11 +1,8 @@
 # Create cisTarget databases
 
-> :information_source: **The SCENIC+ motif collection PWMs will be made available upon publication.**
+> :information_source: **The SCENIC+ public motif collection PWMs can be found at https://resources.aertslab.org/cistarget/motif_collections/.**
 >
 > You can find precomputed databases for human, mouse and fly at https://resources.aertslab.org/cistarget/.
-> If you want early access to the PWMs, you can send us an email to carmen.bravogonzalezblas@kuleuven.be,
-> seppe.dewinter@kuleuven.be and/or stein.aerts@kuleuven.be with your motivation to request the collection
-> and we may decide to share it privately with you.
 
 
 ## Installation
