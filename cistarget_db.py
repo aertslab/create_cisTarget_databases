@@ -217,6 +217,9 @@ class RegionOrGeneIDs:
     def __len__(self) -> int:
         return len(self.ids)
 
+    def __getitem__(self, index) -> str:
+        return self.ids[index]
+
     def issubset(self, other: "RegionOrGeneIDs") -> bool:
         """
         Check if all region or gene IDs in the current RegionOrGeneIDs object are at least present in the other
@@ -288,6 +291,9 @@ class MotifOrTrackIDs:
 
     def __len__(self) -> int:
         return len(self.ids)
+
+    def __getitem__(self, index) -> str:
+        return self.ids[index]
 
 
 @unique

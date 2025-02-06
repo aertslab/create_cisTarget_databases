@@ -51,6 +51,7 @@ def test_RegionOrGeneIDs_with_regions():
 
     assert eval(region_or_gene_ids_instance.__repr__()) == region_or_gene_ids_instance
     assert len(region_or_gene_ids_instance) == 3
+    assert region_or_gene_ids_instance[2] == "reg6"
 
 
 def test_RegionOrGeneIDs_with_genes():
@@ -64,6 +65,7 @@ def test_RegionOrGeneIDs_with_genes():
 
     assert eval(region_or_gene_ids_instance.__repr__()) == region_or_gene_ids_instance
     assert len(region_or_gene_ids_instance) == 3
+    assert region_or_gene_ids_instance[2] == "gene6"
 
 
 def test_RegionOrGeneIDs_with_regions_or_genes_type_str():
@@ -80,6 +82,7 @@ def test_RegionOrGeneIDs_with_regions_or_genes_type_str():
 
     assert eval(region_or_gene_ids_instance.__repr__()) == region_or_gene_ids_instance
     assert len(region_or_gene_ids_instance) == 3
+    assert region_or_gene_ids_instance[2] == "gene6"
 
 
 def test_RegionOrGeneIDs_subset_superset():
@@ -111,6 +114,7 @@ def test_MotifsOrTracksIDs_with_motifs():
 
     assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
     assert len(motif_or_track_ids_instance) == 3
+    assert motif_or_track_ids_instance[0] == "motif10"
 
 
 def test_MotifsOrTracksIDs_with_tracks():
@@ -124,6 +128,7 @@ def test_MotifsOrTracksIDs_with_tracks():
 
     assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
     assert len(motif_or_track_ids_instance) == 3
+    assert motif_or_track_ids_instance[0] == "track10"
 
 
 def test_MotifsOrTracksIDs_with_motifs_or_tracks_type_str():
@@ -140,6 +145,7 @@ def test_MotifsOrTracksIDs_with_motifs_or_tracks_type_str():
 
     assert eval(motif_or_track_ids_instance.__repr__()) == motif_or_track_ids_instance
     assert len(motif_or_track_ids_instance) == 3
+    assert motif_or_track_ids_instance[0] == "track10"
 
 
 def test_DatabaseTypes():
