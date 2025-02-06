@@ -1642,7 +1642,7 @@ class CisTargetDatabase:
                     # if the scores are the same, but the other cisTarget database contains the motif or track at a
                     # different position in the cisTarget database.
                     rng = np.random.default_rng(
-                        seed=seed + hash(self.motif_or_track_ids)
+                        seed=seed + hash(self.motif_or_track_ids[row_idx])
                     )
 
                 rankings_db.df.iloc[
@@ -1657,7 +1657,7 @@ class CisTargetDatabase:
                     # if the scores are the same, but the other cisTarget database contains the motif or track at a
                     # different position in the cisTarget database.
                     rng = np.random.default_rng(
-                        seed=seed + hash(self.motif_or_track_ids)
+                        seed=seed + hash(self.motif_or_track_ids[column_idx])
                     )
 
                 rankings_db.df.iloc[
