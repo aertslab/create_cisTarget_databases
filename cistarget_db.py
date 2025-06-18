@@ -1573,6 +1573,12 @@ class CisTargetDatabase:
                 scores_with_ties_for_motif_or_track_numpy.shape[0]
             )
 
+            # Preallocate numpy array to store rankings with broken ties for the current motif or track.
+            ranking_with_broken_ties_for_motif_or_track_numpy = np.empty(
+                scores_with_ties_for_motif_or_track_numpy.shape[0],
+                dtype=rankings_db_dtype,
+            )
+
             # Rank scores for each region/gene for the current motif/track and break ties:
             #   - Get scores for each region/gene for a certain motif/track and multiply by -1 (scores >= 0) so sorting
             #     later will result in ranking the highest score first (descending):
@@ -1601,21 +1607,23 @@ class CisTargetDatabase:
             #           (-scores_with_ties_for_motif_or_track_numpy)[random_permutations_to_break_ties_numpy].argsort()
             #       ]
             #
-            #   - Finally convert the array (previous step) which contains indices which would sort
-            #     scores_with_ties_for_motif_or_track_numpy from high scores to low scores and which would break tied
-            #     scores in a fair (random) way to a ranking (and store the result in a int16 or int32 numpy array):
+            #   - Finally, assign rankings to ranking_with_broken_ties_for_motif_or_track_numpy by assigning:
             #
-            #       ... .argsort().astype(rankings_db_dtype)
+            #       np.arange(scores_with_ties_for_motif_or_track_numpy.shape[0], dtype=rankings_db_dtype
             #
-            ranking_with_broken_ties_for_motif_or_track_numpy = (
+            #     to the index positions (of ranking_with_broken_ties_for_motif_or_track_numpy) calculated in the
+            #     previous step
+            #
+            #       random_permutations_to_break_ties_numpy[
+            #           (-scores_with_ties_for_motif_or_track_numpy)[random_permutations_to_break_ties_numpy].argsort()
+            #       ]
+            ranking_with_broken_ties_for_motif_or_track_numpy[
                 random_permutations_to_break_ties_numpy[
                     (-scores_with_ties_for_motif_or_track_numpy)[
                         random_permutations_to_break_ties_numpy
                     ].argsort()
                 ]
-                .argsort()
-                .astype(rankings_db_dtype)
-            )
+            ] = np.arange(scores_with_ties_for_motif_or_track_numpy.shape[0], dtype=rankings_db_dtype)
 
             return ranking_with_broken_ties_for_motif_or_track_numpy
 
